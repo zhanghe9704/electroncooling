@@ -67,6 +67,40 @@ int UniformCylinder::density(double *x, double *y, double *z, Beam &ebeam, doubl
     return 0;
 }
 
+
+
+int UniformBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle){
+
+    int nq = ebeam.charge_number();
+    if (nq<0) nq *= -1;
+    double density = current_/(k_pi*radius_*radius_*nq*k_e*ebeam.beta()*k_c);
+    memset(ne, 0, n_particle*sizeof(double));
+    for(unsigned int i=0; i<n_particle; ++i){
+        if(z[i]<=0.5*length_&&z[i]>=-0.5*length_)
+            if(x[i]*x[i]+y[i]*y[i]<=radius_*radius_) ne[i] = density;
+    }
+    return 0;
+}
+
+int UniformBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle, double cx,
+                          double cy, double cz){
+    int nq = ebeam.charge_number();
+    if (nq<0) nq *= -1;
+    double density = current_/(k_pi*radius_*radius_*nq*k_e*ebeam.beta()*k_c);
+
+    //ion_center - electron_center
+    cx -= ebeam.center(0);
+    cy -= ebeam.center(1);
+    cz -= ebeam.center(2);
+    memset(ne, 0, n_particle*sizeof(double));
+    for(unsigned int i=0; i<n_particle; ++i){
+        if((z[i]+cz)<=0.5*length_&&(z[i]+cz)>=-0.5*length_)
+            if((x[i]+cx)*(x[i]+cx)+(y[i]+cy)*(y[i]+cy)<=radius_*radius_) ne[i] = density;
+    }
+    return 0;
+}
+
+
 EBeam::EBeam(double gamma, double tmp_tr, double tmp_long, EBeamShape &shape_defined):
     Beam(-1, k_me/k_u, (gamma-1)*k_me, 0, 0, 0, 0),tmp_tr_(tmp_tr),tmp_long_(tmp_long){
     shape_ = &shape_defined;

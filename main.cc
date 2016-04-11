@@ -52,19 +52,23 @@ int main() {
             double current = 0.03;
             double radius = 0.025;
             double neutralisation = 0;
-            UniformCylinder uniform_cylinder(current, radius, neutralisation);
+//            UniformCylinder uniform_cylinder(current, radius, neutralisation);
+            double length = 0.01;
+            UniformBunch uniform_bunch(current, radius, length, neutralisation);
             double gamma_e = c_beam.gamma();
             double tmp_tr = 0.05;
             double tmp_long = 0.1;
-            EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_cylinder);
+            EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_bunch);
+//            EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_cylinder);
 
 
             //define cooling model
-//            unsigned int n_sample = 5000;
-//            EcoolRateParas ecool_rate_paras(n_sample);
-            unsigned int n_tr = 100;
-            unsigned int n_long = 100;
-            EcoolRateParas ecool_rate_paras(n_tr, n_long);
+            unsigned int n_sample = 5000;
+            EcoolRateParas ecool_rate_paras(n_sample);
+//            unsigned int n_tr = 100;
+//            unsigned int n_long = 100;
+//            EcoolRateParas ecool_rate_paras(n_tr, n_long);
+            ecool_rate_paras.set_bunch_separate(1*length);
 
             ForceParas force_paras(ForceFormula::PARKHOMCHUK);
             double rate_x, rate_y, rate_s;
@@ -177,7 +181,7 @@ int main() {
             KE = 800;
             emit_nx0 = 1.039757508e-6;
             emit_ny0 = 1.039757508e-6;
-            dp_p0 = 2e-3;
+            dp_p0 = 0.002012615391;
             N_ptcl = 3.6E11;
             Beam p_beam(Z,m0/k_u, KE, emit_nx0, emit_ny0, dp_p0, N_ptcl);
 
@@ -218,9 +222,10 @@ int main() {
             //define friction force formula
             force_paras = new ForceParas(ForceFormula::PARKHOMCHUK);
             //define dynamic simulation
-            dynamic_paras = new DynamicParas(60, 300, false, true);
+            dynamic_paras = new DynamicParas(60, 120, false, true);
+            dynamic_paras->set_model(DynamicModel::MODEL_BEAM);
 
-            char file[100] = "test_dynamic_ecool_DC_monte_carlo.txt";
+            char file[100] = "test_dynamic_ecool_DC_model_beam.txt";
             std::ofstream outfile;
             outfile.open(file);
             dynamic(p_beam, cooler, e_beam, ring, outfile);
@@ -237,7 +242,7 @@ int main() {
             KE = 800;
             emit_nx0 = 1.039757508e-6;
             emit_ny0 = 1.039757508e-6;
-            dp_p0 = 2e-3;
+            dp_p0 = 0.002;
             N_ptcl = 3.6E11;
             Beam p_beam(Z,m0/k_u, KE, emit_nx0, emit_ny0, dp_p0, N_ptcl);
 
@@ -269,16 +274,17 @@ int main() {
             EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_cylinder);
 
              //define cooling model: single particle
-            unsigned int n_tr = 100;
-            unsigned int n_long = 100;
-            ecool_paras = new EcoolRateParas(n_tr, n_long);
-//            //define cooling model: monte carlo
-//            unsigned int n_sample = 40000;
-//            ecool_paras = new EcoolRateParas(n_sample);
+//            unsigned int n_tr = 100;
+//            unsigned int n_long = 100;
+//            ecool_paras = new EcoolRateParas(n_tr, n_long);
+            //define cooling model: monte carlo
+            unsigned int n_sample = 40000;
+            ecool_paras = new EcoolRateParas(n_sample);
             //define friction force formula
             force_paras = new ForceParas(ForceFormula::PARKHOMCHUK);
             //define dynamic simulation
-            dynamic_paras = new DynamicParas(60, 300, true, true);
+            dynamic_paras = new DynamicParas(60, 120, true, true);
+//            dynamic_paras->set_model(DynamicModel::MODEL_BEAM);
 
             //Set IBS parameters.
             int nu = 200;
@@ -287,7 +293,7 @@ int main() {
             double log_c = 44.8/2;
             ibs_paras = new IBSParas(nu, nv, log_c);
 
-            char file[100] = "test_dynamic_ecool_ibs_DC_monte_carlo.txt";
+            char file[100] = "test_dynamic_ibs_ecool_DC_monte_carlo.txt";
             std::ofstream outfile;
             outfile.open(file);
             dynamic(p_beam, cooler, e_beam, ring, outfile);

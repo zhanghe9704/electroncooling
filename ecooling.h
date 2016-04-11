@@ -38,7 +38,27 @@ public:
         n_sample_ = n_tr_*n_tr_*n_long_;
         }
 };
+
+struct Twiss{
+    double bet_x_;
+    double bet_y_;
+    double alf_x_;
+    double alf_y_;
+    double disp_x_;
+    double disp_y_;
+    double disp_dx_;
+    double disp_dy_;
+    Twiss():bet_x_(0),bet_y_(0),alf_x_(0),alf_y_(0),disp_x_(0),disp_y_(0),disp_dx_(0),disp_dy_(0){};
+};
+
 int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &ion, Cooler &cooler, EBeam &ebeam,
                   Ring &ring, double &rate_x, double &rate_y, double &rate_s);
 int end_ecooling(EcoolRateParas &ecool_paras, Beam &ion);
+
+int config_ecooling(EcoolRateParas &ecool_paras, Beam &ion);
+int ion_sample(EcoolRateParas &ecool_paras, Beam &ion, Ring &ring, Cooler &cooler);
+int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, Twiss &twiss);
+double emit(double * x, double * xp, unsigned int n);
+double emit_p(double * dp_p, unsigned int n);
+int adjust_disp(double dx, double *x_bet, double *dp_p, double *x, unsigned int n);
 #endif // ECOOLING_H

@@ -17,6 +17,7 @@ double t_cooler;
 int model_beam_count = -1;
 // rms_dynamic_count < 0: Initialize and Clean;  = 0: Initialize, no Clean; >=1 no Initialize, no Clean;
 int rms_dynamic_count = -1;
+bool dynamic_flag = false;
 
 //Initialize the scratch variables for electron cooling rate calculation.
 int assign_ecool_scratches(unsigned int n){
@@ -88,7 +89,7 @@ double emit(double * x, double * xp, unsigned int n){
     xp_mean = 0;
     for(unsigned int i=0; i<n; ++i){
         x_mean += x[i];
-        xp_mean += xp[i];
+       xp_mean += xp[i];
     }
     x_mean /= n;
     xp_mean /= n;
@@ -350,6 +351,45 @@ int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, EBeam &
     return 0;
 }
 
+int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, Twiss &twiss){
+
+    double beta_xs = twiss.bet_x_;
+    double beta_ys = twiss.bet_y_;
+    double alf_xs = twiss.alf_x_;
+    double alf_ys = twiss.alf_y_;
+    double emit_x = ion.emit_x();
+    double emit_y = ion.emit_y();
+
+    gaussian_bet_cod(beta_xs, alf_xs, emit_x, x_bet, xp_bet, n_sample);
+    gaussian_bet_cod(beta_ys, alf_ys, emit_y, y_bet, yp_bet, n_sample);
+
+    double sigma_p = ion.dp_p();
+    gaussian_random(n_sample, dp_p, sigma_p);
+    gaussian_random_adjust(n_sample, dp_p, sigma_p);
+
+    //longitudinal sampling
+    if(ion.bunched()) {
+        double sigma_s = ion.sigma_s();
+        gaussian_random(n_sample, ds, sigma_s);
+        gaussian_random_adjust(n_sample, ds, sigma_s);
+    }
+//    else if(ebeam.bunched()) {      //Bunched electron beam to cool coasting ion beam
+//        double length = ebeam.shape_->length();
+//        uniform_random(n_sample, ds, -0.5*length, 0.5*length);
+//        uniform_random_adjust(n_sample, ds);
+//    }
+
+    double dx = twiss.disp_x_;
+    double dy = twiss.disp_y_;
+    double dpx = twiss.disp_dx_;
+    double dpy = twiss.disp_dy_;
+    adjust_disp(dx, x_bet, dp_p, x, n_sample);
+    adjust_disp(dy, y_bet, dp_p, y, n_sample);
+    adjust_disp(dpx, xp_bet, dp_p, xp, n_sample);
+    adjust_disp(dpy, yp_bet, dp_p, yp, n_sample);
+
+    return 0;
+}
 
 int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, Cooler &cooler){
 
@@ -613,8 +653,8 @@ int adjust_rate(EcoolRateParas &ecool_paras, Beam &ion, Ring &ring, Cooler &cool
     if(ebeam.bunched()&&(!ion.bunched())) {
         double sample_length = ebeam.length();
         double bunch_separate = ecool_paras.bunch_separate();
-        if(sample_length>0) perror("electron bunch length must be positive!");
-        if(bunch_separate>sample_length) {
+        if(sample_length<0) perror("electron bunch length must be positive!");
+        if(bunch_separate>=sample_length) {
             double duty_factor = sample_length/bunch_separate;
             rate_x *= duty_factor;
             rate_y *= duty_factor;
@@ -630,10 +670,10 @@ int bunched_to_coasting(EcoolRateParas &ecool_paras, Beam &ion, EBeam &ebeam, Co
                         ForceParas &force_paras){
     unsigned int n_sample = ecool_paras.n_sample();
     int count = 1;
-    double *force_tr_rcd = new double[n_sample];
-    double *force_long_rcd = new double[n_sample];
-    std::copy(force_x, force_x+n_sample, force_tr_rcd);
-    std::copy(force_z, force_z+n_sample, force_long_rcd);
+    double *force_tr_rcd = new double[n_sample]();
+    double *force_long_rcd = new double[n_sample]();
+//    std::copy(force_x, force_x+n_sample, force_tr_rcd);
+//    std::copy(force_z, force_z+n_sample, force_long_rcd);
     double cz_rcd = ion.center(2);
 
     ecool_paras.set_shift(true);
@@ -642,21 +682,32 @@ int bunched_to_coasting(EcoolRateParas &ecool_paras, Beam &ion, EBeam &ebeam, Co
     double step = length/n_long;
     double gamma_e_inv = 1/ebeam.gamma();
     for(double cz = cz_rcd-0.5*length; cz <= cz_rcd+0.5*length; cz += step) {
-        if(cz!=0) {
-            ion.set_center(2,cz);
-            electron_density(ecool_paras, ion, ebeam);
-            for(unsigned int i=0; i<n_sample; ++i) ne[i] *= gamma_e_inv;
-            force(n_sample, ion, ebeam, cooler, force_paras);
-            for(unsigned int i=0; i<n_sample; ++i) {
-                force_tr_rcd[i] += force_x[i];
-                force_long_rcd[i] += force_z[i];
-            }
-            ++count;
+        ion.set_center(2,cz);
+        electron_density(ecool_paras, ion, ebeam);
+        for(unsigned int i=0; i<n_sample; ++i) ne[i] *= gamma_e_inv;
+        force(n_sample, ion, ebeam, cooler, force_paras);
+        for(unsigned int i=0; i<n_sample; ++i) {
+            force_tr_rcd[i] += force_x[i];
+            force_long_rcd[i] += force_z[i];
         }
+        ++count;
     }
+//    for(double cz = cz_rcd-0.5*length; cz <= cz_rcd+0.5*length; cz += step) {
+//        if(cz!=0) {
+//            ion.set_center(2,cz);
+//            electron_density(ecool_paras, ion, ebeam);
+//            for(unsigned int i=0; i<n_sample; ++i) ne[i] *= gamma_e_inv;
+//            force(n_sample, ion, ebeam, cooler, force_paras);
+//            for(unsigned int i=0; i<n_sample; ++i) {
+//                force_tr_rcd[i] += force_x[i];
+//                force_long_rcd[i] += force_z[i];
+//            }
+//            ++count;
+//        }
+//    }
     ion.set_center(2, cz_rcd);
     ecool_paras.set_shift(false);
-    double count_inv = 1/count;
+    double count_inv = 1.0/static_cast<double>(count);
     for(unsigned int i=0; i<n_sample; ++i) {
         force_x[i] = force_tr_rcd[i]*count_inv;
         force_z[i] = force_long_rcd[i]*count_inv;
@@ -670,10 +721,12 @@ int bunched_to_coasting(EcoolRateParas &ecool_paras, Beam &ion, EBeam &ebeam, Co
 int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &ion, Cooler &cooler, EBeam &ebeam,
                   Ring &ring, double &rate_x, double &rate_y, double &rate_s) {
     //Initialize the scratch variables
-    if(rms_dynamic_count<1) config_ecooling(ecool_paras, ion);
+//    if(rms_dynamic_count<1) config_ecooling(ecool_paras, ion);
+    if(!dynamic_flag) config_ecooling(ecool_paras, ion);
     //Create the ion samples
 //    if(model_beam_count<0) ion_sample(ecool_paras, ion, ring, cooler, ebeam);
-    if(model_beam_count<0) ion_sample(ecool_paras, ion, ring, cooler);
+//    if(model_beam_count<0) ion_sample(ecool_paras, ion, ring, cooler);
+    if(!dynamic_flag) ion_sample(ecool_paras, ion, ring, cooler);
     //Calculate the electron density for each ion
     electron_density(ecool_paras, ion, ebeam);
 
@@ -686,10 +739,12 @@ int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &io
 //    beam_frame(ecool_paras.n_sample(), ebeam, ion);
     beam_frame(n_sample, ebeam.gamma());
     //Calculate friction force
-    force(n_sample, ion, ebeam, cooler, force_paras);
+//    force(n_sample, ion, ebeam, cooler, force_paras);
     //Special treatment for bunched electron beam to cool coasting ion beam
     if(!ion.bunched()&&ebeam.bunched())
         bunched_to_coasting(ecool_paras, ion, ebeam, cooler, force_paras);
+    else
+        force(n_sample, ion, ebeam, cooler, force_paras);
     //Transfer back to lab frame
 //    lab_frame(ecool_paras.n_sample(), ebeam, ion);
     lab_frame(n_sample, ebeam.gamma());
@@ -713,6 +768,7 @@ int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &io
     rate_s *= freq;
     adjust_rate(ecool_paras, ion, ring, cooler, ebeam, rate_x, rate_y, rate_s);
     //clean the scratch variables
-    if(rms_dynamic_count<0) end_ecooling(ecool_paras, ion);
+//    if(rms_dynamic_count<0) end_ecooling(ecool_paras, ion);
+    if(!dynamic_flag) end_ecooling(ecool_paras, ion);
     return 0;
 }

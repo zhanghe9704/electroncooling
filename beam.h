@@ -102,6 +102,25 @@ class GaussianBunch: public EBeamShape{
 
 };
 
+
+class UniformBunch: public EBeamShape{
+    double current_;                   //Current of the beam in A
+    double radius_;              //Radius of the beam in meter
+    double length_;
+    double neutralisation_;
+public:
+    //Calculate the charge density for a given position (x,y,z) in Lab frame.
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n);
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n, double cx, double cy, double cz);
+    Shape shape(){return Shape::UNIFORM_BUNCH;}
+    double length(){return length_;}
+    bool bunched(){return true;}
+//    UniformCylinder(double I, double radius, double neutralisation):Shape(ShapeList::uniformCylinder),I(I),radius(radius),neutralisation(neutralisation){};
+    UniformBunch(double current, double radius, double length, double neutralisation):current_(current),radius_(radius),
+            length_(length), neutralisation_(neutralisation){};
+
+};
+
 class EBeam:public Beam{
     double tmp_tr_;            //Transverse temperature, in eV
     double tmp_long_;          //Longitudinal temperature, in eV
