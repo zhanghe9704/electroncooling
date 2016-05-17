@@ -9,12 +9,14 @@ extern DynamicParas * dynamic_paras;
 extern IBSParas * ibs_paras;
 extern EcoolRateParas * ecool_paras;
 extern ForceParas * force_paras;
+extern Twiss * twiss_ref;
+extern int n_ion_model;
 
 enum class Test {IBS, ECOOL, BOTH, DYNAMICIBS, DYNAMICECOOL, DYNAMICBOTH};
 
 int main() {
 
-    Test test = Test::ECOOL;
+    Test test = Test::DYNAMICBOTH;
     switch (test){
         case Test::ECOOL: {
             //********************************
@@ -52,23 +54,19 @@ int main() {
             double current = 0.03;
             double radius = 0.025;
             double neutralisation = 0;
-//            UniformCylinder uniform_cylinder(current, radius, neutralisation);
-            double length = 0.01;
-            UniformBunch uniform_bunch(current, radius, length, neutralisation);
+            UniformCylinder uniform_cylinder(current, radius, neutralisation);
             double gamma_e = c_beam.gamma();
             double tmp_tr = 0.05;
             double tmp_long = 0.1;
-            EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_bunch);
-//            EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_cylinder);
+            EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_cylinder);
 
 
             //define cooling model
-            unsigned int n_sample = 5000;
-            EcoolRateParas ecool_rate_paras(n_sample);
-//            unsigned int n_tr = 100;
-//            unsigned int n_long = 100;
-//            EcoolRateParas ecool_rate_paras(n_tr, n_long);
-            ecool_rate_paras.set_bunch_separate(1*length);
+//            unsigned int n_sample = 5000;
+//            EcoolRateParas ecool_rate_paras(n_sample);
+            unsigned int n_tr = 100;
+            unsigned int n_long = 100;
+            EcoolRateParas ecool_rate_paras(n_tr, n_long);
 
             ForceParas force_paras(ForceFormula::PARKHOMCHUK);
             double rate_x, rate_y, rate_s;
@@ -239,64 +237,79 @@ int main() {
             int Z;
             Z = 1;
             m0 = 938.272;
-            KE = 800;
-            emit_nx0 = 1.039757508e-6;
-            emit_ny0 = 1.039757508e-6;
-            dp_p0 = 0.002;
-            N_ptcl = 3.6E11;
-            Beam p_beam(Z,m0/k_u, KE, emit_nx0, emit_ny0, dp_p0, N_ptcl);
+            KE = 30000;
+            emit_nx0 = 0.4515633419e-6;
+            emit_ny0 = 0.4515633419e-6;
+            dp_p0 = 0.0004957205723;
+            N_ptcl = 6.56E9;
+            sigma_s0 = 2.509282121E-2;
+            Beam p_beam(Z,m0/k_u, KE, emit_nx0, emit_ny0, dp_p0, sigma_s0, N_ptcl);
 
             // define the lattice of the proton ring
-            std::string filename = "MEICBoosterRedesign.tfs";
+//            std::string filename = "MEICBoosterRedesign.tfs";
+            std::string filename = "MEICColliderRedesign1IP.tfs";
             Lattice lattice(filename);
 
             //Define the ring
             Ring ring(lattice, p_beam);
 
-            //define the cooler
-            double cooler_length = 10;
-            double n_section = 1;
-            double magnetic_field = 0.1;
-            double beta_h = 10;
-            double beta_v = 10;
-            double dis_h = 0;
-            double dis_v = 0;
-            Cooler cooler(cooler_length,n_section,magnetic_field,beta_h,beta_v,dis_h, dis_v);
-
-            //define electron beam
-            double current = 2;
-            double radius = 0.008;
-            double neutralisation = 0;
-            UniformCylinder uniform_cylinder(current, radius, neutralisation);
-            double gamma_e = p_beam.gamma();
-            double tmp_tr = 0.1;
-            double tmp_long = 0.1;
-            EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_cylinder);
-
-             //define cooling model: single particle
-//            unsigned int n_tr = 100;
-//            unsigned int n_long = 100;
-//            ecool_paras = new EcoolRateParas(n_tr, n_long);
-            //define cooling model: monte carlo
-            unsigned int n_sample = 40000;
-            ecool_paras = new EcoolRateParas(n_sample);
-            //define friction force formula
-            force_paras = new ForceParas(ForceFormula::PARKHOMCHUK);
+//            //define the cooler
+//            double cooler_length = 30;
+//            double n_section = 2;
+//            double magnetic_field = 1;
+//            double beta_h = 100;
+//            double beta_v = 100;
+//            double dis_h = 5;
+//            double dis_v = 0;
+//            Cooler cooler(cooler_length,n_section,magnetic_field,beta_h,beta_v,dis_h, dis_v);
+//
+//            //define electron beam
+//            double n_e = 1.25E10;
+//            double sigma_e_x = 0.0012;
+//            double sigma_e_y = 0.0012;
+//            double sigma_e_s = 0.025;
+//            GaussianBunch gaussian_bunch(n_e, sigma_e_x, sigma_e_y, sigma_e_s);
+//            double gamma_e = p_beam.gamma();
+//            double tmp_tr = 0.5;
+//            double tmp_long = 0.1;
+//            EBeam e_beam(gamma_e, tmp_tr, tmp_long, gaussian_bunch);
+//
+//             //define cooling model: single particle
+////            unsigned int n_tr = 100;
+////            unsigned int n_long = 100;
+////            ecool_paras = new EcoolRateParas(n_tr, n_long);
+//            //define cooling model: monte carlo
+//            unsigned int n_sample = 10000;
+//            ecool_paras = new EcoolRateParas(n_sample);
+//            //define friction force formula
+//            force_paras = new ForceParas(ForceFormula::PARKHOMCHUK);
             //define dynamic simulation
-            dynamic_paras = new DynamicParas(60, 120, true, true);
-//            dynamic_paras->set_model(DynamicModel::MODEL_BEAM);
+            double t = 3600;
+            int n_step = 360;
+            bool ibs = true;
+            bool ecool = false;
+            dynamic_paras = new DynamicParas(t, n_step, ibs, ecool);
+            dynamic_paras->set_model(DynamicModel::MODEL_BEAM);
 
             //Set IBS parameters.
-            int nu = 200;
-            int nv = 200;
+            int nu = 100;
+            int nv = 100;
             int nz = 40;
-            double log_c = 44.8/2;
+            double log_c = 39.2/2;
             ibs_paras = new IBSParas(nu, nv, log_c);
 
-            char file[100] = "test_dynamic_ibs_ecool_DC_monte_carlo.txt";
+            char file[100] = "test_dynamic_ibs_bunched_model_beam.txt";
             std::ofstream outfile;
             outfile.open(file);
-            dynamic(p_beam, cooler, e_beam, ring, outfile);
+            Cooler *cooler;
+            EBeam *e_beam;
+            twiss_ref = new Twiss();
+            twiss_ref->bet_x_ = 10;
+            twiss_ref->bet_y_ = 10;
+//            twiss_ref->disp_x_ = 5;
+            n_ion_model = 5000;
+            dynamic(p_beam, *cooler, *e_beam, ring, outfile);
+//            dynamic(p_beam, cooler, e_beam, ring, outfile);
             outfile.close();
 
             break;

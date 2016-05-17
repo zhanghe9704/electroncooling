@@ -25,6 +25,7 @@ public:
     int set_k(double x){k_ = x; return 0;}
     int set_log_c(double x){ log_c_ = x; use_log_c_ = true; return 0;}
     int reset_off(){reset_ = false; return 0;}
+    int reset_on(){reset_ = true; return 0;}
     IBSParas(int nu, int nv):nu_(nu),nv_(nv){};
     IBSParas(int nu, int nv, double log_c):nu_(nu),nv_(nv),log_c_(log_c){};
     IBSParas(int nu, int nv, int nz):nu_(nu),nv_(nv),nz_(nz){use_log_c_ = false;}
