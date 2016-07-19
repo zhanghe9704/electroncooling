@@ -1,7 +1,7 @@
 #Introduction of the new electron cooling simulation code#
 
 ## Environment  ##
-This code is devloped by C\++. Users need to write their own "main" program. To compile the code, please make sure your compiler supports c\++ 11 and  the option for c\++ 11 is turned on. For example, when using GCC, one needs to add "-std=c\++11" into the compiler options. 
+This code is devloped by C\++. Users need to write their own "main" program. To compile the code, please make sure your compiler supports c\++ 11 and  the option for c\++ 11 is turned on. For example, when using GCC, one needs to add "-std=c\++11" into the compiler options. A Code Blocks Project (cbp) file is included in the subfolder cooling_release, and the Code Blocks IDE with a proper compiler can be used to compiler the project. Makefiles for multiple platform can be generated using the tool "cbp2make". 
 
 ## Constants ##
 The following physical and mathematical constants are defined in "__constants.h__":
@@ -118,6 +118,21 @@ std::cout<<"ibs rate: "<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
 
 
 ## Define the cooler ##
+
+The __Cooler__ class is provide in "cooler.h". The following parameters are required to define an electron cooler: length of the cooler, number of coolers, magnetic field inside the cooler, and the transverse beta functions at the cooler. One can also specifies the dispersion functions, the alpha functions, and the derivative of the dispersion functions at the cooler.  If not set, the default values for them are zeros. 
+
+~~~~c++
+double cooler_length = 10;
+double n_section = 1;
+double magnetic_field = 0.1;
+double beta_h = 10;
+double beta_v = 10;
+double dis_h = 0;	//Dispersion functions at the cooler can be set but not required.
+double dis_v = 0;	
+Cooler cooler(cooler_length,n_section,magnetic_field,beta_h,beta_v,dis_h, dis_v);
+~~~~
+
+
 
 ## Define the electron beam ##
 
