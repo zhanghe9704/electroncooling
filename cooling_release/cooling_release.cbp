@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="cooling_release" />
+		<Option pch_mode="2" />
+		<Option compiler="gnu_gcc_x64_compiler" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/cooling_release" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gnu_gcc_compiler_x64" />
+				<Compiler>
+					<Add option="-std=c++0x" />
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/cooling_release" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gnu_gcc_compiler_x64" />
+				<Option projectCompilerOptionsRelation="-1" />
+				<Option projectLinkerOptionsRelation="-1" />
+				<Option projectIncludeDirsRelation="-1" />
+				<Option projectResourceIncludeDirsRelation="-1" />
+				<Option projectLibDirsRelation="-1" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-std=c++0x" />
+				</Compiler>
+				<MakeCommands>
+					<Build command="" />
+					<CompileFile command="" />
+					<Clean command="" />
+					<DistClean command="" />
+					<AskRebuildNeeded command="" />
+					<SilentBuild command=" &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="../beam.cc" />
+		<Unit filename="../beam.h" />
+		<Unit filename="../constants.h" />
+		<Unit filename="../cooler.h" />
+		<Unit filename="../dynamic.cc" />
+		<Unit filename="../dynamic.h" />
+		<Unit filename="../ecooling.cc" />
+		<Unit filename="../ecooling.h" />
+		<Unit filename="../force.cc" />
+		<Unit filename="../force.h" />
+		<Unit filename="../functions.cc" />
+		<Unit filename="../functions.h" />
+		<Unit filename="../ibs.cc" />
+		<Unit filename="../ibs.h" />
+		<Unit filename="../main.cc" />
+		<Unit filename="../ring.cc" />
+		<Unit filename="../ring.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
