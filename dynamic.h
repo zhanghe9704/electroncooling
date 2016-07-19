@@ -9,7 +9,7 @@
 #include "ring.h"
 #include "cooler.h"
 
-enum class DynamicModel {RMS, MODEL_BEAM};
+enum class DynamicModel {RMS, MODEL_BEAM, TURN_BY_TURN};
 
 class DynamicParas{
     double time_;

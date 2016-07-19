@@ -268,8 +268,8 @@ double coef_a(Lattice &lattice, Beam &beam){
 }
 
 int ibs_coupling(double &rx, double &ry, double k, double emit_x, double emit_y){
-    double rxc = 0.5*(rx*(2-k)+ry*k*emit_x/emit_y);
-    double ryc = 0.5*(ry*(2-k)+rx*k*emit_y/emit_x);
+    double rxc = 0.5*(rx*(2-k)+ry*k*emit_y/emit_x);
+    double ryc = 0.5*(ry*(2-k)+rx*k*emit_x/emit_y);
     rx = rxc;
     ry = ryc;
     return 0;
