@@ -119,7 +119,7 @@ std::cout<<"ibs rate: "<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
 
 ## Define the cooler ##
 
-The __Cooler__ class is provide in "cooler.h". The following parameters are required to define an electron cooler: length of the cooler, number of coolers, magnetic field inside the cooler, and the transverse beta functions at the cooler. One can also specifies the dispersion functions, the alpha functions, and the derivative of the dispersion functions at the cooler.  If not set, the default values for them are zeros. 
+The __Cooler__ class is provide in "cooler.h". The following parameters are required to define an electron cooler: the length of the cooler, the number of coolers, the magnetic field inside the cooler, and the transverse beta functions at the cooler. One can also specifies the dispersion functions, the alpha functions, and the derivative of the dispersion functions at the cooler.  If not set, the default values for them are zeros. 
 
 ~~~~c++
 double cooler_length = 10;
@@ -135,6 +135,43 @@ Cooler cooler(cooler_length,n_section,magnetic_field,beta_h,beta_v,dis_h, dis_v)
 
 
 ## Define the electron beam ##
+
+The __EBeamShape__ class in "beam.h" provides an interface for different shapes of the electron beam. Currently the following three shapes have been defined: coasting electron beam with uniform density and cylinder shape, Gaussian bunch, and uniform bunch. (Other shapes can be defined easily as a derived class of __EBeamShape__ too.)  The respective classes for them  are __UniformCylinder__ , __GaussianBunch__ and __UniformBunch__ , all of which are derived classes of __EBeamShape__ .  Users can set values of different parameters for each shape, as follows.
+
+~~~~c++
+//Define a coasting electron beam with uniform density and cylinder shape
+double current = 2;		//Current of the electron beam in A
+double radius = 0.008;	//Transverse radius of the electron beam
+UniformCylinder uniform_cylinder(current, radius);
+~~~~
+
+~~~~c++
+//Define a bunched electron beam with Gaussian distribution
+double ne = 1e8; 		//Number of electrons in the bunch
+double sigma_x = 1.5e-2;//RMS bunch size in the three dimensions in meters
+double sigma_y = 1.5e-2;
+double sigma_s = 2e-2;
+GaussianBunch gaussian_bunch(ne, sigma_x, sigma_y, sigma_s);
+~~~~
+
+~~~~c++
+//Define a bunched electron beam with uniform density and beer can shape
+double current = 2;		//Current of the electron beam in A
+double radius = 0.008;	//Transverse radius of the electron beam
+double length = 2e-2	//Full length of the bunch in meters
+UniformBunch uniform_bunch(current, radius, length);
+~~~~
+
+Then the electron beam in the cooler can be defined using the  __EBeam__ class,  provided in "beam.h" Users can set value of the temperature and the Lorentz factor $\gamma$  for the electron beam.  
+
+~~~~c++
+double gamma_e = p_beam.gamma();	//Electrons have the same velocity with the ions
+double tmp_tr = 0.1;				//Transverse temperature
+double tmp_long = 0.1;				//Longitudianl temperature
+EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_cylinder); //Coasting electron beam
+~~~~
+
+
 
 ## Choose the friction force formula ##
 

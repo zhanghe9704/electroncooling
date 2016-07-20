@@ -116,7 +116,7 @@ public:
     double length(){return length_;}
     bool bunched(){return true;}
 //    UniformCylinder(double I, double radius, double neutralisation):Shape(ShapeList::uniformCylinder),I(I),radius(radius),neutralisation(neutralisation){};
-    UniformBunch(double current, double radius, double length, double neutralisation):current_(current),radius_(radius),
+    UniformBunch(double current, double radius, double length, double neutralisation=2):current_(current),radius_(radius),
             length_(length), neutralisation_(neutralisation){};
 
 };
