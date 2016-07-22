@@ -1,4 +1,4 @@
-#Introduction of the new electron cooling simulation code#
+#Tutorial#
 
 ## Environment  ##
 This code is devloped by C\++. Users need to write their own "main" program. To compile the code, please make sure your compiler supports c\++ 11 and  the option for c\++ 11 is turned on. For example, when using GCC, one needs to add "-std=c\++11" into the compiler options. A Code Blocks Project (cbp) file is included in the subfolder cooling_release, and the Code Blocks IDE with a proper compiler can be used to compiler the project. Makefiles for multiple platform can be generated using the tool "cbp2make". 
@@ -174,6 +174,15 @@ EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_cylinder); //Coasting electron b
 
 
 ## Choose the friction force formula ##
+
+For now only one formula is provided for friction force calculation, which is the Parkhomchuk formula for magnetized friction force.  Other formulas would be added in future. The user need to choose the formula to use in electron cooling rate calculation. 
+
+~~~~c++
+//Choose the Parkhomchuk formula for friction force calculation
+force_paras = new ForceParas(ForceFormula::PARKHOMCHUK);
+~~~~
+
+
 
 ## Electron cooling rate calculation ##
 
