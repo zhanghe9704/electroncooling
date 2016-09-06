@@ -175,7 +175,7 @@ EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_cylinder); //Coasting electron b
 
 ## Choose the friction force formula ##
 
-For now only one formula is provided for friction force calculation, which is the Parkhomchuk formula for magnetized friction force.  Other formulas would be added in future. The user need to choose the formula to use in electron cooling rate calculation. 
+For now, only one formula is provided for friction force calculation, which is the Parkhomchuk formula for magnetized friction force.  Other formulas would be added in future. The user needs to choose the formula to use in electron cooling rate calculation. 
 
 ~~~~c++
 //Choose the Parkhomchuk formula for friction force calculation
@@ -185,6 +185,18 @@ force_paras = new ForceParas(ForceFormula::PARKHOMCHUK);
 
 
 ## Electron cooling rate calculation ##
+
+Two methods, the single-particle method and the Monte-Carlo method, are provided for electron cooling rate calculation, following the terminologies used in BETACOOL. The basic idea and the computation process are the same for the both method: (1) generate sample ions, (2) calculate the friction force on each sample ion and the momentum change for each of them, (3) calculate the new emittance of the ion bunch, and (4) finally calculate the cooling rate as the emittance change rate. The difference between the two methods lies in the sampling of the ions and the calculation of the emittance.   
+
+In the single-particle method, the transverse coordinates of the sample ions are generated using the following formulas:
+$$
+x_\beta=\sqrt{I\beta}\sin \phi \\ x_\beta ^{\prime}=\sqrt{\frac{I}{\beta }} (\cos \phi -\alpha \sin\phi ) \\
+$$
+ where $I$ is the dynamic invariance such as 
+$$
+I = \beta {x_\beta ^{\prime}} ^2 + 2 \alpha x_\beta x_\beta ^{\prime} + \gamma x_\beta ^2 = \varepsilon _x
+$$
+$\varepsilon_x$ is the transverse emittance, and $\alpha$, $\beta$, $\gamma$ are the TWISS parameters at the cooler. When $\varepsilon_x$ is given, all the sample ions have the same dynamic invariance $I$, but different $\phi$ . For coasting ion beam, the longitudinal positions are set to zero for all the sample ions. Their momentum spreads have the same absolute value, but could have different signs.  For bunched ion beam, 
 
 ## Simulation of the electron cooling process ##
 
