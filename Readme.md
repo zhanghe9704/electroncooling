@@ -80,7 +80,7 @@ Ring ring(lattice, p_beam);
 
 ## Intrabeam scattering (IBS) rate calculation
 
-The IBS rate can be calculated, after the ring and the ion beam are define. The IBS rate is calculated using Martini model. One needs to set up the grid number for the 3D integral in Martini formula. 
+The IBS rate can be calculated, after the ring and the ion beam are define. The IBS rate is calculated using Martini model, which assumes the vertical dispersion function is zero everywhere. One needs to set up the grid number for the 3D integral in the Martini formula. 
 
 ~~~~c++
 int nu = 100;
@@ -186,17 +186,42 @@ force_paras = new ForceParas(ForceFormula::PARKHOMCHUK);
 
 ## Electron cooling rate calculation ##
 
-Two methods, the single-particle method and the Monte-Carlo method, are provided for electron cooling rate calculation, following the terminologies used in BETACOOL. The basic idea and the computation process are the same for the both method: (1) generate sample ions, (2) calculate the friction force on each sample ion and the momentum change for each of them, (3) calculate the new emittance of the ion bunch, and (4) finally calculate the cooling rate as the emittance change rate. The difference between the two methods lies in the sampling of the ions and the calculation of the emittance.   
+Two methods, the single-particle method and the Monte-Carlo method, are provided for electron cooling rate calculation, following the terminologies used in BETACOOL. The basic idea and the computation process are the same for the both methods: (1) generate sample ions, (2) calculate the friction force on each sample ion and the momentum change for each of them, (3) calculate the new emittance of the ion bunch, and (4) finally calculate the cooling rate as the emittance change rate. The difference between the two methods lies in the sampling of the ions and the calculation of the emittance.   
 
 In the single-particle method, the transverse coordinates of the sample ions are generated using the following formulas:
 $$
 x_\beta=\sqrt{I\beta}\sin \phi \\ x_\beta ^{\prime}=\sqrt{\frac{I}{\beta }} (\cos \phi -\alpha \sin\phi ) \\
 $$
- where $I$ is the dynamic invariance such as 
+ where $I$ is the transverse dynamic invariance such as 
 $$
 I = \beta {x_\beta ^{\prime}} ^2 + 2 \alpha x_\beta x_\beta ^{\prime} + \gamma x_\beta ^2 = \varepsilon _x
 $$
-$\varepsilon_x$ is the transverse emittance, and $\alpha$, $\beta$, $\gamma$ are the TWISS parameters at the cooler. When $\varepsilon_x$ is given, all the sample ions have the same dynamic invariance $I$, but different $\phi$ . For coasting ion beam, the longitudinal positions are set to zero for all the sample ions. Their momentum spreads have the same absolute value, but could have different signs.  For bunched ion beam, 
+$\varepsilon_x$ is the transverse emittance, and $\alpha$, $\beta$, $\gamma$ are the TWISS parameters at the cooler.  All the sample ions have the same dynamic invariance $I$, determined by the given $\varepsilon_x$, but different $\phi$ . For coasting ion beam, the longitudinal positions are set to zero for all the sample ions. Their momentum spreads have the same absolute value, but could have different signs.  For bunched ion beam, the longitudinal distance to the reference particle $s$ and the momentum spread $\Delta p / p$ for each ion is generated as
+$$
+\frac{\Delta p}{p} = \sqrt{I_l} \cos \psi \\ s=\beta_l \sqrt{I_l} \sin \psi
+$$
+where $I_l$ is the longitudinal dynamic invariance such as 
+$$
+I_l = \left(\frac{\Delta p}{p} \right)^2 + \left( \frac{s}{\beta_l} \right)^2 = 2 \varepsilon_l
+$$
+$\varepsilon_l$ is the longitudinal emittance, and $\beta_l=\frac{\delta_s}{\delta_p/p} $, in which $\sigma_s$ is the r.m.s. bunch length, and $\sigma_p/p$ is the r.m.s. momentum spread. Same with the transverse case, all the ions have the same dynamic variant $I_l$, determined by the given $\varepsilon_l$, but different $\psi$. The total number of ions are determined by how many different values of $\phi$ and $\psi$ are used, which can be chosen by the user. If one wants to use $n_t$ different $\phi$ and $n_l$ different $\psi$ , the values of $\phi$ will be calculated from $0$ to $2\pi$ with the step size of $2\pi/n_t$ and the values of $\psi$ will be calculated from $0$ to $2\pi$ with the step size of $2\pi/n_l$ . The totally number of ions will be $n_t^2 \cdot n_l$ for bunched ion beam and $2 n_t^2$ for coasting ion beam. 
+
+After generating the the ions, the friction force on each ion is calculated using the selected formula. The cooler is treated as a thin lens, so that the friction force gives a kick to the ion, which leads to a change of the momentum but does not affect the position. Then the new emittances $\varepsilon_x ^\prime$ and $\varepsilon_l^\prime$ can be calculated using the above formulas on $I$ and $I_l$ .  The cooling rate is calculated as
+$$
+R_x = \frac{\varepsilon_x^\prime-\varepsilon_x}{\varepsilon_x} \\ R_l = \frac{\varepsilon_l^\prime-\varepsilon_l}{\varepsilon_l}
+$$
+The following shows a sample code for electron cooling rate calculation using the single particle method. The ion beam, the electron beam, the cooler, the ring, and the friction force formula should be defined before the calculation. 
+
+```c++
+unsigned int n_tr = 100;	   //number of $\phi$ for transverse direction
+unsigned int n_long = 100;	   //number of $\psi$ for longitudinal direction
+ecool_rate_paras = new EcoolRateParas(n_tr, n_long);  //parameters for electron cooling rate
+double rate_x, rate_y, rate_s; //Electron cooling rate in x, y, and s direction
+//force_paras - parameters for friction force, i_beam - ion beam, e_beam - electron beam
+ecooling_rate(ecool_rate_paras, force_paras, i_beam, cooler, e_beam, ring, rate_x, rate_y, rate_s);
+```
+
+
 
 ## Simulation of the electron cooling process ##
 
