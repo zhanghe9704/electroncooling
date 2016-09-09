@@ -196,7 +196,13 @@ $$
 $$
 I = \beta {x_\beta ^{\prime}} ^2 + 2 \alpha x_\beta x_\beta ^{\prime} + \gamma x_\beta ^2 = \varepsilon _x
 $$
-$\varepsilon_x$ is the transverse emittance, and $\alpha$, $\beta$, $\gamma$ are the TWISS parameters at the cooler.  All the sample ions have the same dynamic invariance $I$, determined by the given $\varepsilon_x$, but different $\phi$ . For coasting ion beam, the longitudinal positions are set to zero for all the sample ions. Their momentum spreads have the same absolute value, but could have different signs.  For bunched ion beam, the longitudinal distance to the reference particle $s$ and the momentum spread $\Delta p / p$ for each ion is generated as
+$\varepsilon_x$ is the transverse emittance, and $\alpha$, $\beta$, $\gamma$ are the TWISS parameters at the cooler.  All the sample ions have the same dynamic invariance $I$, determined by the given $\varepsilon_x$, but different $\phi$ . With dispersion $D$ and $D^\prime$, an adjustment on the transverse coordinates, with respect to the momentum spread $\Delta p/p$ of the ion , should be added. 
+$$
+x=x_\beta + D \frac{\Delta p}{p} \\ x^\prime = x_\beta ^\prime +D^\prime \frac{\Delta p}{p}
+$$
+
+
+For coasting ion beam, the longitudinal positions are set to zero for all the sample ions. Their momentum spreads have the same absolute value, but could have different signs.  For bunched ion beam, the longitudinal distance to the reference particle $s$ and the momentum spread $\Delta p / p$ for each ion is generated as
 $$
 \frac{\Delta p}{p} = \sqrt{I_l} \cos \psi \\ s=\beta_l \sqrt{I_l} \sin \psi
 $$
@@ -206,10 +212,12 @@ I_l = \left(\frac{\Delta p}{p} \right)^2 + \left( \frac{s}{\beta_l} \right)^2 = 
 $$
 $\varepsilon_l$ is the longitudinal emittance, and $\beta_l=\frac{\delta_s}{\delta_p/p} $, in which $\sigma_s$ is the r.m.s. bunch length, and $\sigma_p/p$ is the r.m.s. momentum spread. Same with the transverse case, all the ions have the same dynamic variant $I_l$, determined by the given $\varepsilon_l$, but different $\psi$. The total number of ions are determined by how many different values of $\phi$ and $\psi$ are used, which can be chosen by the user. If one wants to use $n_t$ different $\phi$ and $n_l$ different $\psi$ , the values of $\phi$ will be calculated from $0$ to $2\pi$ with the step size of $2\pi/n_t$ and the values of $\psi$ will be calculated from $0$ to $2\pi$ with the step size of $2\pi/n_l$ . The totally number of ions will be $n_t^2 \cdot n_l$ for bunched ion beam and $2 n_t^2$ for coasting ion beam. 
 
-After generating the the ions, the friction force on each ion is calculated using the selected formula. The cooler is treated as a thin lens, so that the friction force gives a kick to the ion, which leads to a change of the momentum but does not affect the position. Then the new emittances $\varepsilon_x ^\prime$ and $\varepsilon_l^\prime$ can be calculated using the above formulas on $I$ and $I_l$ .  The cooling rate is calculated as
+After generating the the ions, the friction force on each ion is calculated using the selected formula. The cooler is treated as a thin lens, so that the friction force gives a kick to the ion, which leads to a change of the momentum but does not affect the position. Then the new emittances $\varepsilon_x ^\prime$ and $\varepsilon_l^\prime$ can be calculated using the above formulas on $I$ and $I_l$ for each ion and taking average over all the ions.  The cooling rate is calculated as
 $$
-R_x = \frac{\varepsilon_x^\prime-\varepsilon_x}{\varepsilon_x} \\ R_l = \frac{\varepsilon_l^\prime-\varepsilon_l}{\varepsilon_l}
+R_x = \frac{\varepsilon_x^\prime-\varepsilon_x}{\varepsilon_x \tau} \\ R_l = \frac{\varepsilon_l^\prime-\varepsilon_l}{\varepsilon_l \tau}
 $$
+where $\tau$ is the circular motion period of the ions. 
+
 The following shows a sample code for electron cooling rate calculation using the single particle method. The ion beam, the electron beam, the cooler, the ring, and the friction force formula should be defined before the calculation. 
 
 ```c++
@@ -221,7 +229,36 @@ double rate_x, rate_y, rate_s; //Electron cooling rate in x, y, and s direction
 ecooling_rate(ecool_rate_paras, force_paras, i_beam, cooler, e_beam, ring, rate_x, rate_y, rate_s);
 ```
 
+In Monte-Carlo method, the sample ions are have Gaussian distribution in all the three dimensions. Each individual ion has its own dynamic invariant, and statistically the emittance of the ion bunch equals the predetermined value. In the transverse direction, if the TWISS parameter $\alpha = 0$ at the cooler, the coordinates $x_\beta$ and $x_\beta^\prime$ can be generated as random numbers with Gaussian distribution, whose expected value is zero and whose standard deviations are $\sigma = \sqrt{\beta \varepsilon_x}$ and $\sigma^\prime = \sqrt{\varepsilon_x / \beta}$  respectively, where $\beta$ is the TWISS parameter and $\varepsilon_x$ is the transverse emittance. If $\alpha \neq 0$, we can rotate the frame into the one with $\alpha = 0$, generate the Gaussian random numbers and then transfer them back to the original frame. The transfer matrix $M_{so}$ converts the coordinates from the original frame $\hat{S}$ to the frame $\hat{O}$ with $\alpha = 0$, such as 
+$$
+\left( \begin{array}{c} x_\beta \\ x_\beta ^\prime \end{array} \right)_{\hat{O}} = \left( \begin{array}{cc} \cos \theta & \sin \theta \\ -\sin \theta & \cos \theta \end{array} \right) \left( \begin{array}{c} x_\beta \\ x_\beta ^\prime \end{array} \right)_{\hat{S}}
+$$
+where $\tan (2\theta) = 2 \alpha/(\gamma -\beta)$ with $\alpha$, $\beta$, $\gamma$ the TWISS parameters at $\hat{S}$.  The new TWISS parameters at $\hat{O}$ can be calculated using the following formula:
+$$
+\left( \begin{array}{c} \beta \\ \alpha \\ \gamma \end{array} \right)_{\hat{O}} = \left( \begin{array}{ccc} m_{11}^2 & -2m_{11}m_{12} & m_{12}^2 \\ -m_{11}m_{21}  & m_{11}m_{22}+m_{12}m_{21} & -m_{12}m_{22} \\ m_{21}^2 & -2m_{21}m_{22} & m_{22}^2   \end{array} \right)\left( \begin{array}{c} \beta \\ \alpha \\ \gamma \end{array} \right)_{\hat{S}}
+$$
+The coordinates are generated in the frame $\hat{O}$ , and then they are transferred back to the frame $\hat{S}$, as follows. 
+$$
+\left( \begin{array}{c} x_\beta \\ x_\beta ^\prime \end{array} \right)_{\hat{S}} = \left( \begin{array}{cc} \cos \theta & -\sin \theta \\ \sin \theta & \cos \theta \end{array} \right) \left( \begin{array}{c} x_\beta \\ x_\beta ^\prime \end{array} \right)_{\hat{O}}
+$$
+The transverse emittance $\varepsilon_x$ is an invariant for these transformations.  If the dispersion functions $D$ and $D^\prime $ are not zero, they will result in an adjust on the transverse coordinates. In longitudinal direction, the positions for coasting ion beams are all zero, while the position for bunched ion beams are Gaussian random number, whose expected value is zero and whose stand deviation equals the r.m.s. bunch length. For both cases, the momentum spreads are Gaussian random numbers, whose expected value is zero and whose stand deviation equals the r.m.s. momentum spread. The emittance is calculated statistically, such as 
+$$
+\varepsilon_x =\sqrt{\sigma_x^2 \sigma_{x^\prime}^2- \sigma_{xx^\prime}^2 } \\ \varepsilon_l = \left \{ \begin{array}{lcl} \frac{\sigma_p}{p} \sigma_s & \mathrm{for} & \mathrm{bunched \ beam} \\ \left( \frac{\sigma_p}{p} \right)^2 & \mathrm{for} & \mathrm{coasting \ beam} \end{array} \right .
+$$
+where $\sigma_x$, $\sigma_{x^\prime}$, $\sigma_p/p$, and $\sigma_s$ are the standard deviation of $x$, $x^\prime$, $\Delta_p/p$, and $s$. The cooling rates are calculate using the same formula for $R_x$ and $R_l$ above. 
 
+
+
+The following shows a sample code for electron cooling rate calculation using the Monte Carlo method.
+
+```c++
+unsigned int n = 1000000;	   //number of ions
+ecool_rate_paras = new EcoolRateParas(n);  //parameters for electron cooling rate
+double rate_x, rate_y, rate_s; //Electron cooling rate in x, y, and s direction
+//force_paras - parameters for friction force, i_beam - ion beam, e_beam - electron beam
+ecooling_rate(ecool_rate_paras, force_paras, i_beam, cooler, e_beam, ring, rate_x, rate_y, rate_s);
+
+```
 
 ## Simulation of the electron cooling process ##
 
