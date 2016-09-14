@@ -257,16 +257,151 @@ ecool_rate_paras = new EcoolRateParas(n);  //parameters for electron cooling rat
 double rate_x, rate_y, rate_s; //Electron cooling rate in x, y, and s direction
 //force_paras - parameters for friction force, i_beam - ion beam, e_beam - electron beam
 ecooling_rate(ecool_rate_paras, force_paras, i_beam, cooler, e_beam, ring, rate_x, rate_y, rate_s);
-
 ```
 
 ## Simulation of the electron cooling process ##
 
-## Advanced topics ##
+The electron cooling process is simulated in a four-step procedure, which includes:
+
+1. Initialize the simulation environment.
+2. Create sample ions.
+3. Calculate the expansion rate under the IBS and/or electron cooling effect.
+4. Update the beam parameters and the sample ions. Repeat from the third step till the end of time. 
+
+In the first step, one selects which effect, IBS effect, electron cooling or both, to consider in the simulation, and which method, for example the RMS dynamic model, the model beam model, or any other model, to use in the simulation. Other parameters, such as the total time and the step size, should also be set up. In the second, sample ions are created according to the method and the parameters selected in the first step. In the third step, friction force on all the ions are calculated and the expansion rate due to the IBS and/or electron cooling effect at this instant time is calculated. In the last step, the parameters of the ion beam, such as the emittance, the momentum spread and the bunch length (if applicable) are updated. The coordinates of all the ions are also updated.   
+
+Both the RMS dynamic method and the model beam method in BETACOOL fit into this four-step procedure. The main difference of them  exists in the fourth step.   Using the RMS dynamic method, one assumes the ion beam keeps the Gaussian distribution during the cooling process and concentrates on the evolution of the macroscopic parameters, such as the emittance and the momentum spread, not the individual ions in the simulation. So in step four, one updates the beam parameters first, and then create a new group of sample ions according to the new beam parameters to replace the old sample ions. However, under strong cooling effect, the ion beam is not necessary to maintain the Gaussian distribution. In such a case, the model beam method is prefer. Using the model beam method, both the IBS effect and the cooling effect are treated as kicks to each ion, and the beta oscillation and the synchrotron oscillation during one time step are treated as a random phase advance to each ion. Thus in the fourth step, the coordinates of all the ions are updated and the new beam parameters are statistically calculated. 
+
+
+
+The following shows a sample code for the electron cooling process simulation with the model beam method. 
+
+```c++
+int time = 3600; 								//Simulate one hour (3600 seconds)
+int n_step = 360; 								//Number of steps
+bool effect_ibs = false;						//IBS effect not included in the simulation
+bool effect_ecool = true;						//Electron cooling effect included
+dynamic_paras = new DynamicParas(time, n_step, effect_ibs, effect_ecool);
+//Use the model beam method. The default method is RMS dynamic method. 
+dynamic_paras->set_model(DynamicModel::MODEL_BEAM); 
+
+char file[100] = "cooling_dynamic_output.txt";  //Define the output file
+std::ofstream outfile;
+outfile.open(file);
+//Start the simulation. p_beam, cooler, e_beam, and ring shoud have been defined. 
+dynamic(p_beam, cooler, e_beam, ring, outfile);	
+outfile.close();								//Close the output file
+```
+
+If one only needs to include the IBS effect in the simulation, it is not necessary to define the cooler and the electron beam. Since the Gaussian distribution is assumed in the Martini formula, RMS dynamic method is preferred. A sample code is shown as follows. 
+
+```c++
+int time = 3600; 								//Simulate one hour (3600 seconds)
+int n_step = 360; 								//Number of steps
+bool effect_ibs = true;							//IBS effect included in the simulation
+bool effect_ecool = false;						//Electron cooling effect not included
+dynamic_paras = new DynamicParas(time, n_step, effect_ibs, effect_ecool);
+
+char file[100] = "ibs_dynamic_output.txt";  	//Define the output file
+std::ofstream outfile;
+outfile.open(file);
+//The electron beam and the cooler are not defined. 
+Cooler *cooler=nullptr;
+EBeam *e_beam=nullptr;
+//Start the simulation. p_beam and ring shoud have been defined. 
+dynamic(p_beam, *cooler, *e_beam, ring, outfile);	
+outfile.close();								//Close the output file
+```
+
+The output file contains the following data in columns: time [s], emittance [m] in x direction, emittance [m] in y direction, momentum spread dp/p, rms bunch length [m] (for bunched ion beam only), expansion rate [1/s] in x direction, expansion rate [1/s] in y direction, and expansion rate [1/s] in longitudinal direction. 
 
 ## Sample code ##
 
-~~~~c++
+The following is a sample of the "main.cc" file. 
 
-~~~~
+```c++
+#include <chrono>
+#include<fstream>
+#include "dynamic.h"
+#include "ecooling.h"
+#include "ibs.h"
+#include "ring.h"
 
+extern DynamicParas * dynamic_paras;
+extern IBSParas * ibs_paras;
+extern EcoolRateParas * ecool_paras;
+extern ForceParas * force_paras;
+
+int main() {
+  	double m0, KE, emit_nx0, emit_ny0, dp_p0, sigma_s0, N_ptcl;
+	int Z;
+  	//Define the proton beam
+	Z = 1;						//Charge number
+	m0 = 938.272;				//Mass in MeV		
+	KE = 800;					//Kinetic energy in MeV	
+	emit_nx0 = 1.039757508e-6;	//Emittance in x direction, [m*rad]
+	emit_ny0 = 1.039757508e-6;	//Emittance in y direction, [m*rad]
+	dp_p0 = 2e-3;				//Momentum spread
+	N_ptcl = 3.6E11;			//Number of particles
+	Beam p_beam(Z,m0/k_u, KE, emit_nx0, emit_ny0, dp_p0, N_ptcl);
+	
+	 // define the lattice of the proton ring
+	std::string filename = "MEICBoosterRedesign.tfs"; //Lattice file in MADX tfs format
+	Lattice lattice(filename);
+	
+	//Define the ring
+	Ring ring(lattice, p_beam);
+	
+	//Set IBS parameters.
+	int nu = 200;
+	int nv = 200;
+	double log_c = 44.8/2;
+	ibs_paras = new IBSParas(nu, nv, log_c);
+	ibs_paras->set_k(1.0);		//Fully coupled in transverse directions
+  
+  	//define the cooler
+	double cooler_length = 10;	//Cooler length in m
+	double n_section = 1;
+	double magnetic_field = 0.1;//Magnetic field in T
+	double beta_h = 10;			//Horizontal beta function in m
+	double beta_v = 10;			//Vertical beta function in m
+	double dis_h = 0;			//Horizontal dispersion function in m
+	double dis_v = 0;			//Vertical dispersion function in m
+	Cooler cooler(cooler_length,n_section,magnetic_field,beta_h,beta_v,dis_h, dis_v);
+	
+	//define electron beam (DC electron beam)
+	double current = 2;			//Current in A
+	double radius = 0.008;		//Radius in m
+	double neutralisation = 0;
+	UniformCylinder uniform_cylinder(current, radius, neutralisation);
+	double gamma_e = p_beam.gamma();	//Lorentz factor gamma
+	double tmp_tr = 0.1;		//Transverse temperature in eV
+	double tmp_long = 0.1;		//Longitudinal temperature in eV
+	EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_cylinder);
+  
+  	//define cooling model: monte carlo
+	unsigned int n_sample = 40000;	//Number of the sample ions
+	ecool_paras = new EcoolRateParas(n_sample);
+	//define friction force formula
+	force_paras = new ForceParas(ForceFormula::PARKHOMCHUK);
+	//define dynamic simulation
+  	double time = 60;			//Total time to simulate
+  	int n_step = 120;			//Number of steps
+  	bool effect_ibs = true;		//IBS effect included in smiulation
+  	bool effect_ecool = true;	//Electron cooling included in simulation
+	dynamic_paras = new DynamicParas(time, n_step, effect_ibs, effect_ecool);
+	dynamic_paras->set_model(DynamicModel::MODEL_BEAM);	//Choose the model beam method
+	
+	char file[100] = "ibs_ecool_dynamic_output.txt";	//Output file
+	std::ofstream outfile;
+	outfile.open(file);
+	dynamic(p_beam, cooler, e_beam, ring, outfile);		//Start simulation
+	outfile.close();									//Close the output file
+
+ 	return 0;
+}
+```
+
+
+
+## Advanced topics
