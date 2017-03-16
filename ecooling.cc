@@ -125,6 +125,36 @@ double emit_p(double * dp_p, unsigned int n){
     return emit_p;
 }
 
+double emit_p(double * dp_p, double * ds, Ring &ring, unsigned int n){
+    double emit_p = 0;
+    double dp_p_mean = 0;
+    for(unsigned int i=0; i<n; ++i){
+        dp_p_mean += dp_p[i];
+    }
+    dp_p_mean /= n;
+
+    for(unsigned int i=0; i<n; ++i){
+        double dp_p_adj = dp_p[i] - dp_p_mean;
+        emit_p += dp_p_adj*dp_p_adj;
+    }
+
+    double emit_s = 0;
+    double ds_mean = 0;
+    for(unsigned int i=0; i<n; ++i){
+        ds_mean += ds[i];
+    }
+    ds_mean /= n;
+
+    for(unsigned int i=0; i<n; ++i){
+        double ds_adj = ds[i] - ds_mean;
+        emit_s += ds_adj*ds_adj;
+    }
+    emit_s /= (ring.beta_s()*ring.beta_s());
+
+    emit_p = (emit_p + emit_s)/n;
+    return emit_p;
+}
+
 
 //Generate Gaussian random number in S frame with given Twiss parameters
 //First, rotate to O frame where alf = 0;
@@ -154,6 +184,8 @@ int gaussian_bet_cod(double beta_xs, double alf_xs, double emit_x, double *x_bet
     //Generate x and xp in O frame
     gaussian_random(n, x_bet, sigma_xo);
     gaussian_random(n, xp_bet, sigma_xpo);
+    gaussian_random_adjust(n, x_bet, sigma_xo);
+    gaussian_random_adjust(n, xp_bet, sigma_xpo);
 
     //Rotate back to S frame
     for(unsigned int i=0; i<n;++i){
@@ -581,6 +613,32 @@ int original_emittance(EcoolRateParas &ecool_paras, Beam &ion, double &emit_x0, 
     return 0;
 }
 
+
+int original_emittance(EcoolRateParas &ecool_paras, Ring &ring, Beam &ion, double &emit_x0, double &emit_y0, double &emit_z0) {
+    switch(ecool_paras.ion_sample()){
+        case IonSample::SINGLE_PARTICLE: {
+            emit_x0 = ion.emit_x();
+            emit_y0 = ion.emit_y();
+            if(ion.bunched()) emit_z0 = (2*ion.dp_p()*ion.dp_p());
+            else emit_z0 = (ion.dp_p()*ion.dp_p());
+            break;
+        }
+        case IonSample::MONTE_CARLO: {
+            unsigned int n_sample = ecool_paras.n_sample();
+            emit_x0 = emit(x_bet, xp_bet, n_sample);
+            emit_y0 = emit(y_bet, yp_bet, n_sample);
+            if (ion.bunched()) emit_z0 = emit_p(dp_p, ds, ring, n_sample);
+            else emit_z0 = emit_p(dp_p, n_sample);
+            break;
+        }
+        default:{
+        perror("Error in defining ion beam model!");
+        break;
+        }
+    }
+    return 0;
+}
+
 int apply_kick(unsigned int n_sample, Beam &ion) {
     double p0 = ion.gamma()*ion.mass()*1e6*k_e*ion.beta()/k_c;
     for(unsigned int i=0; i<n_sample; ++i){
@@ -636,7 +694,8 @@ int new_emittance(EcoolRateParas ecool_paras, Beam ion, Ring &ring, Cooler &cool
         case IonSample::MONTE_CARLO: {
             emit_x = emit(x_bet, xp_bet, n_sample);
             emit_y = emit(y_bet, yp_bet, n_sample);
-            emit_z = emit_p(dp_p, n_sample);
+            if(ion.bunched()) emit_z = emit_p(dp_p, ds, ring, n_sample);
+            else emit_z = emit_p(dp_p, n_sample);
             break;
         }
         default: {
@@ -752,7 +811,8 @@ int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &io
     force_distribute(n_sample,ion);
     //Original emittance
     double emit_x0, emit_y0, emit_z0;
-    original_emittance(ecool_paras, ion, emit_x0, emit_y0, emit_z0);
+//    original_emittance(ecool_paras, ion, emit_x0, emit_y0, emit_z0);
+    original_emittance(ecool_paras, ring, ion, emit_x0, emit_y0, emit_z0);
     //Apply kick
     apply_kick(n_sample, ion);
     //New emittance

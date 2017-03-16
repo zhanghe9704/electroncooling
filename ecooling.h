@@ -11,17 +11,17 @@ enum class IonSample {SINGLE_PARTICLE, MONTE_CARLO};
 
 class EcoolRateParas{
     IonSample ion_sample_ = IonSample::SINGLE_PARTICLE;
-    unsigned int n_sample_ = 125000;
-    unsigned int n_tr_ = 50;
-    unsigned int n_long_ = 50;
+    int n_sample_ = 125000;
+    int n_tr_ = 50;
+    int n_long_ = 50;
     bool shift_ = false;             //false: ion center and e- center overlap, true: there's a shift between the beam
     double bunch_separate_;
     int n_long_sample_ = 50;
 public:
     IonSample ion_sample(){return ion_sample_;}
-    unsigned int n_sample(){return n_sample_;}
-    unsigned int n_tr(){return n_tr_;}
-    unsigned int n_long(){return n_long_;}
+    int n_sample(){return n_sample_;}
+    int n_tr(){return n_tr_;}
+    int n_long(){return n_long_;}
     double bunch_separate(){return bunch_separate_;}
     bool shift(){return shift_;}
     int n_long_sample(){return n_long_sample_;}
@@ -32,8 +32,8 @@ public:
     int set_n_long_sample(int x){ n_long_sample_ = x; return 0;}
 
     EcoolRateParas(){};
-    EcoolRateParas(unsigned int n_sample):ion_sample_(IonSample::MONTE_CARLO),n_sample_(n_sample){};
-    EcoolRateParas(unsigned int n_tr, unsigned int n_long):n_tr_(n_tr),n_long_(n_long){
+    EcoolRateParas(int n_sample):ion_sample_(IonSample::MONTE_CARLO),n_sample_(n_sample){};
+    EcoolRateParas(int n_tr, int n_long):n_tr_(n_tr),n_long_(n_long){
         if (n_long_<2) n_long_ = 2;
         n_sample_ = n_tr_*n_tr_*n_long_;
         }
@@ -60,5 +60,6 @@ int ion_sample(EcoolRateParas &ecool_paras, Beam &ion, Ring &ring, Cooler &coole
 int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, Twiss &twiss);
 double emit(double * x, double * xp, unsigned int n);
 double emit_p(double * dp_p, unsigned int n);
+double emit_p(double * dp_p, double * ds, Ring &ring, unsigned int n);
 int adjust_disp(double dx, double *x_bet, double *dp_p, double *x, unsigned int n);
 #endif // ECOOLING_H

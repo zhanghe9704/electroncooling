@@ -132,7 +132,7 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam) {
         //Calculate  new emittances
         emit_nx *= exp(rx*dt);
         emit_ny *= exp(ry*dt);
-        dp *= dp*exp(rs*dt);
+        dp *= dp*exp(rs*dt);  //Dirty patch for over cooling in longitudinal direction
         dp = sqrt(dp);
         if(ion.bunched()) sigma_s = ring.beta_s()*dp;
         //update beam parameters

@@ -324,7 +324,6 @@ int main() {
         case Test::DYNAMICBOTH: {
 
             srand(time(NULL));
-//            srand(0);
 
             // define proton beam;
             double m0, KE, emit_nx0, emit_ny0, dp_p0, sigma_s0, N_ptcl;
@@ -332,27 +331,18 @@ int main() {
             Z = 1;
             m0 = 938.272;
             KE = 100e3;
-//            // CM energy 44.7 GeV
-//            emit_nx0 = 0.5e-6;
-//            emit_ny0 = 0.12e-6;
-//            dp_p0 = 0.0008;
-//            N_ptcl = 0.98E10*0.59;
-//            sigma_s0 = 2.5E-2;
-
-            double factor = 2.25;
             // CM energy 44.7 GeV
-            emit_nx0 = 0.5e-6*factor;
-            emit_ny0 = 0.15e-6*factor;
+            emit_nx0 = 0.5e-6;
+            emit_ny0 = 0.1e-6;
             dp_p0 = 0.0008;
-            N_ptcl = 0.98E10*0.93;
-            sigma_s0 = 1.5E-2;
-
+            N_ptcl = 0.98E10;
+            sigma_s0 = 1E-2;
 //            // CM energy 63.3 GeV
-//            emit_nx0 = 1.25e-6;
-//            emit_ny0 = 0.38e-6;
+//            emit_nx0 = 1e-6;
+//            emit_ny0 = 0.2e-6;
 //            dp_p0 = 0.0008;
-//            N_ptcl = 3.9E10*0.25;
-//            sigma_s0 = 2.5E-2;
+//            N_ptcl = 3.9E10;
+//            sigma_s0 = 2E-2;
             Beam p_beam(Z,m0/k_u, KE, emit_nx0, emit_ny0, dp_p0, sigma_s0, N_ptcl);
             std::cout<<"Normalized emittance: "<<p_beam.emit_nx()<<' '<<p_beam.emit_ny()<<std::endl;
             std::cout<<"Geometric emittance: "<<p_beam.emit_x()<<' '<<p_beam.emit_y()<<std::endl;
@@ -369,19 +359,18 @@ int main() {
             double cooler_length = 60;
             double n_section = 1;
             double magnetic_field = 1;
-            double beta_h = 60;
-            double beta_v = 200;
-            double dis_h = 2.0;
-            double dis_v = 0.6;
+            double beta_h = 100;
+            double beta_v = 100;
+            double dis_h = 0;
+            double dis_v = 0;
             Cooler cooler(cooler_length,n_section,magnetic_field,beta_h,beta_v,dis_h, dis_v);
             std::cout<<"Ion beam size at cooler: "<<sqrt(cooler.beta_h()*p_beam.emit_x())
-                    <<' '<<sqrt(cooler.beta_v()*p_beam.emit_y())<<std::endl<<std::endl;
+                    <<' '<<sqrt(cooler.beta_v()*p_beam.emit_y())<<std::endl;
 
 //            //define electron beam
             double length = 0.02;
-            double radius = 0.000528*sqrt(factor);
-            std::cout<<"Electron beam radius: "<<radius<<std::endl;
-            double q_e = 2.0e-9;
+            double radius = 0.001;
+            double q_e = 2e-9;
             double current = q_e*p_beam.beta()*k_c/length;
             UniformBunch uniform_bunch(current, radius, length);
             double gamma_e = p_beam.gamma();
@@ -399,45 +388,62 @@ int main() {
 //            double tmp_long = 0.1;
 //            EBeam e_beam(gamma_e, tmp_tr, tmp_long, gaussian_bunch);
 //
+//             //define cooling model: single particle
+//            unsigned int n_tr = 100;
+//            unsigned int n_long = 100;
+//            ecool_paras = new EcoolRateParas(n_tr, n_long);
             //define cooling model: monte carlo
-            unsigned int n_sample = 100000;
+            unsigned int n_sample = 50000;
             ecool_paras = new EcoolRateParas(n_sample);
 //            //define friction force formula
             force_paras = new ForceParas(ForceFormula::PARKHOMCHUK);
 
             double rate_x, rate_y, rate_s;
             ecooling_rate(*ecool_paras, *force_paras, p_beam, cooler, e_beam, ring, rate_x, rate_y, rate_s);
-            std::cout<<"cooling rate: [1/s] "<<rate_x<<" "<<rate_y<<" "<<rate_s<<std::endl;
-
-            //Set IBS parameters.
-            int nu = 100;
-            int nv = 100;
-            int nz = 40;
-            double log_c = 40.4/2;      //100 GeV, 63.3 GeV CM Energy
-//            double log_c = 39.2/2;    //100 GeV
-            ibs_paras = new IBSParas(nu, nv, log_c);
-//            ibs_paras = new IBSParas(nu, nv, nz);
-            ibs_paras->set_k(0.4);
-
-            double rx_ibs, ry_ibs, rz_ibs;
-            config_ibs(lattice);
-            ibs_rate(lattice, p_beam, *ibs_paras, rx_ibs, ry_ibs, rz_ibs);
-            std::cout<<"IBS rate: [1/s] "<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
-//            end_ibs();
-            std::cout<<"Total rate: [1/s] "<<rx_ibs+rate_x<<' '<<ry_ibs+rate_y<<' '<<rz_ibs+rate_s<<std::endl<<std::endl;
-
-            return 0;
+            std::cout<<"cooling rate: "<<rate_x<<" "<<rate_y<<" "<<rate_s<<std::endl;
 
             //define dynamic simulation
-            double t = 1200*2;
-            int n_step = 600*2;
+            double t = 600;
+            int n_step = 1;
             bool ibs = true;
             bool ecool = true;
             dynamic_paras = new DynamicParas(t, n_step, ibs, ecool);
 //            dynamic_paras->set_model(DynamicModel::MODEL_BEAM);
             dynamic_paras->set_model(DynamicModel::RMS);
 
-            char file[100] = "Collider_100GeV_strong_cooling_baseline_44Ecm_2nC_rms_02_long_cool_compensated.txt";
+            //Set IBS parameters.
+            int nu = 100;
+            int nv = 100;
+            int nz = 40;
+            double log_c = 40.4/2;      //250 GeV
+//            double log_c = 39.2/2;    //100 GeV
+            ibs_paras = new IBSParas(nu, nv, log_c);
+//            ibs_paras = new IBSParas(nu, nv, nz);
+//            ibs_paras->set_k(0.2);
+
+            double rx_ibs, ry_ibs, rz_ibs;
+            config_ibs(lattice);
+            ibs_rate(lattice, p_beam, *ibs_paras, rx_ibs, ry_ibs, rz_ibs);
+            std::cout<<"ibs rate: "<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
+            end_ibs();
+
+            return 0;
+
+//            ibs_paras = new IBSParas(nu, nv, log_c);
+//            ibs_rate(lattice, p_beam, *ibs_paras, rx_ibs, ry_ibs, rz_ibs);
+//            std::cout<<"ibs rate: "<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
+
+//            double rate_x, rate_y, rate_s;
+//            ecooling_rate(*ecool_paras, *force_paras, p_beam, cooler, e_beam, ring, rate_x, rate_y, rate_s);
+//            std::cout<<"Cool rate: "<<rate_x<<" "<<rate_y<<" "<<rate_s<<std::endl;
+//
+//            rate_x += rx_ibs;
+//            rate_y += ry_ibs;
+//            rate_s += rz_ibs;
+//            std::cout<<"total rate: "<<rate_x<<" "<<rate_y<<" "<<rate_s<<std::endl;
+//            return 0;
+
+            char file[100] = "Collider_100GeV_strong_cooling_baseline.txt";
             std::ofstream outfile;
             outfile.open(file);
 //            Cooler *cooler;
