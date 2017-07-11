@@ -257,6 +257,7 @@ void define_ring(string &str, Set_ring *ring_args) {
     var = trim_tab(var);
     val = trim_blank(val);
     val = trim_tab(val);
+    str_toupper(var);
     assert(std::find(RING_ARGS.begin(),RING_ARGS.end(),var)!=RING_ARGS.end() && "WRONG COMMANDS IN SECTION_RING!");
     if (var=="LATTICE") {
         ring_args->lattice_file = val;

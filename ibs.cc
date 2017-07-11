@@ -1,82 +1,114 @@
+#include <memory>
 #include "ibs.h"
 
 //Scratch variables for IBS calculation
-double *sigma_xbet, *sigma_xbetp, *sigma_y, *sigma_yp;
-double *a_f, *b2_f, *c2_f, *d2_f, *dtld_f, *k1_f, *k2_f, *k3_f;
-double *sin_u, *sin_u2, *cos_u2, *sin_v, *cos_v, *sin_u2_cos_v2;
-double *g1, *g2_1, *g2_2, *g3;
-double *f1, *f2, *f3;
+//double *sigma_xbet, *sigma_xbetp, *sigma_y, *sigma_yp;
+//double *a_f, *b2_f, *c2_f, *d2_f, *dtld_f, *k1_f, *k2_f, *k3_f;
+//double *sin_u, *sin_u2, *cos_u2, *sin_v, *cos_v, *sin_u2_cos_v2;
+//double *g1, *g2_1, *g2_2, *g3;
+//double *f1, *f2, *f3;
+
+std::unique_ptr<double []> sigma_xbet, sigma_xbetp, sigma_y, sigma_yp;
+std::unique_ptr<double []> a_f, b2_f, c2_f, d2_f, dtld_f, k1_f, k2_f, k3_f;
+
+std::unique_ptr<double []> sin_u, sin_u2, cos_u2, sin_v, cos_v, sin_u2_cos_v2;
+std::unique_ptr<double []> g1, g2_1, g2_2, g3;
+std::unique_ptr<double []> f1, f2, f3;
+
+extern bool TURN_BY_TURN, COAST;
 
 int config_ibs(Lattice &lattice) {
     int n = lattice.n_element();
 
-    sigma_xbet = new double[n];
-    memset(sigma_xbet, 0, n*sizeof(double));
-    sigma_xbetp = new double[n];
-    memset(sigma_xbetp, 0, n*sizeof(double));
-    sigma_y = new double[n];
-    memset(sigma_y, 0, n*sizeof(double));
-    sigma_yp = new double[n];
-    memset(sigma_yp, 0, n*sizeof(double));
+//    sigma_xbet = new double[n];
+//    memset(sigma_xbet, 0, n*sizeof(double));
+//    sigma_xbetp = new double[n];
+//    memset(sigma_xbetp, 0, n*sizeof(double));
+//    sigma_y = new double[n];
+//    memset(sigma_y, 0, n*sizeof(double));
+//    sigma_yp = new double[n];
+//    memset(sigma_yp, 0, n*sizeof(double));
 
-    a_f = new double[n];
-    memset(a_f, 0, n*sizeof(double));
-    b2_f = new double[n];
-    memset(b2_f, 0, n*sizeof(double));
-    c2_f = new double[n];
-    memset(c2_f, 0, n*sizeof(double));
-    d2_f = new double[n];
-    memset(d2_f, 0, n*sizeof(double));
-    dtld_f = new double[n];
-    memset(dtld_f, 0, n*sizeof(double));
-    k1_f = new double[n];
-    memset(k1_f, 0, n*sizeof(double));
-    k2_f = new double[n];
-    memset(k2_f, 0, n*sizeof(double));
-    k3_f = new double[n];
-    memset(k3_f, 0, n*sizeof(double));
+//    a_f = new double[n];
+//    memset(a_f, 0, n*sizeof(double));
+//    b2_f = new double[n];
+//    memset(b2_f, 0, n*sizeof(double));
+//    c2_f = new double[n];
+//    memset(c2_f, 0, n*sizeof(double));
+//    d2_f = new double[n];
+//    memset(d2_f, 0, n*sizeof(double));
+//    dtld_f = new double[n];
+//    memset(dtld_f, 0, n*sizeof(double));
+//    k1_f = new double[n];
+//    memset(k1_f, 0, n*sizeof(double));
+//    k2_f = new double[n];
+//    memset(k2_f, 0, n*sizeof(double));
+//    k3_f = new double[n];
+//    memset(k3_f, 0, n*sizeof(double));
 
-    f1 = new double[n];
-    f2 = new double[n];
-    f3 = new double[n];
+//    f1 = new double[n];
+//    f2 = new double[n];
+//    f3 = new double[n];
     return 0;
 }
 
 int end_ibs() {
-    delete[] sigma_xbet;
-    delete[] sigma_xbetp;
-    delete[] sigma_y;
-    delete[] sigma_yp;
-    delete[] a_f;
-    delete[] b2_f;
-    delete[] c2_f;
-    delete[] d2_f;
-    delete[] dtld_f;
-    delete[] k1_f;
-    delete[] k2_f;
-    delete[] k3_f;
+//    delete[] sigma_xbet;
+//    delete[] sigma_xbetp;
+//    delete[] sigma_y;
+//    delete[] sigma_yp;
+//    delete[] a_f;
+//    delete[] b2_f;
+//    delete[] c2_f;
+//    delete[] d2_f;
+//    delete[] dtld_f;
+//    delete[] k1_f;
+//    delete[] k2_f;
+//    delete[] k3_f;
 
-    delete[] sin_u;
-    delete[] sin_u2;
-    delete[] cos_u2;
-    delete[] sin_v;
-    delete[] cos_v;
-    delete[] sin_u2_cos_v2;
-    delete[] g1;
-    delete[] g2_1;
-    delete[] g2_2;
-    delete[] g3;
+//    delete[] sin_u;
+//    delete[] sin_u2;
+//    delete[] cos_u2;
+//    delete[] sin_v;
+//    delete[] cos_v;
+//    delete[] sin_u2_cos_v2;
+//    delete[] g1;
+//    delete[] g2_1;
+//    delete[] g2_2;
+//    delete[] g3;
 
-    delete[] f1;
-    delete[] f2;
-    delete[] f3;
+//    delete[] f1;
+//    delete[] f2;
+//    delete[] f3;
     return 0;
+}
+
+//Set ptrs for bunch_size
+void set_bunch_size(int n) {
+    if(sigma_xbet.get()==nullptr) {
+        sigma_xbet.reset(new double[n]);
+        memset(sigma_xbet.get(), 0, n*sizeof(double));
+//        std::cout<<"reset bunch_sizze"<<std::endl;
+    }
+    if(sigma_xbetp.get()==nullptr) {
+        sigma_xbetp.reset(new double[n]);
+        memset(sigma_xbetp.get(), 0, n*sizeof(double));
+    }
+    if(sigma_y.get()==nullptr) {
+        sigma_y.reset(new double[n]);
+        memset(sigma_y.get(), 0, n*sizeof(double));
+    }
+    if(sigma_yp.get()==nullptr) {
+        sigma_yp.reset(new double[n]);
+        memset(sigma_yp.get(), 0, n*sizeof(double));
+    }
 }
 
 //Calculate sigma_xbet, sigma_xbetp, sigma_y, sigma_yp
 int bunch_size(Lattice &lattice, Beam &beam) {
     double emit_x = beam.emit_x();
     double emit_y = beam.emit_y();
+    set_bunch_size(lattice.n_element());
     for(int i=0; i<lattice.n_element(); ++i) {
         sigma_xbet[i] = sqrt(lattice.betx(i)*emit_x);
         sigma_y[i] = sqrt(lattice.bety(i)*emit_y);
@@ -90,11 +122,50 @@ int bunch_size(Lattice &lattice, Beam &beam) {
     return 0;
 }
 
+//Set the ptrs for abcdk
+void set_abcdk(int n) {
+    if(a_f.get()==nullptr) {
+        a_f.reset(new double[n]);
+        memset(a_f.get(), 0, n*sizeof(double));
+//        std::cout<<"reset abcdk"<<std::endl;
+    }
+    if(b2_f.get()==nullptr) {
+        b2_f.reset(new double[n]);
+        memset(b2_f.get(), 0, n*sizeof(double));
+    }
+    if(c2_f.get()==nullptr) {
+        c2_f.reset(new double[n]);
+        memset(c2_f.get(), 0, n*sizeof(double));
+    }
+    if(d2_f.get()==nullptr) {
+        d2_f.reset(new double[n]);
+        memset(d2_f.get(), 0, n*sizeof(double));
+    }
+    if(dtld_f.get()==nullptr) {
+        dtld_f.reset(new double[n]);
+        memset(dtld_f.get(), 0, n*sizeof(double));
+    }
+    if(k1_f.get()==nullptr) {
+        k1_f.reset(new double[n]);
+        memset(k1_f.get(), 0, n*sizeof(double));
+    }
+    if(k2_f.get()==nullptr) {
+        k2_f.reset(new double[n]);
+        memset(k2_f.get(), 0, n*sizeof(double));
+    }
+    if(k3_f.get()==nullptr) {
+        k3_f.reset(new double[n]);
+        memset(k3_f.get(), 0, n*sizeof(double));
+    }
+}
+
 //Calculate a, b, c, d and dtld
 //Call bunch_size() before calling this one
 int abcdk(Lattice &lattice, Beam &beam){
     double d_tld, q, sigma_x, sigma_tmp;
     int n = lattice.n_element();
+
+    set_abcdk(n);
 
     double dp_p = beam.dp_p();
     double beta = beam.beta();
@@ -129,17 +200,29 @@ int abcdk(Lattice &lattice, Beam &beam){
 }
 
 int coef_f(int nu, int nv){
-    sin_u = new double[nu];
-    sin_u2 = new double[nu];
-    cos_u2 = new double[nu];
-    sin_v = new double[nv];
-    cos_v = new double[nv];
-    sin_u2_cos_v2 = new double[nu*nv];
+//    sin_u = new double[nu];
+//    sin_u2 = new double[nu];
+//    cos_u2 = new double[nu];
+//    sin_v = new double[nv];
+//    cos_v = new double[nv];
+//    sin_u2_cos_v2 = new double[nu*nv];
+//
+//    g1 = new double[nu*nv];
+//    g2_1 = new double[nu*nv];
+//    g2_2 = new double[nu*nv];
+//    g3 = new double[nu];
 
-    g1 = new double[nu*nv];
-    g2_1 = new double[nu*nv];
-    g2_2 = new double[nu*nv];
-    g3 = new double[nu];
+    if(sin_u.get()==nullptr) sin_u.reset(new double[nu]);
+    if(sin_u2.get()==nullptr) sin_u2.reset(new double[nu]);
+    if(cos_u2.get()==nullptr) cos_u2.reset(new double[nu]);
+    if(sin_v.get()==nullptr) sin_v.reset(new double[nv]);
+    if(cos_v.get()==nullptr) cos_v.reset(new double[nv]);
+    if(sin_u2_cos_v2.get()==nullptr) sin_u2_cos_v2.reset(new double[nu*nv]);
+
+    if(g1.get()==nullptr) g1.reset(new double[nu*nv]);
+    if(g2_1.get()==nullptr) g2_1.reset(new double[nu*nv]);
+    if(g2_2.get()==nullptr) g2_2.reset(new double[nu*nv]);
+    if(g3.get()==nullptr) g3.reset(new double[nu]);
 
     double du = k_pi/nu;
     double u = -0.5*du;
@@ -173,11 +256,18 @@ int coef_f(int nu, int nv){
 }
 
 int f(int n_element, int nu, int nv, int nz){
+    if(f1.get()==nullptr) f1.reset(new double[n_element]);
+    if(f2.get()==nullptr) f2.reset(new double[n_element]);
+    if(f3.get()==nullptr) f3.reset(new double[n_element]);
+    memset(f1.get(), 0, n_element*sizeof(double));
+    memset(f2.get(), 0, n_element*sizeof(double));
+    memset(f3.get(), 0, n_element*sizeof(double));
+
     for(int ie=0; ie<n_element; ++ie){
         int cnt = 0;
-        f1[ie] = 0;
-        f2[ie] = 0;
-        f3[ie] = 0;
+//        f1[ie] = 0;
+//        f2[ie] = 0;
+//        f3[ie] = 0;
         double duv = 2*k_pi*k_pi/(nv*nu);
         for(int iu=0; iu<nu; ++iu){
             for(int iv=0; iv<nv; ++iv){
@@ -205,11 +295,18 @@ int f(int n_element, int nu, int nv, int nz){
 }
 
 int f(int n_element, int nu, int nv, double log_c){
+//    if(f1.get()==nullptr) std::cout<<"create f1"<<std::endl;
+    if(f1.get()==nullptr) f1.reset(new double[n_element]);
+    if(f2.get()==nullptr) f2.reset(new double[n_element]);
+    if(f3.get()==nullptr) f3.reset(new double[n_element]);
+    memset(f1.get(), 0, n_element*sizeof(double));
+    memset(f2.get(), 0, n_element*sizeof(double));
+    memset(f3.get(), 0, n_element*sizeof(double));
     for(int ie=0; ie<n_element; ++ie){
         int cnt = 0;
-        f1[ie] = 0;
-        f2[ie] = 0;
-        f3[ie] = 0;
+//        f1[ie] = 0;
+//        f2[ie] = 0;
+//        f3[ie] = 0;
         double duv = 2*k_pi*k_pi/(nu*nv);
         for(int iu=0; iu<nu; ++iu){
             for(int iv=0; iv<nv; ++iv){
@@ -301,6 +398,7 @@ int ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, doubl
     rs = 0;
     int n=2;
     if (beam.bunched()) n=1;
+//    if (TURN_BY_TURN&&COAST) n = 2;
     for(int i=0; i<n_element-1; ++i){
         double l_element = lattice.l_element(i);
         rs += n*a*(1-d2_f[i])*f1[i]*l_element;

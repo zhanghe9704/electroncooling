@@ -331,7 +331,7 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring, std::ofstream &
 //    double sigma_s = 0;
 //    if(ion.bunched()) sigma_s = ion.sigma_s();
     double t = 0;
-    if(ibs) config_ibs(*ring.lattice_);
+//    if(ibs) config_ibs(*ring.lattice_);
 
     record_config(n_step, ion.bunched());
 
@@ -400,7 +400,7 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring, std::ofstream &
 
     //Clean;
     clear_record(ion.bunched());
-    if(ibs) end_ibs();
+//    if(ibs) end_ibs();
     if(ecool) {
         rms_dynamic_count = -1;
         end_ecooling(*ecool_paras, ion);

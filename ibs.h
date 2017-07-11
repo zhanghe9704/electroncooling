@@ -32,8 +32,8 @@ public:
 
 };
 
-int config_ibs(Lattice &lattice);
+//int config_ibs(Lattice &lattice);
 int ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs);
-int end_ibs();
+//int end_ibs();
 
 #endif

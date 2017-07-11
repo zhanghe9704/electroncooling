@@ -2,6 +2,7 @@
 #define RING_H
 
 #include <cassert>
+#include <memory>
 #include <string>
 #include <vector>
 #include "beam.h"
@@ -52,6 +53,8 @@ class Ring{
  public:
     Beam *beam_;
     Lattice *lattice_;
+//    std::shared_ptr<Beam> beam_;
+//    std::shared_ptr<Lattice> lattice_;
     double beta_s(){assert(beam_->bunched()); return beta_s_;}
     double circ(){return circ_;}
     Ring(double circ, Beam &beam_defined);
