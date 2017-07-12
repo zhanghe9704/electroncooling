@@ -53,7 +53,7 @@ struct Twiss{
 
 int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &ion, Cooler &cooler, EBeam &ebeam,
                   Ring &ring, double &rate_x, double &rate_y, double &rate_s);
-int end_ecooling(EcoolRateParas &ecool_paras, Beam &ion);
+//int end_ecooling(EcoolRateParas &ecool_paras, Beam &ion);
 
 int config_ecooling(EcoolRateParas &ecool_paras, Beam &ion);
 int ion_sample(EcoolRateParas &ecool_paras, Beam &ion, Ring &ring, Cooler &cooler);

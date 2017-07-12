@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
 
     }
     else {
-        Test test = Test::IBS;
+        Test test = Test::DYNAMICBOTH;
         switch (test){
             case Test::BOTH: {
                 // define proton beam;
@@ -587,6 +587,7 @@ int main(int argc, char** argv) {
     }
 
     //Pause the system
+    std::cout<<std::endl<<"Press the Enter key to close the window."<<std::endl;
     std::cin.ignore( std::numeric_limits< std::streamsize >::max( ), '\n' );
 
     return 0;

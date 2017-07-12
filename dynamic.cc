@@ -21,9 +21,12 @@ double *rdn=nullptr; //random number for model beam simulations
 extern int model_beam_count;
 extern int rms_dynamic_count;
 extern bool dynamic_flag;
-extern double *x_bet, *xp_bet, *y_bet, *yp_bet, *ds, *dp_p, *x, *y, *xp, *yp;
-extern double *force_x, *force_y, *force_z;
+//extern double *x_bet, *xp_bet, *y_bet, *yp_bet, *ds, *dp_p, *x, *y, *xp, *yp;
+//extern double *force_x, *force_y, *force_z;
 extern double t_cooler;
+
+extern std::unique_ptr<double []> x_bet, xp_bet, y_bet, yp_bet, ds, dp_p, x, y, xp, yp;
+extern std::unique_ptr<double []> force_x, force_y, force_z;
 
 int record_config(int n, bool bunched) {
     int n_step = n+1;
@@ -55,31 +58,42 @@ int clear_record(bool bunched) {
 }
 
 int model_beam_ibs_scratches(int n_sample) {
-    x = new double[n_sample]();
-    y = new double[n_sample]();
-    xp = new double[n_sample]();
-    yp = new double[n_sample]();
-    x_bet = new double[n_sample]();
-    y_bet = new double[n_sample]();
-    xp_bet = new double[n_sample]();
-    yp_bet = new double[n_sample]();
-    ds = new double[n_sample]();
-    dp_p = new double[n_sample]();
+//    x = new double[n_sample]();
+//    y = new double[n_sample]();
+//    xp = new double[n_sample]();
+//    yp = new double[n_sample]();
+//    x_bet = new double[n_sample]();
+//    y_bet = new double[n_sample]();
+//    xp_bet = new double[n_sample]();
+//    yp_bet = new double[n_sample]();
+//    ds = new double[n_sample]();
+//    dp_p = new double[n_sample]();
+//
+    x_bet.reset(new double[n_sample]);
+    xp_bet.reset(new double[n_sample]);
+    y_bet.reset(new double[n_sample]);
+    yp_bet.reset(new double[n_sample]);
+    ds.reset(new double[n_sample]);
+    dp_p.reset(new double[n_sample]);
+    x.reset(new double[n_sample]);
+    y.reset(new double[n_sample]);
+    xp.reset(new double[n_sample]);
+    yp.reset(new double[n_sample]);
     srand(time(NULL));
     return 0;
 }
 
 int model_beam_ibs_clean() {
-    delete[] x;
-    delete[] y;
-    delete[] yp;
-    delete[] xp;
-    delete[] x_bet;
-    delete[] y_bet;
-    delete[] xp_bet;
-    delete[] yp_bet;
-    delete[] ds;
-    delete[] dp_p;
+//    delete[] x;
+//    delete[] y;
+//    delete[] yp;
+//    delete[] xp;
+//    delete[] x_bet;
+//    delete[] y_bet;
+//    delete[] xp_bet;
+//    delete[] yp_bet;
+//    delete[] ds;
+//    delete[] dp_p;
     return 0;
 }
 
@@ -283,16 +297,26 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam) {
             }
         }
 
-        adjust_disp(dx, x_bet, dp_p, x, n_sample);
-        adjust_disp(dy, y_bet, dp_p, y, n_sample);
-        adjust_disp(dpx, xp_bet, dp_p, xp, n_sample);
-        adjust_disp(dpy, yp_bet, dp_p, yp, n_sample);
+//        adjust_disp(dx, x_bet, dp_p, x, n_sample);
+//        adjust_disp(dy, y_bet, dp_p, y, n_sample);
+//        adjust_disp(dpx, xp_bet, dp_p, xp, n_sample);
+//        adjust_disp(dpy, yp_bet, dp_p, yp, n_sample);
+
+        adjust_disp(dx, x_bet.get(), dp_p.get(), x.get(), n_sample);
+        adjust_disp(dy, y_bet.get(), dp_p.get(), y.get(), n_sample);
+        adjust_disp(dpx, xp_bet.get(), dp_p.get(), xp.get(), n_sample);
+        adjust_disp(dpy, yp_bet.get(), dp_p.get(), yp.get(), n_sample);
 
         //update beam parameters
-        double emit_x = emit(x_bet, xp_bet, n_sample);
-        double emit_y = emit(y_bet, yp_bet, n_sample);
-        dp = sqrt(emit_p(dp_p, n_sample));
-        if(ion.bunched()) sigma_s = sqrt(emit_p(ds, n_sample));
+//        double emit_x = emit(x_bet, xp_bet, n_sample);
+//        double emit_y = emit(y_bet, yp_bet, n_sample);
+//        dp = sqrt(emit_p(dp_p, n_sample));
+//        if(ion.bunched()) sigma_s = sqrt(emit_p(ds, n_sample));
+
+        double emit_x = emit(x_bet.get(), xp_bet.get(), n_sample);
+        double emit_y = emit(y_bet.get(), yp_bet.get(), n_sample);
+        dp = sqrt(emit_p(dp_p.get(), n_sample));
+        if(ion.bunched()) sigma_s = sqrt(emit_p(ds.get(), n_sample));
 
         ion.set_emit_x(emit_x);
         ion.set_emit_y(emit_y);
@@ -403,7 +427,7 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring, std::ofstream &
 //    if(ibs) end_ibs();
     if(ecool) {
         rms_dynamic_count = -1;
-        end_ecooling(*ecool_paras, ion);
+//        end_ecooling(*ecool_paras, ion);
     }
     else {
         if(dynamic_paras->model()==DynamicModel::MODEL_BEAM) model_beam_ibs_clean();

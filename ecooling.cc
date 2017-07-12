@@ -9,9 +9,12 @@
 #include "functions.h"
 #include "ring.h"
 
-double *x_bet, *xp_bet, *y_bet, *yp_bet, *ds, *dp_p, *x, *y, *xp, *yp, *ne;
-double *force_x, *force_y, *force_z, *v_tr, *v_long;
-double *x_spl, *xp_spl, *y_spl, *yp_spl, *ds_spl, *dp_p_spl;
+std::unique_ptr<double []> x_bet, xp_bet, y_bet, yp_bet, ds, dp_p, x, y, xp, yp, ne;
+std::unique_ptr<double []> force_x, force_y, force_z, v_tr, v_long;
+std::unique_ptr<double []> x_spl, xp_spl, y_spl, yp_spl, ds_spl, dp_p_spl;
+//double *x_bet, *xp_bet, *y_bet, *yp_bet, *ds, *dp_p, *x, *y, *xp, *yp, *ne;
+//double *force_x, *force_y, *force_z, *v_tr, *v_long;
+//double *x_spl, *xp_spl, *y_spl, *yp_spl, *ds_spl, *dp_p_spl;
 double t_cooler;
 // model_beam_count <0 : create sample ions;
 int model_beam_count = -1;
@@ -21,39 +24,56 @@ bool dynamic_flag = false;
 
 //Initialize the scratch variables for electron cooling rate calculation.
 int assign_ecool_scratches(unsigned int n){
-    x_bet = new double[n];
-    memset(x_bet, 0, n*sizeof(double));
-    xp_bet = new double[n];
-    memset(xp_bet, 0, n*sizeof(double));
-    y_bet = new double[n];
-    memset(y_bet, 0, n*sizeof(double));
-    yp_bet = new double[n];
-    memset(yp_bet, 0, n*sizeof(double));
-    ds = new double[n];
-    memset(ds, 0, n*sizeof(double));
-    dp_p = new double[n];
-    memset(dp_p, 0, n*sizeof(double));
-    x = new double[n];
-    memset(x, 0, n*sizeof(double));
-    xp = new double[n];
-    memset(xp, 0, n*sizeof(double));
-    y = new double[n];
-    memset(y, 0, n*sizeof(double));
-    yp = new double[n];
-    memset(yp, 0, n*sizeof(double));
-    ne = new double[n];
-    memset(ne, 0, n*sizeof(double));
+    x_bet.reset(new double[n]);
+    xp_bet.reset(new double[n]);
+    y_bet.reset(new double[n]);
+    yp_bet.reset(new double[n]);
+    ds.reset(new double[n]);
+    dp_p.reset(new double[n]);
+    x.reset(new double[n]);
+    y.reset(new double[n]);
+    xp.reset(new double[n]);
+    yp.reset(new double[n]);
+    ne.reset(new double[n]);
+    force_x.reset(new double[n]);
+    force_y.reset(new double[n]);
+    force_z.reset(new double[n]);
+    v_tr.reset(new double[n]);
+    v_long.reset(new double[n]);
 
-    force_x = new double[n];
-    memset(force_x, 0, n*sizeof(double));
-    force_y = new double[n];
-    memset(force_y, 0, n*sizeof(double));
-    force_z = new double[n];
-    memset(force_z, 0, n*sizeof(double));
-    v_long = new double[n];
-    memset(v_long, 0, n*sizeof(double));
-    v_tr = new double[n];
-    memset(v_tr, 0, n*sizeof(double));
+//    x_bet = new double[n];
+//    memset(x_bet, 0, n*sizeof(double));
+//    xp_bet = new double[n];
+//    memset(xp_bet, 0, n*sizeof(double));
+//    y_bet = new double[n];
+//    memset(y_bet, 0, n*sizeof(double));
+//    yp_bet = new double[n];
+//    memset(yp_bet, 0, n*sizeof(double));
+//    ds = new double[n];
+//    memset(ds, 0, n*sizeof(double));
+//    dp_p = new double[n];
+//    memset(dp_p, 0, n*sizeof(double));
+//    x = new double[n];
+//    memset(x, 0, n*sizeof(double));
+//    xp = new double[n];
+//    memset(xp, 0, n*sizeof(double));
+//    y = new double[n];
+//    memset(y, 0, n*sizeof(double));
+//    yp = new double[n];
+//    memset(yp, 0, n*sizeof(double));
+//    ne = new double[n];
+//    memset(ne, 0, n*sizeof(double));
+
+//    force_x = new double[n];
+//    memset(force_x, 0, n*sizeof(double));
+//    force_y = new double[n];
+//    memset(force_y, 0, n*sizeof(double));
+//    force_z = new double[n];
+//    memset(force_z, 0, n*sizeof(double));
+//    v_long = new double[n];
+//    memset(v_long, 0, n*sizeof(double));
+//    v_tr = new double[n];
+//    memset(v_tr, 0, n*sizeof(double));
 
     srand(time(NULL));
     return 0;
@@ -61,23 +81,23 @@ int assign_ecool_scratches(unsigned int n){
 
 //Release the scratch variables for electron cooling rate calculation.
 int clean_ecool_scratches(){
-    delete[] x_bet;
-    delete[] xp_bet;
-    delete[] y_bet;
-    delete[] yp_bet;
-    delete[] ds;
-    delete[] dp_p;
-    delete[] x;
-    delete[] xp;
-    delete[] y;
-    delete[] yp;
-    delete[] ne;
+//    delete[] x_bet;
+//    delete[] xp_bet;
+//    delete[] y_bet;
+//    delete[] yp_bet;
+//    delete[] ds;
+//    delete[] dp_p;
+//    delete[] x;
+//    delete[] xp;
+//    delete[] y;
+//    delete[] yp;
+//    delete[] ne;
 
-    delete[] v_long;
-    delete[] v_tr;
-    delete[] force_x;
-    delete[] force_y;
-    delete[] force_z;
+//    delete[] v_long;
+//    delete[] v_tr;
+//    delete[] force_x;
+//    delete[] force_y;
+//    delete[] force_z;
 
     return 0;
 }
@@ -204,14 +224,20 @@ int adjust_disp(double dx, double *x_bet, double *dp_p, double *x, unsigned int 
 
 int assign_single_particle_scratches(EcoolRateParas &ecool_paras, Beam &ion) {
     unsigned int n_tr = ecool_paras.n_tr();
-    x_spl = new double[n_tr];
-    y_spl = new double[n_tr];
-    xp_spl = new double[n_tr];
-    yp_spl = new double[n_tr];
+    if (x_spl.get() == nullptr) x_spl.reset(new double[n_tr]);
+    if (y_spl.get() == nullptr) y_spl.reset(new double[n_tr]);
+    if (xp_spl.get() == nullptr) xp_spl.reset(new double[n_tr]);
+    if (yp_spl.get() == nullptr) yp_spl.reset(new double[n_tr]);
+//    x_spl = new double[n_tr];
+//    y_spl = new double[n_tr];
+//    xp_spl = new double[n_tr];
+//    yp_spl = new double[n_tr];
     if(ion.bunched()) {
         unsigned int n_long = ecool_paras.n_long();
-        ds_spl = new double[n_long];
-        dp_p_spl = new double[n_long];
+        if (ds_spl.get() == nullptr) ds_spl.reset(new double[n_long]);
+        if (dp_p_spl.get() == nullptr) dp_p_spl.reset(new double[n_long]);
+//        ds_spl = new double[n_long];
+//        dp_p_spl = new double[n_long];
     }
     return 0;
 }
@@ -236,14 +262,14 @@ int config_ecooling(EcoolRateParas &ecool_paras, Beam &ion) {
 }
 
 int clean_single_particle_scratches(Beam &ion) {
-    delete[] x_spl;
-    delete[] y_spl;
-    delete[] xp_spl;
-    delete[] yp_spl;
-    if(ion.bunched()) {
-        delete[] ds_spl;
-        delete[] dp_p_spl;
-    }
+//    delete[] x_spl;
+//    delete[] y_spl;
+//    delete[] xp_spl;
+//    delete[] yp_spl;
+//    if(ion.bunched()) {
+//        delete[] ds_spl;
+//        delete[] dp_p_spl;
+//    }
     return 0;
 }
 
@@ -352,18 +378,28 @@ int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, EBeam &
     double emit_x = ion.emit_x();
     double emit_y = ion.emit_y();
 
-    gaussian_bet_cod(beta_xs, alf_xs, emit_x, x_bet, xp_bet, n_sample);
-    gaussian_bet_cod(beta_ys, alf_ys, emit_y, y_bet, yp_bet, n_sample);
+//    gaussian_bet_cod(beta_xs, alf_xs, emit_x, x_bet, xp_bet, n_sample);
+//    gaussian_bet_cod(beta_ys, alf_ys, emit_y, y_bet, yp_bet, n_sample);
+//
+//    double sigma_p = ion.dp_p();
+//    gaussian_random(n_sample, dp_p, sigma_p);
+//    gaussian_random_adjust(n_sample, dp_p, sigma_p);
+
+    gaussian_bet_cod(beta_xs, alf_xs, emit_x, x_bet.get(), xp_bet.get(), n_sample);
+    gaussian_bet_cod(beta_ys, alf_ys, emit_y, y_bet.get(), yp_bet.get(), n_sample);
 
     double sigma_p = ion.dp_p();
-    gaussian_random(n_sample, dp_p, sigma_p);
-    gaussian_random_adjust(n_sample, dp_p, sigma_p);
+    gaussian_random(n_sample, dp_p.get(), sigma_p);
+    gaussian_random_adjust(n_sample, dp_p.get(), sigma_p);
 
     //longitudinal sampling
     if(ion.bunched()) {
         double sigma_s = ion.sigma_s();
-        gaussian_random(n_sample, ds, sigma_s);
-        gaussian_random_adjust(n_sample, ds, sigma_s);
+//        gaussian_random(n_sample, ds, sigma_s);
+//        gaussian_random_adjust(n_sample, ds, sigma_s);
+//
+        gaussian_random(n_sample, ds.get(), sigma_s);
+        gaussian_random_adjust(n_sample, ds.get(), sigma_s);
     }
 //    else if(ebeam.bunched()) {      //Bunched electron beam to cool coasting ion beam
 //        double length = ebeam.shape_->length();
@@ -375,10 +411,16 @@ int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, EBeam &
     double dy = cooler.disp_v();
     double dpx = cooler.der_disp_h();
     double dpy = cooler.der_disp_v();
-    adjust_disp(dx, x_bet, dp_p, x, n_sample);
-    adjust_disp(dy, y_bet, dp_p, y, n_sample);
-    adjust_disp(dpx, xp_bet, dp_p, xp, n_sample);
-    adjust_disp(dpy, yp_bet, dp_p, yp, n_sample);
+//    adjust_disp(dx, x_bet, dp_p, x, n_sample);
+//    adjust_disp(dy, y_bet, dp_p, y, n_sample);
+//    adjust_disp(dpx, xp_bet, dp_p, xp, n_sample);
+//    adjust_disp(dpy, yp_bet, dp_p, yp, n_sample);
+
+    adjust_disp(dx, x_bet.get(), dp_p.get(), x.get(), n_sample);
+    adjust_disp(dy, y_bet.get(), dp_p.get(), y.get(), n_sample);
+    adjust_disp(dpx, xp_bet.get(), dp_p.get(), xp.get(), n_sample);
+    adjust_disp(dpy, yp_bet.get(), dp_p.get(), yp.get(), n_sample);
+
 
     return 0;
 }
@@ -392,19 +434,34 @@ int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, Twiss &
     double emit_x = ion.emit_x();
     double emit_y = ion.emit_y();
 
-    gaussian_bet_cod(beta_xs, alf_xs, emit_x, x_bet, xp_bet, n_sample);
-    gaussian_bet_cod(beta_ys, alf_ys, emit_y, y_bet, yp_bet, n_sample);
+//    gaussian_bet_cod(beta_xs, alf_xs, emit_x, x_bet, xp_bet, n_sample);
+//    gaussian_bet_cod(beta_ys, alf_ys, emit_y, y_bet, yp_bet, n_sample);
+//
+//    double sigma_p = ion.dp_p();
+//    gaussian_random(n_sample, dp_p, sigma_p);
+//    gaussian_random_adjust(n_sample, dp_p, sigma_p);
+//
+//    //longitudinal sampling
+//    if(ion.bunched()) {
+//        double sigma_s = ion.sigma_s();
+//        gaussian_random(n_sample, ds, sigma_s);
+//        gaussian_random_adjust(n_sample, ds, sigma_s);
+//    }
+
+    gaussian_bet_cod(beta_xs, alf_xs, emit_x, x_bet.get(), xp_bet.get(), n_sample);
+    gaussian_bet_cod(beta_ys, alf_ys, emit_y, y_bet.get(), yp_bet.get(), n_sample);
 
     double sigma_p = ion.dp_p();
-    gaussian_random(n_sample, dp_p, sigma_p);
-    gaussian_random_adjust(n_sample, dp_p, sigma_p);
+    gaussian_random(n_sample, dp_p.get(), sigma_p);
+    gaussian_random_adjust(n_sample, dp_p.get(), sigma_p);
 
     //longitudinal sampling
     if(ion.bunched()) {
         double sigma_s = ion.sigma_s();
-        gaussian_random(n_sample, ds, sigma_s);
-        gaussian_random_adjust(n_sample, ds, sigma_s);
+        gaussian_random(n_sample, ds.get(), sigma_s);
+        gaussian_random_adjust(n_sample, ds.get(), sigma_s);
     }
+
 //    else if(ebeam.bunched()) {      //Bunched electron beam to cool coasting ion beam
 //        double length = ebeam.shape_->length();
 //        uniform_random(n_sample, ds, -0.5*length, 0.5*length);
@@ -415,10 +472,15 @@ int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, Twiss &
     double dy = twiss.disp_y_;
     double dpx = twiss.disp_dx_;
     double dpy = twiss.disp_dy_;
-    adjust_disp(dx, x_bet, dp_p, x, n_sample);
-    adjust_disp(dy, y_bet, dp_p, y, n_sample);
-    adjust_disp(dpx, xp_bet, dp_p, xp, n_sample);
-    adjust_disp(dpy, yp_bet, dp_p, yp, n_sample);
+    adjust_disp(dx, x_bet.get(), dp_p.get(), x.get(), n_sample);
+    adjust_disp(dy, y_bet.get(), dp_p.get(), y.get(), n_sample);
+    adjust_disp(dpx, xp_bet.get(), dp_p.get(), xp.get(), n_sample);
+    adjust_disp(dpy, yp_bet.get(), dp_p.get(), yp.get(), n_sample);
+
+//    adjust_disp(dx, x_bet, dp_p, x, n_sample);
+//    adjust_disp(dy, y_bet, dp_p, y, n_sample);
+//    adjust_disp(dpx, xp_bet, dp_p, xp, n_sample);
+//    adjust_disp(dpy, yp_bet, dp_p, yp, n_sample);
 
     return 0;
 }
@@ -432,32 +494,55 @@ int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, Cooler 
     double emit_x = ion.emit_x();
     double emit_y = ion.emit_y();
 
-    gaussian_bet_cod(beta_xs, alf_xs, emit_x, x_bet, xp_bet, n_sample);
-    gaussian_bet_cod(beta_ys, alf_ys, emit_y, y_bet, yp_bet, n_sample);
+//    gaussian_bet_cod(beta_xs, alf_xs, emit_x, x_bet, xp_bet, n_sample);
+//    gaussian_bet_cod(beta_ys, alf_ys, emit_y, y_bet, yp_bet, n_sample);
+//
+//    double sigma_p = ion.dp_p();
+//    gaussian_random(n_sample, dp_p, sigma_p);
+//    gaussian_random_adjust(n_sample, dp_p, sigma_p);
+//
+//    //longitudinal sampling
+//    if(ion.bunched()) {
+//        double sigma_s = ion.sigma_s();
+//        gaussian_random(n_sample, ds, sigma_s);
+//        gaussian_random_adjust(n_sample, ds, sigma_s);
+//    }
+//
+//    double dx = cooler.disp_h();
+//    double dy = cooler.disp_v();
+//    double dpx = cooler.der_disp_h();
+//    double dpy = cooler.der_disp_v();
+//    adjust_disp(dx, x_bet, dp_p, x, n_sample);
+//    adjust_disp(dy, y_bet, dp_p, y, n_sample);
+//    adjust_disp(dpx, xp_bet, dp_p, xp, n_sample);
+//    adjust_disp(dpy, yp_bet, dp_p, yp, n_sample);
+
+
+    gaussian_bet_cod(beta_xs, alf_xs, emit_x, x_bet.get(), xp_bet.get(), n_sample);
+    gaussian_bet_cod(beta_ys, alf_ys, emit_y, y_bet.get(), yp_bet.get(), n_sample);
 
     double sigma_p = ion.dp_p();
-    gaussian_random(n_sample, dp_p, sigma_p);
-    gaussian_random_adjust(n_sample, dp_p, sigma_p);
+    gaussian_random(n_sample, dp_p.get(), sigma_p);
+    gaussian_random_adjust(n_sample, dp_p.get(), sigma_p);
 
     //longitudinal sampling
     if(ion.bunched()) {
         double sigma_s = ion.sigma_s();
-        gaussian_random(n_sample, ds, sigma_s);
-        gaussian_random_adjust(n_sample, ds, sigma_s);
+        gaussian_random(n_sample, ds.get(), sigma_s);
+        gaussian_random_adjust(n_sample, ds.get(), sigma_s);
     }
 
     double dx = cooler.disp_h();
     double dy = cooler.disp_v();
     double dpx = cooler.der_disp_h();
     double dpy = cooler.der_disp_v();
-    adjust_disp(dx, x_bet, dp_p, x, n_sample);
-    adjust_disp(dy, y_bet, dp_p, y, n_sample);
-    adjust_disp(dpx, xp_bet, dp_p, xp, n_sample);
-    adjust_disp(dpy, yp_bet, dp_p, yp, n_sample);
+    adjust_disp(dx, x_bet.get(), dp_p.get(), x.get(), n_sample);
+    adjust_disp(dy, y_bet.get(), dp_p.get(), y.get(), n_sample);
+    adjust_disp(dpx, xp_bet.get(), dp_p.get(), xp.get(), n_sample);
+    adjust_disp(dpy, yp_bet.get(), dp_p.get(), yp.get(), n_sample);
 
     return 0;
 }
-
 
 int ion_sample(EcoolRateParas &ecool_paras, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam) {
     switch (ecool_paras.ion_sample()) {
@@ -501,10 +586,12 @@ int electron_density(EcoolRateParas &ecool_paras, Beam &ion, EBeam &ebeam) {
     if(ecool_paras.shift()){
         double cx, cy, cz;
         ion.center(cx, cy, cz);
-        ebeam.shape_->density(x, y, ds, ebeam, ne, ecool_paras.n_sample(), cx, cy, cz);
+//        ebeam.shape_->density(x, y, ds, ebeam, ne, ecool_paras.n_sample(), cx, cy, cz);
+        ebeam.shape_->density(x.get(), y.get(), ds.get(), ebeam, ne.get(), ecool_paras.n_sample(), cx, cy, cz);
     }
     else{
-        ebeam.shape_->density(x, y, ds, ebeam, ne, ecool_paras.n_sample());
+//        ebeam.shape_->density(x, y, ds, ebeam, ne, ecool_paras.n_sample());
+         ebeam.shape_->density(x.get(), y.get(), ds.get(), ebeam, ne.get(), ecool_paras.n_sample());
     }
     return 0;
 }
@@ -575,7 +662,8 @@ int force(unsigned int n_sample, Beam &ion, EBeam &ebeam, Cooler &cooler, ForceP
     force_paras.set_time_cooler(t_cooler);
 
     //Calculate friction force
-    friction_force(ion.charge_number(),n_sample,v_tr, v_long, ne, force_paras, force_x, force_z);
+//    friction_force(ion.charge_number(),n_sample,v_tr, v_long, ne, force_paras, force_x, force_z);
+    friction_force(ion.charge_number(),n_sample,v_tr.get(), v_long.get(), ne.get(), force_paras, force_x.get(), force_z.get());
     return 0;
 }
 
@@ -600,9 +688,12 @@ int original_emittance(EcoolRateParas &ecool_paras, Beam &ion, double &emit_x0, 
         }
         case IonSample::MONTE_CARLO: {
             unsigned int n_sample = ecool_paras.n_sample();
-            emit_x0 = emit(x_bet, xp_bet, n_sample);
-            emit_y0 = emit(y_bet, yp_bet, n_sample);
-            emit_z0 = emit_p(dp_p, n_sample);
+//            emit_x0 = emit(x_bet, xp_bet, n_sample);
+//            emit_y0 = emit(y_bet, yp_bet, n_sample);
+//            emit_z0 = emit_p(dp_p, n_sample);
+            emit_x0 = emit(x_bet.get(), xp_bet.get(), n_sample);
+            emit_y0 = emit(y_bet.get(), yp_bet.get(), n_sample);
+            emit_z0 = emit_p(dp_p.get(), n_sample);
             break;
         }
         default:{
@@ -625,10 +716,14 @@ int original_emittance(EcoolRateParas &ecool_paras, Ring &ring, Beam &ion, doubl
         }
         case IonSample::MONTE_CARLO: {
             unsigned int n_sample = ecool_paras.n_sample();
-            emit_x0 = emit(x_bet, xp_bet, n_sample);
-            emit_y0 = emit(y_bet, yp_bet, n_sample);
-            if (ion.bunched()) emit_z0 = emit_p(dp_p, ds, ring, n_sample);
-            else emit_z0 = emit_p(dp_p, n_sample);
+//            emit_x0 = emit(x_bet, xp_bet, n_sample);
+//            emit_y0 = emit(y_bet, yp_bet, n_sample);
+//            if (ion.bunched()) emit_z0 = emit_p(dp_p, ds, ring, n_sample);
+//            else emit_z0 = emit_p(dp_p, n_sample);
+            emit_x0 = emit(x_bet.get(), xp_bet.get(), n_sample);
+            emit_y0 = emit(y_bet.get(), yp_bet.get(), n_sample);
+            if (ion.bunched()) emit_z0 = emit_p(dp_p.get(), ds.get(), ring, n_sample);
+            else emit_z0 = emit_p(dp_p.get(), n_sample);
             break;
         }
         default:{
@@ -692,10 +787,14 @@ int new_emittance(EcoolRateParas ecool_paras, Beam ion, Ring &ring, Cooler &cool
             break;
         }
         case IonSample::MONTE_CARLO: {
-            emit_x = emit(x_bet, xp_bet, n_sample);
-            emit_y = emit(y_bet, yp_bet, n_sample);
-            if(ion.bunched()) emit_z = emit_p(dp_p, ds, ring, n_sample);
-            else emit_z = emit_p(dp_p, n_sample);
+//            emit_x = emit(x_bet, xp_bet, n_sample);
+//            emit_y = emit(y_bet, yp_bet, n_sample);
+//            if(ion.bunched()) emit_z = emit_p(dp_p, ds, ring, n_sample);
+//            else emit_z = emit_p(dp_p, n_sample);
+            emit_x = emit(x_bet.get(), xp_bet.get(), n_sample);
+            emit_y = emit(y_bet.get(), yp_bet.get(), n_sample);
+            if(ion.bunched()) emit_z = emit_p(dp_p.get(), ds.get(), ring, n_sample);
+            else emit_z = emit_p(dp_p.get(), n_sample);
             break;
         }
         default: {

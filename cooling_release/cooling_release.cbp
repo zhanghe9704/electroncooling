@@ -10,26 +10,32 @@
 				<Option output="bin/Debug/cooling_release" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
-				<Option compiler="gnu_gcc_compiler_x64" />
+				<Option compiler="gnu_gcc_51_x64_compiler" />
 				<Compiler>
 					<Add option="-std=c++0x" />
 					<Add option="-g" />
+					<Add option="-std=c++11" />
 				</Compiler>
+				<Linker>
+					<Add option="-L./ -lmuparser" />
+				</Linker>
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/cooling_release" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
-				<Option compiler="gnu_gcc_compiler_x64" />
-				<Option projectCompilerOptionsRelation="-1" />
-				<Option projectLinkerOptionsRelation="-1" />
+				<Option compiler="gnu_gcc_51_x64_compiler" />
+				<Option parameters="test_input2.txt" />
 				<Option projectIncludeDirsRelation="-1" />
-				<Option projectResourceIncludeDirsRelation="-1" />
 				<Option projectLibDirsRelation="-1" />
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-std=c++0x" />
+					<Add option="-std=c++11" />
 				</Compiler>
+				<Linker>
+					<Add option="-L./ -lmuparser" />
+				</Linker>
 				<MakeCommands>
 					<Build command="" />
 					<CompileFile command="" />
@@ -41,7 +47,9 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-Wall" />
+			<Add option="-std=c++0x" />
+			<Add option="-g" />
+			<Add option="-std=c++11" />
 		</Compiler>
 		<Unit filename="../beam.cc" />
 		<Unit filename="../beam.h" />
@@ -58,8 +66,13 @@
 		<Unit filename="../ibs.cc" />
 		<Unit filename="../ibs.h" />
 		<Unit filename="../main.cc" />
+		<Unit filename="../math_parser.cc" />
+		<Unit filename="../math_parser.h" />
+		<Unit filename="../muParserDLL.h" />
 		<Unit filename="../ring.cc" />
 		<Unit filename="../ring.h" />
+		<Unit filename="../ui.cc" />
+		<Unit filename="../ui.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
