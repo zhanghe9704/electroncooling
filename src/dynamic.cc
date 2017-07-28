@@ -187,9 +187,9 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam) {
             //Apply cooling kicks
             if(dynamic_paras->ecool()) {
                 for(unsigned int i=0; i<n_sample; ++i) {
-                    xp[i] *= exp(force_x[i]*t_cooler*dt*freq/(xp[i]*p0));
-                    yp[i] *= exp(force_y[i]*t_cooler*dt*freq/(yp[i]*p0));
-                    dp_p[i] *= exp(force_z[i]*t_cooler*dt*freq/(dp_p[i]*p0));
+                    xp[i] = xp[i]!=0?xp[i]*exp(force_x[i]*t_cooler*dt*freq/(xp[i]*p0)):xp[i];
+                    yp[i] = yp[i]!=0?yp[i]*exp(force_y[i]*t_cooler*dt*freq/(yp[i]*p0)):yp[i];
+                    dp_p[i] = dp_p[i]!=0?dp_p[i]*exp(force_z[i]*t_cooler*dt*freq/(dp_p[i]*p0)):dp_p[i];
                 }
             }
          }
@@ -207,7 +207,9 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam) {
                 for(unsigned int i=0; i<n_sample; ++i) xp[i] += theta_x*rdn[i];
             }
             else {
-                for(unsigned int i=0; i<n_sample; ++i) xp[i] *= exp(rx_ibs*dt);
+//                for(unsigned int i=0; i<n_sample; ++i) xp[i] *= exp(rx_ibs*dt);
+                auto theta = xp[i]!=0?rx_ibs*dt*ion.emit_x()/twiss_ref->bet_x_/(xp[i]*xp[i]):xp[i];
+                xp[i] *= exp(theta);
             }
 
             if (ry_ibs>0) {   //Why times 2 here?
@@ -216,7 +218,9 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam) {
                 for(unsigned int i=0; i<n_sample; ++i) yp[i] += theta_y*rdn[i];
             }
             else {
-                for(unsigned int i=0; i<n_sample; ++i) yp[i] *= exp(ry_ibs*dt);
+//                for(unsigned int i=0; i<n_sample; ++i) yp[i] *= exp(ry_ibs*dt);
+                auto theta = yp[i]!=0?ry_ibs*dt*ion.emit_y()/twiss_ref->bet_y_/(yp[i]*yp[i]):yp[i];
+                yp[i] *= exp(theta);
             }
 
             if (rs_ibs>0) {
@@ -227,7 +231,11 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam) {
                 for(unsigned int i=0; i<n_sample; ++i) dp_p[i] += theta_s*rdn[i];
             }
             else {
-                for(unsigned int i=0; i<n_sample; ++i) dp_p[i] *= exp(rs_ibs*dt);
+//                for(unsigned int i=0; i<n_sample; ++i) dp_p[i] *= exp(rs_ibs*dt);
+                double kb = 1;
+                if (ion.bunched()) kb = 2;
+                auto theta = dp_p[i]!=0?rs_ibs*dt*kb*ion.dp_p()*ion.dp_p()/(dp_p[i]*dp_p[i]):dp_p[i];
+                dp_p[i] *= exp(theta);
             }
         }
         //New betatron oscillation coordinates

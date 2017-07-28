@@ -671,8 +671,8 @@ int force(unsigned int n_sample, Beam &ion, EBeam &ebeam, Cooler &cooler, ForceP
 int force_distribute(unsigned int n_sample, Beam &ion) {
     double v0 = ion.beta()*k_c;
     for(unsigned int i=0; i<n_sample; ++i){
-        force_y[i] = force_x[i]*yp[i]*v0/v_tr[i];
-        force_x[i] = force_x[i]*xp[i]*v0/v_tr[i];
+        force_y[i] = yp[i]!=0?force_x[i]*yp[i]*v0/v_tr[i]:0;
+        force_x[i] = xp[i]!=0?force_x[i]*xp[i]*v0/v_tr[i]:0;
     }
     return 0;
 }
@@ -737,9 +737,12 @@ int original_emittance(EcoolRateParas &ecool_paras, Ring &ring, Beam &ion, doubl
 int apply_kick(unsigned int n_sample, Beam &ion) {
     double p0 = ion.gamma()*ion.mass()*1e6*k_e*ion.beta()/k_c;
     for(unsigned int i=0; i<n_sample; ++i){
-        xp[i] += force_x[i]*t_cooler/p0;
-        yp[i] += force_y[i]*t_cooler/p0;
-        dp_p[i] += force_z[i]*t_cooler/p0;
+//        xp[i] += force_x[i]*t_cooler/p0;
+//        yp[i] += force_y[i]*t_cooler/p0;
+//        dp_p[i] += force_z[i]*t_cooler/p0;
+        xp[i] = xp[i]!=0?xp[i]*exp(force_x[i]*t_cooler/(p0*xp[i])):xp[i];
+        yp[i] = yp[i]!=0?yp[i]*exp(force_y[i]*t_cooler/(p0*yp[i])):yp[i];
+        dp_p[i] = dp_p[i]!=0?dp_p[i]*exp(force_z[i]*t_cooler/(p0*dp_p[i])):dp_p[i];
     }
     return 0;
 }
