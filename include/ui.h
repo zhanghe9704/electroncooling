@@ -8,6 +8,7 @@
 
 #include "beam.h"
 #include "cooler.h"
+#include "ecooling.h"
 #include "math_parser.h"
 #include "ring.h"
 
@@ -42,6 +43,12 @@ class Set_ibs{
      int nz = 0;
      double log_c = 0;
      double coupling = -1;
+};
+
+class Set_ecool{
+ public:
+     int n_sample = 0;
+     std::string force = "PARKHOMCHUK";
 };
 
 class Set_cooler{
@@ -80,23 +87,29 @@ class Set_e_beam{
 
 class Set_ptrs{
  public:
+     std::vector<double> ibs_rate = {0,0,0};
+     std::vector<double> ecool_rate = {0,0,0};
+     std::vector<double> total_rate = {0,0,0};
      std::unique_ptr<Set_ion> ion_ptr = nullptr;
      std::unique_ptr<Beam> ion_beam = nullptr;
-//     std::shared_ptr<Beam> ion_beam = nullptr;
      std::unique_ptr<Set_ring> ring_ptr = nullptr;
      std::unique_ptr<Lattice> lattice = nullptr;
-//     std::shared_ptr<Lattice> lattice = nullptr;
      std::unique_ptr<Set_ibs> ibs_ptr = nullptr;
      std::unique_ptr<Ring> ring = nullptr;
      std::unique_ptr<Set_cooler> cooler_ptr = nullptr;
      std::unique_ptr<Cooler> cooler = nullptr;
      std::unique_ptr<Set_e_beam_shape> e_beam_shape_ptr = nullptr;
+     std::unique_ptr<EBeamShape> e_beam_shape = nullptr;
      std::unique_ptr<Set_e_beam> e_beam_ptr = nullptr;
      std::unique_ptr<EBeam> e_beam = nullptr;
+     std::unique_ptr<Set_ecool> ecool_ptr = nullptr;
+     std::unique_ptr<EcoolRateParas> ecool_paras = nullptr;
+     std::unique_ptr<ForceParas> force_paras = nullptr;
+
 };
 
 enum class Section{NONE, SECTION_ION, SECTION_RING, SECTION_COOLER, SECTION_RUN, SECTION_IBS, SECTION_SCRATCH,
-    SECTION_E_BEAM_SHAPE, SECTION_E_BEAM};
+    SECTION_E_BEAM_SHAPE, SECTION_E_BEAM, SECTION_ECOOL};
 
 std::string remove_comments(std::string input_line);
 std::string trim_blank(std::string input_line);
@@ -111,4 +124,5 @@ void define_cooler(std::string &str, Set_cooler *cooler_args);
 void create_cooler(Set_ptrs &ptrs);
 void define_e_beam_shape(std::string &str, Set_e_beam_shape *e_beam_shape_args);
 void define_e_beam(std::string &str, Set_e_beam *e_beam_args);
+void set_ecool(std::string &str, Set_ecool *ecool_args);
 #endif // UI_H_INCLUDED

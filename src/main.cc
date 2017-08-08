@@ -76,6 +76,10 @@ int main(int argc, char** argv) {
                                 if (ptrs.e_beam_ptr.get() == nullptr) ptrs.e_beam_ptr.reset(new Set_e_beam());
                                 break;
                             }
+                            case Section::SECTION_ECOOL: {
+                                if (ptrs.ecool_ptr.get() == nullptr) ptrs.ecool_ptr.reset(new Set_ecool());
+                                break;
+                            }
                             case Section::SECTION_RUN: {
                                 break;
                             }
@@ -122,6 +126,10 @@ int main(int argc, char** argv) {
                             }
                             case Section::SECTION_E_BEAM: {
                                 define_e_beam(line, ptrs.e_beam_ptr.get());
+                                break;
+                            }
+                            case Section::SECTION_ECOOL: {
+                                set_ecool(line, ptrs.ecool_ptr.get());
                                 break;
                             }
                             case Section::SECTION_RUN: {

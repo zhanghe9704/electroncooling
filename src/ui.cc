@@ -13,8 +13,8 @@ muParserHandle_t math_parser = NULL;
 //std::vector<std::string> sections = {"SECTION_ION", "SECTION_RING", "SECTION_COOLER"};
 std::vector<string> ION_ARGS = {"CHARGE_NUMBER", "MASS", "KINETIC_ENERGY", "NORM_EMIT_X", "NORM_EMIT_Y",
     "MOMENTUM_SPREAD", "PARTICLE_NUMBER", "RMS_BUNCH_LENGTH"};
-std::vector<string> RUN_COMMANDS = {"CREATE_ION_BEAM", "CREATE_RING", "CREATE_ELEC_BEAM", "CREATE_COOLER",
-    "CALCULATE_IBS"};
+std::vector<string> RUN_COMMANDS = {"CREATE_ION_BEAM", "CREATE_RING", "CREATE_E_BEAM", "CREATE_COOLER",
+    "CALCULATE_IBS", "CALCULATE_ECOOL", "TOTAL_EXPANSION_RATE"};
 std::vector<string> RING_ARGS = {"LATTICE"};
 std::vector<string> IBS_ARGS = {"NU","NV","NZ","LOG_C","COUPLING"};
 std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD", "BET_X", "BET_Y", "DISP_X", "DISP_Y",
@@ -23,6 +23,8 @@ std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD",
 std::vector<string> E_BEAM_SHAPE_ARGS = {"SHAPE", "RADIUS", "CURRENT", "SIMGA_X", "SIGMA_Y", "SIGMA_Z", "LENGTH", "E_NUMBER"};
 std::vector<string> E_BEAM_SHAPE_TYPES = {"DC_UNIFORM", "BUNCHED_GAUSSIAN", "BUNCHED_UNIFORM"};
 std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L"};
+std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
+std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
 
 std::map<std::string, Section> sections{
     {"SECTION_ION",Section::SECTION_ION},
@@ -32,8 +34,9 @@ std::map<std::string, Section> sections{
     {"SECTION_IBS",Section::SECTION_IBS},
     {"SECTION_SCRATCH", Section::SECTION_SCRATCH},
     {"SECTION_E_BEAM_SHAPE", Section::SECTION_E_BEAM_SHAPE},
-    {"SECTION_E_BEAM", Section::SECTION_E_BEAM}
-    };
+    {"SECTION_E_BEAM", Section::SECTION_E_BEAM},
+    {"SECTION_ECOOL", Section::SECTION_ECOOL}
+};
 
 //enum class Section {
 //    SECTION_ION = sections["SECTION_ION"],
@@ -175,6 +178,43 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
     }
 }
 
+void create_e_beam(Set_ptrs &ptrs) {
+    assert(ptrs.e_beam_shape_ptr.get()!=nullptr && "MUST DEFINE THE ELECTRON BEAM SHAPE BEFORE CREATE THE ELECTRON BEAM!");
+    std::string shape = ptrs.e_beam_shape_ptr->shape;
+    assert(std::find(E_BEAM_SHAPE_TYPES.begin(),E_BEAM_SHAPE_TYPES.end(),shape)!=E_BEAM_SHAPE_TYPES.end()
+           && "WRONG ELECTRON BEAM SHAPE!");
+    double gamma = ptrs.e_beam_ptr->gamma;
+    double tmp_tr = ptrs.e_beam_ptr->tmp_tr;
+    double tmp_l = ptrs.e_beam_ptr->tmp_l;
+    assert(gamma>0 && tmp_tr >= 0 && tmp_l >= 0 && "WRONG PARAMETER VALUE FOR ELECTRON BEAM!");
+
+    if (shape == "DC_UNIFORM") {
+        double current = ptrs.e_beam_shape_ptr->current;
+        double radius = ptrs.e_beam_shape_ptr->radius;
+        assert(current >= 0 && radius > 0 && "WRONG PARAMETER VALUE FOR DC_UNIFORM SHAPE");
+        ptrs.e_beam_shape.reset(new UniformCylinder(current, radius));
+        ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
+    }
+    else if(shape == "BUNCHED_GAUSSIAN") {
+        double n = ptrs.e_beam_shape_ptr->n;
+        double sigma_x = ptrs.e_beam_shape_ptr->sigma_x;
+        double sigma_y = ptrs.e_beam_shape_ptr->sigma_y;
+        double sigma_z = ptrs.e_beam_shape_ptr->sigma_z;
+        assert(sigma_x > 0 && sigma_y > 0 && sigma_z > 0 && n > 0 && "WRONG PARAMETER VALUE FOR BUNCHED_GAUSSIAN SHAPE");
+        ptrs.e_beam_shape.reset(new GaussianBunch(n, sigma_x, sigma_y, sigma_z));
+        ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
+    }
+    else if(shape == "BUNCHED_UNIFORM") {
+        double current = ptrs.e_beam_shape_ptr->current;
+        double radius = ptrs.e_beam_shape_ptr->radius;
+        double length = ptrs.e_beam_shape_ptr->length;
+        assert(current >= 0 && radius > 0 && length > 0 && "WRONG PARAMETER VALUE FOR BUNCHED_UNIFORM SHAPE");
+        ptrs.e_beam_shape.reset(new UniformBunch(current, radius, length));
+        ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
+    }
+    std::cout<<"Electron beam created!"<<std::endl;
+}
+
 void define_ion_beam(std::string &str, Set_ion *ion_args){
     assert(ion_args!=nullptr && "SECTION_ION MUST BE CLAIMED!");
     string::size_type idx = str.find("=");
@@ -269,7 +309,7 @@ void create_ring(Set_ptrs &ptrs) {
     ptrs.lattice.reset(new Lattice(lattice_file));
 //    ptrs.lattice = std::make_shared<Lattice>(lattice_file);
 //    std::cout<< ptrs.lattice->betx(0) <<std::endl;
-    assert(ptrs.ion_beam.get()!=nullptr && "MUST DEFINE THE ION BEFORE DEFINE RING!");
+    assert(ptrs.ion_beam.get()!=nullptr && "MUST DEFINE THE ION BEFORE CREATE THE RING!");
     ptrs.ring.reset(new Ring(*ptrs.lattice, *ptrs.ion_beam));
     std::cout<<"Ring created!"<<std::endl;
 }
@@ -301,18 +341,58 @@ void calculate_ibs(Set_ptrs &ptrs) {
     double rx, ry, rz;
 
     if (log_c>0) {
-        assert(nu>0 && nv>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION");
+        assert(nu>0 && nv>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
         IBSParas ibs_paras(nu, nv, log_c);
         ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
     }
     else {
-        assert(nu>0 && nv>0 && nz>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION");
+        assert(nu>0 && nv>0 && nz>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
         IBSParas ibs_paras(nu, nv, nz);
         ibs_rate(*ptrs.lattice, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
     }
+    ptrs.ibs_rate.at(0) = rx;
+    ptrs.ibs_rate.at(1) = ry;
+    ptrs.ibs_rate.at(2) = rz;
     std::cout<<std::scientific;
     std::cout << std::setprecision(3);
     std::cout<<"IBS rate (1/s): "<<rx<<"  "<<ry<<"  "<<rz<<std::endl;
+}
+
+void calculate_ecool(Set_ptrs &ptrs) {
+    assert(ptrs.cooler.get()!=nullptr && "MUST CREATE THE COOLER BEFORE CALCULATE ELECTRON COOLING RATE!");
+    assert(ptrs.e_beam.get()!=nullptr && "MUST CREATE THE ELECTRON BEAM BEFORE CALCULATE ELECTRON COOLING RATE!");
+    int n_sample = ptrs.ecool_ptr->n_sample;
+    assert(n_sample > 0 && "WRONG PARAMETER VALUE FOR ELECTRON COOLING RATE CALCULATION!");
+    EcoolRateParas ecool_paras(n_sample);
+    std::string force_formula = ptrs.ecool_ptr->force;
+    assert(std::find(FRICTION_FORCE_FORMULA.begin(),FRICTION_FORCE_FORMULA.end(),force_formula)!=FRICTION_FORCE_FORMULA.end()
+               && "UNKNOWN FRICTION FORCE FORMULA SECTION_ECOOL!");
+    ForceFormula force;
+    if (force_formula == "PARKHOMCHUK") {
+        force = ForceFormula::PARKHOMCHUK;
+    }
+    ForceParas force_paras(force);
+
+    assert(ptrs.ion_beam.get()!=nullptr && "MUST CREATE THE ION BEAM BEFORE CALCULATE ELECTRON COOLING RATE!");
+    assert(ptrs.ring.get()!=nullptr && "MUST CREATE THE RING BEFORE CALCULATE ELECTRON COOLING RATE!");
+    double rx, ry, rz;
+    ecooling_rate(ecool_paras, force_paras, *ptrs.ion_beam, *ptrs.cooler, *ptrs.e_beam, *ptrs.ring, rx, ry, rz);
+    ptrs.ecool_rate.at(0) = rx;
+    ptrs.ecool_rate.at(1) = ry;
+    ptrs.ecool_rate.at(2) = rz;
+    std::cout<<std::scientific;
+    std::cout << std::setprecision(3);
+    std::cout<<"Electron cooling rate (1/s): "<<rx<<"  "<<ry<<"  "<<rz<<std::endl;
+}
+
+void total_expansion_rate(Set_ptrs &ptrs) {
+    if (std::all_of(ptrs.ibs_rate.begin(), ptrs.ibs_rate.end(), [](double i) { return i==0; })) calculate_ibs(ptrs);
+    if (std::all_of(ptrs.ecool_rate.begin(), ptrs.ecool_rate.end(), [](double i) { return i==0; })) calculate_ecool(ptrs);
+    for(int i=0; i<3; ++i) ptrs.total_rate.at(i) = ptrs.ecool_rate.at(i) + ptrs.ibs_rate.at(i);
+    std::cout<<std::scientific;
+    std::cout << std::setprecision(3);
+    std::cout<<"Total expansion rate (1/s): "<<ptrs.total_rate.at(0)<<"  "<<ptrs.total_rate.at(1)<<"  "
+        <<ptrs.total_rate.at(2)<<std::endl;
 }
 
 void run(std::string &str, Set_ptrs &ptrs) {
@@ -330,6 +410,15 @@ void run(std::string &str, Set_ptrs &ptrs) {
     }
     else if(str == "CREATE_COOLER") {
         create_cooler(ptrs);
+    }
+    else if(str == "CREATE_E_BEAM") {
+        create_e_beam(ptrs);
+    }
+    else if(str == "CALCULATE_ECOOL") {
+        calculate_ecool(ptrs);
+    }
+    else if(str == "TOTAL_EXPANSION_RATE") {
+        total_expansion_rate(ptrs);
     }
 }
 
@@ -435,7 +524,7 @@ void define_cooler(std::string &str, Set_cooler *cooler_args) {
 }
 
 void set_ibs(string &str, Set_ibs *ibs_args) {
-    assert(ibs_args!=nullptr && "SECTION_ibs MUST BE CLAIMED!");
+    assert(ibs_args!=nullptr && "SECTION_IBS MUST BE CLAIMED!");
     string::size_type idx = str.find("=");
     assert(idx!=string::npos && "WRONG COMMAND IN SECTION_IBS!");
     string var = str.substr(0, idx);
@@ -475,6 +564,36 @@ void set_ibs(string &str, Set_ibs *ibs_args) {
         }
     }
 
+}
+
+void set_ecool(string &str, Set_ecool *ecool_args){
+    assert(ecool_args!=nullptr && "SECTION_ECOOL MUST BE CLAIMED!");
+    string::size_type idx = str.find("=");
+    assert(idx!=string::npos && "WRONG COMMAND IN SECTION_ECOOL!");
+    string var = str.substr(0, idx);
+    string val = str.substr(idx+1);
+    var = trim_blank(var);
+    var = trim_tab(var);
+    val = trim_blank(val);
+    val = trim_tab(val);
+    assert(std::find(ECOOL_ARGS.begin(),ECOOL_ARGS.end(),var)!=ECOOL_ARGS.end() && "WRONG COMMANDS IN SECTION_ECOOL!");
+
+    if (var == "FORCE_FORMULA") {
+        ecool_args->force = val;
+    }
+    else {
+        if (math_parser == NULL) {
+            if (var == "SAMPLE_NUMBE") {
+                ecool_args->n_sample = std::stod(val);
+            }
+        }
+        else {
+            mupSetExpr(math_parser, val.c_str());
+            if (var == "SAMPLE_NUMBER") {
+                ecool_args->n_sample = static_cast<double>(mupEval(math_parser));
+            }
+        }
+    }
 }
 
 void parse(std::string &str, muParserHandle_t &math_parser){

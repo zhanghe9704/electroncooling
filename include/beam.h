@@ -3,6 +3,7 @@
 
 #include "constants.h"
 #include <cstdio>
+#include <memory>
 
 class Beam{
     int charge_number_;   //Number of charges
