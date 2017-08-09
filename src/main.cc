@@ -67,11 +67,6 @@ int main(int argc, char** argv) {
                                 if (ptrs.cooler_ptr.get() == nullptr) ptrs.cooler_ptr.reset(new Set_cooler());
                                 break;
                             }
-                            case Section::SECTION_E_BEAM_SHAPE: {
-                                if (ptrs.e_beam_shape_ptr.get() == nullptr)
-                                    ptrs.e_beam_shape_ptr.reset(new Set_e_beam_shape());
-                                break;
-                            }
                             case Section::SECTION_E_BEAM: {
                                 if (ptrs.e_beam_ptr.get() == nullptr) ptrs.e_beam_ptr.reset(new Set_e_beam());
                                 break;
@@ -118,10 +113,6 @@ int main(int argc, char** argv) {
                             }
                             case Section::SECTION_COOLER: {
                                 define_cooler(line, ptrs.cooler_ptr.get());
-                                break;
-                            }
-                            case Section::SECTION_E_BEAM_SHAPE: {
-                                define_e_beam_shape(line, ptrs.e_beam_shape_ptr.get());
                                 break;
                             }
                             case Section::SECTION_E_BEAM: {

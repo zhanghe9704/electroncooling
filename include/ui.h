@@ -66,8 +66,12 @@ class Set_cooler{
      double alpha_y = 0;
 };
 
-class Set_e_beam_shape{
+
+class Set_e_beam{
  public:
+     double gamma = 0;
+     double tmp_tr = -1;
+     double tmp_l = -1;
      int n = 0;
      double sigma_x = 0;
      double sigma_y = 0;
@@ -76,13 +80,6 @@ class Set_e_beam_shape{
      double radius = 0;
      double length = 0;
      std::string shape = "";
-};
-
-class Set_e_beam{
- public:
-     double gamma = 0;
-     double tmp_tr = -1;
-     double tmp_l = -1;
 };
 
 class Set_ptrs{
@@ -98,7 +95,6 @@ class Set_ptrs{
      std::unique_ptr<Ring> ring = nullptr;
      std::unique_ptr<Set_cooler> cooler_ptr = nullptr;
      std::unique_ptr<Cooler> cooler = nullptr;
-     std::unique_ptr<Set_e_beam_shape> e_beam_shape_ptr = nullptr;
      std::unique_ptr<EBeamShape> e_beam_shape = nullptr;
      std::unique_ptr<Set_e_beam> e_beam_ptr = nullptr;
      std::unique_ptr<EBeam> e_beam = nullptr;
@@ -122,7 +118,6 @@ void set_ibs(std::string &str, Set_ibs *ibs_args);
 void parse(std::string &str, muParserHandle_t &math_parser);
 void define_cooler(std::string &str, Set_cooler *cooler_args);
 void create_cooler(Set_ptrs &ptrs);
-void define_e_beam_shape(std::string &str, Set_e_beam_shape *e_beam_shape_args);
 void define_e_beam(std::string &str, Set_e_beam *e_beam_args);
 void set_ecool(std::string &str, Set_ecool *ecool_args);
 #endif // UI_H_INCLUDED

@@ -20,9 +20,11 @@ std::vector<string> IBS_ARGS = {"NU","NV","NZ","LOG_C","COUPLING"};
 std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD", "BET_X", "BET_Y", "DISP_X", "DISP_Y",
     "ALPHA_X", "ALPHA_Y", "DISP_DX", "DISP_DY"};
 //std::vector<string> SCRATCH_COMMANDS = {"PRINT", "LIST_VAR", "LIST_CONST"};
-std::vector<string> E_BEAM_SHAPE_ARGS = {"SHAPE", "RADIUS", "CURRENT", "SIMGA_X", "SIGMA_Y", "SIGMA_Z", "LENGTH", "E_NUMBER"};
+//std::vector<string> E_BEAM_SHAPE_ARGS = {"SHAPE", "RADIUS", "CURRENT", "SIMGA_X", "SIGMA_Y", "SIGMA_Z", "LENGTH", "E_NUMBER"};
 std::vector<string> E_BEAM_SHAPE_TYPES = {"DC_UNIFORM", "BUNCHED_GAUSSIAN", "BUNCHED_UNIFORM"};
-std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L"};
+//std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L"};
+std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L", "SHAPE", "RADIUS", "CURRENT", "SIMGA_X", "SIGMA_Y",
+    "SIGMA_Z", "LENGTH", "E_NUMBER"};
 std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
 std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
 
@@ -33,7 +35,7 @@ std::map<std::string, Section> sections{
     {"SECTION_RUN",Section::SECTION_RUN},
     {"SECTION_IBS",Section::SECTION_IBS},
     {"SECTION_SCRATCH", Section::SECTION_SCRATCH},
-    {"SECTION_E_BEAM_SHAPE", Section::SECTION_E_BEAM_SHAPE},
+//    {"SECTION_E_BEAM_SHAPE", Section::SECTION_E_BEAM_SHAPE},
     {"SECTION_E_BEAM", Section::SECTION_E_BEAM},
     {"SECTION_ECOOL", Section::SECTION_ECOOL}
 };
@@ -73,74 +75,6 @@ void str_toupper(std::string &str) {
     for (auto & c: str) c = toupper(c);
 }
 
-void define_e_beam_shape(string &str, Set_e_beam_shape *e_beam_shape_args) {
-    assert(e_beam_shape_args!=nullptr && "SECTION_E_BEAM_SHAPE MUST BE CLAIMED!");
-    string::size_type idx = str.find("=");
-    assert(idx!=string::npos && "WRONG COMMAND IN SECTION_E_BEAM_SHAPE!");
-    string var = str.substr(0, idx);
-    string val = str.substr(idx+1);
-    var = trim_blank(var);
-    var = trim_tab(var);
-    val = trim_blank(val);
-    val = trim_tab(val);
-    assert(std::find(E_BEAM_SHAPE_ARGS.begin(),E_BEAM_SHAPE_ARGS.end(),var)!=E_BEAM_SHAPE_ARGS.end()
-           && "WRONG COMMANDS IN SECTION_E_BEAM_SHAPE!");
-    if (var == "SHAPE") {
-        assert(std::find(E_BEAM_SHAPE_TYPES.begin(),E_BEAM_SHAPE_TYPES.end(),val)!=E_BEAM_SHAPE_TYPES.end()
-           && "UNDEFINED ELECTRON BEAM SHAPE!");
-        e_beam_shape_args->shape = val;
-    }
-    else {
-        if (math_parser == NULL) {
-            if(var == "E_NUMBER") {
-                e_beam_shape_args->n = std::stoi(val);
-            }
-            else if (var == "RADIUS") {
-                e_beam_shape_args->radius = std::stod(val);
-            }
-            else if (var == "CURRENT") {
-                e_beam_shape_args->current = std::stod(val);
-            }
-            else if (var == "SIMGA_X") {
-                e_beam_shape_args->sigma_x = std::stod(val);
-            }
-            else if (var == "SIGMA_Y") {
-                e_beam_shape_args->sigma_y = std::stod(val);
-            }
-            else if (var == "SIGMA_Z") {
-                e_beam_shape_args->sigma_z = std::stod(val);
-            }
-            else if (var == "LENGTH") {
-                e_beam_shape_args->length = std::stod(val);
-            }
-        }
-        else {
-            mupSetExpr(math_parser, val.c_str());
-            if(var == "E_NUMBER") {
-                e_beam_shape_args->n = static_cast<int>(mupEval(math_parser));
-            }
-            else if (var == "RADIUS") {
-                e_beam_shape_args->radius = mupEval(math_parser);
-            }
-            else if (var == "CURRENT") {
-                e_beam_shape_args->current = mupEval(math_parser);
-            }
-            else if (var == "SIMGA_X") {
-                e_beam_shape_args->sigma_x = mupEval(math_parser);
-            }
-            else if (var == "SIGMA_Y") {
-                e_beam_shape_args->sigma_y = mupEval(math_parser);
-            }
-            else if (var == "SIGMA_Z") {
-                e_beam_shape_args->sigma_z = mupEval(math_parser);
-            }
-            else if (var == "LENGTH") {
-                e_beam_shape_args->length = mupEval(math_parser);
-            }
-        }
-    }
-}
-
 void define_e_beam(string &str, Set_e_beam *e_beam_args) {
     assert(e_beam_args!=nullptr && "SECTION_E_BEAM MUST BE CLAIMED!");
     string::size_type idx = str.find("=");
@@ -153,34 +87,83 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
     val = trim_tab(val);
     assert(std::find(E_BEAM_ARGS.begin(),E_BEAM_ARGS.end(),var)!=E_BEAM_ARGS.end()
            && "WRONG COMMANDS IN SECTION_E_BEAM!");
-    if (math_parser == NULL) {
-        if (var == "GAMMA") {
-            e_beam_args->gamma = std::stod(val);
-        }
-        if (var == "TMP_TR") {
-            e_beam_args->tmp_tr = std::stod(val);
-        }
-        if (var == "TMP_L") {
-            e_beam_args->tmp_l = std::stod(val);
-        }
+    if (var == "SHAPE") {
+        assert(std::find(E_BEAM_SHAPE_TYPES.begin(),E_BEAM_SHAPE_TYPES.end(),val)!=E_BEAM_SHAPE_TYPES.end()
+           && "UNDEFINED ELECTRON BEAM SHAPE!");
+        e_beam_args->shape = val;
     }
     else {
-        mupSetExpr(math_parser, val.c_str());
-        if (var == "GAMMA") {
-            e_beam_args->gamma = mupEval(math_parser);
+        if (math_parser == NULL) {
+            if(var == "E_NUMBER") {
+                e_beam_args->n = std::stoi(val);
+            }
+            else if (var == "RADIUS") {
+                e_beam_args->radius = std::stod(val);
+            }
+            else if (var == "CURRENT") {
+                e_beam_args->current = std::stod(val);
+            }
+            else if (var == "SIMGA_X") {
+                e_beam_args->sigma_x = std::stod(val);
+            }
+            else if (var == "SIGMA_Y") {
+                e_beam_args->sigma_y = std::stod(val);
+            }
+            else if (var == "SIGMA_Z") {
+                e_beam_args->sigma_z = std::stod(val);
+            }
+            else if (var == "LENGTH") {
+                e_beam_args->length = std::stod(val);
+            }
+            else if (var == "GAMMA") {
+                e_beam_args->gamma = std::stod(val);
+            }
+            else if (var == "TMP_TR") {
+                e_beam_args->tmp_tr = std::stod(val);
+            }
+            else if (var == "TMP_L") {
+                e_beam_args->tmp_l = std::stod(val);
+            }
         }
-        if (var == "TMP_TR") {
-            e_beam_args->tmp_tr = mupEval(math_parser);
-        }
-        if (var == "TMP_L") {
-            e_beam_args->tmp_l = mupEval(math_parser);
+        else {
+            mupSetExpr(math_parser, val.c_str());
+            if(var == "E_NUMBER") {
+                e_beam_args->n = static_cast<int>(mupEval(math_parser));
+            }
+            else if (var == "RADIUS") {
+                e_beam_args->radius = mupEval(math_parser);
+            }
+            else if (var == "CURRENT") {
+                e_beam_args->current = mupEval(math_parser);
+            }
+            else if (var == "SIMGA_X") {
+                e_beam_args->sigma_x = mupEval(math_parser);
+            }
+            else if (var == "SIGMA_Y") {
+                e_beam_args->sigma_y = mupEval(math_parser);
+            }
+            else if (var == "SIGMA_Z") {
+                e_beam_args->sigma_z = mupEval(math_parser);
+            }
+            else if (var == "LENGTH") {
+                e_beam_args->length = mupEval(math_parser);
+            }
+            else if (var == "GAMMA") {
+                e_beam_args->gamma = mupEval(math_parser);
+            }
+            else if (var == "TMP_TR") {
+                e_beam_args->tmp_tr = mupEval(math_parser);
+            }
+            else if (var == "TMP_L") {
+                e_beam_args->tmp_l = mupEval(math_parser);
+            }
         }
     }
 }
 
 void create_e_beam(Set_ptrs &ptrs) {
-    assert(ptrs.e_beam_shape_ptr.get()!=nullptr && "MUST DEFINE THE ELECTRON BEAM SHAPE BEFORE CREATE THE ELECTRON BEAM!");
-    std::string shape = ptrs.e_beam_shape_ptr->shape;
+    assert(ptrs.e_beam_ptr.get()!=nullptr && "MUST DEFINE THE ELECTRON BEAM BEFORE CREATE THE ELECTRON BEAM!");
+    std::string shape = ptrs.e_beam_ptr->shape;
     assert(std::find(E_BEAM_SHAPE_TYPES.begin(),E_BEAM_SHAPE_TYPES.end(),shape)!=E_BEAM_SHAPE_TYPES.end()
            && "WRONG ELECTRON BEAM SHAPE!");
     double gamma = ptrs.e_beam_ptr->gamma;
@@ -189,25 +172,25 @@ void create_e_beam(Set_ptrs &ptrs) {
     assert(gamma>0 && tmp_tr >= 0 && tmp_l >= 0 && "WRONG PARAMETER VALUE FOR ELECTRON BEAM!");
 
     if (shape == "DC_UNIFORM") {
-        double current = ptrs.e_beam_shape_ptr->current;
-        double radius = ptrs.e_beam_shape_ptr->radius;
+        double current = ptrs.e_beam_ptr->current;
+        double radius = ptrs.e_beam_ptr->radius;
         assert(current >= 0 && radius > 0 && "WRONG PARAMETER VALUE FOR DC_UNIFORM SHAPE");
         ptrs.e_beam_shape.reset(new UniformCylinder(current, radius));
         ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
     }
     else if(shape == "BUNCHED_GAUSSIAN") {
-        double n = ptrs.e_beam_shape_ptr->n;
-        double sigma_x = ptrs.e_beam_shape_ptr->sigma_x;
-        double sigma_y = ptrs.e_beam_shape_ptr->sigma_y;
-        double sigma_z = ptrs.e_beam_shape_ptr->sigma_z;
+        double n = ptrs.e_beam_ptr->n;
+        double sigma_x = ptrs.e_beam_ptr->sigma_x;
+        double sigma_y = ptrs.e_beam_ptr->sigma_y;
+        double sigma_z = ptrs.e_beam_ptr->sigma_z;
         assert(sigma_x > 0 && sigma_y > 0 && sigma_z > 0 && n > 0 && "WRONG PARAMETER VALUE FOR BUNCHED_GAUSSIAN SHAPE");
         ptrs.e_beam_shape.reset(new GaussianBunch(n, sigma_x, sigma_y, sigma_z));
         ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
     }
     else if(shape == "BUNCHED_UNIFORM") {
-        double current = ptrs.e_beam_shape_ptr->current;
-        double radius = ptrs.e_beam_shape_ptr->radius;
-        double length = ptrs.e_beam_shape_ptr->length;
+        double current = ptrs.e_beam_ptr->current;
+        double radius = ptrs.e_beam_ptr->radius;
+        double length = ptrs.e_beam_ptr->length;
         assert(current >= 0 && radius > 0 && length > 0 && "WRONG PARAMETER VALUE FOR BUNCHED_UNIFORM SHAPE");
         ptrs.e_beam_shape.reset(new UniformBunch(current, radius, length));
         ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
