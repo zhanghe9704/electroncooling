@@ -9,12 +9,18 @@
 #include "ibs.h"
 
 using std::string;
+
+extern DynamicParas *dynamic_paras;
+extern IBSParas *ibs_paras;
+extern EcoolRateParas *ecool_paras;
+extern ForceParas *force_paras;
+
 muParserHandle_t math_parser = NULL;
 //std::vector<std::string> sections = {"SECTION_ION", "SECTION_RING", "SECTION_COOLER"};
 std::vector<string> ION_ARGS = {"CHARGE_NUMBER", "MASS", "KINETIC_ENERGY", "NORM_EMIT_X", "NORM_EMIT_Y",
     "MOMENTUM_SPREAD", "PARTICLE_NUMBER", "RMS_BUNCH_LENGTH"};
 std::vector<string> RUN_COMMANDS = {"CREATE_ION_BEAM", "CREATE_RING", "CREATE_E_BEAM", "CREATE_COOLER",
-    "CALCULATE_IBS", "CALCULATE_ECOOL", "TOTAL_EXPANSION_RATE"};
+    "CALCULATE_IBS", "CALCULATE_ECOOL", "TOTAL_EXPANSION_RATE", "RUN_SIMULATION"};
 std::vector<string> RING_ARGS = {"LATTICE"};
 std::vector<string> IBS_ARGS = {"NU","NV","NZ","LOG_C","COUPLING"};
 std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD", "BET_X", "BET_Y", "DISP_X", "DISP_Y",
@@ -27,6 +33,10 @@ std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L", "SHAPE", "RADIUS"
     "SIGMA_Z", "LENGTH", "E_NUMBER"};
 std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
 std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
+std::vector<string> SIMULATION_ARGS = {"TIME", "STEP_NUMBER", "SAMPLE_NUMBER", "IBS", "E_COOL", "OUTPUT_INTERVAL",
+    "SAVE_PARTICLE_INTERVAL", "OUTPUT_FILE", "MODEL", "REF_BET_X", "REF_BET_Y", "REF_ALF_X", "REF_ALF_Y",
+    "REF_DISP_X", "REF_DISP_Y", "REF_DISP_DX", "REF_DISP_DY"};
+std::vector<string> DYNAMIC_VALUE = {"RMS", "MODEL_BEAM"};
 
 std::map<std::string, Section> sections{
     {"SECTION_ION",Section::SECTION_ION},
@@ -35,16 +45,10 @@ std::map<std::string, Section> sections{
     {"SECTION_RUN",Section::SECTION_RUN},
     {"SECTION_IBS",Section::SECTION_IBS},
     {"SECTION_SCRATCH", Section::SECTION_SCRATCH},
-//    {"SECTION_E_BEAM_SHAPE", Section::SECTION_E_BEAM_SHAPE},
     {"SECTION_E_BEAM", Section::SECTION_E_BEAM},
-    {"SECTION_ECOOL", Section::SECTION_ECOOL}
+    {"SECTION_ECOOL", Section::SECTION_ECOOL},
+    {"SECTION_SIMULATION",Section::SECTION_SIMULATION}
 };
-
-//enum class Section {
-//    SECTION_ION = sections["SECTION_ION"],
-//    SECTION_RING = sections["SECTION_RING"],
-//    SECTION_COOLER = sections["SECTION_COOLER"]
-//    };
 
 // Remove everything from the first "#" in the string
 std::string remove_comments(std::string input_line) {
@@ -321,16 +325,19 @@ void calculate_ibs(Set_ptrs &ptrs) {
     int nv = ptrs.ibs_ptr->nv;
     int nz = ptrs.ibs_ptr->nz;
     double log_c = ptrs.ibs_ptr->log_c;
+    double k = ptrs.ibs_ptr->coupling;
     double rx, ry, rz;
 
     if (log_c>0) {
         assert(nu>0 && nv>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
         IBSParas ibs_paras(nu, nv, log_c);
+        if (k>0) ibs_paras.set_k(k);
         ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
     }
     else {
         assert(nu>0 && nv>0 && nz>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
         IBSParas ibs_paras(nu, nv, nz);
+        if (k>0) ibs_paras.set_k(k);
         ibs_rate(*ptrs.lattice, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
     }
     ptrs.ibs_rate.at(0) = rx;
@@ -378,6 +385,75 @@ void total_expansion_rate(Set_ptrs &ptrs) {
         <<ptrs.total_rate.at(2)<<std::endl;
 }
 
+void run_simulation(Set_ptrs &ptrs) {
+    bool ibs = ptrs.dynamic_ptr->ibs;
+    bool ecool = ptrs.dynamic_ptr->ecool;
+    double t = ptrs.dynamic_ptr->time;
+    int n_step = ptrs.dynamic_ptr->n_step;
+    int n_sample = ptrs.dynamic_ptr->n_sample;
+    int output_intvl = ptrs.dynamic_ptr->output_intvl;
+    int save_ptcl_intvl = ptrs.dynamic_ptr->save_ptcl_intvl;
+
+    assert(t>0 && n_step>0 && n_sample>0 && output_intvl>0 && "WRONG PARAMETERS FOR SIMULAITON");
+    dynamic_paras = new DynamicParas(t, n_step, ibs, ecool);
+    dynamic_paras->set_model(ptrs.dynamic_ptr->model);
+    dynamic_paras->set_n_sample(n_sample);
+    if (output_intvl>1) dynamic_paras->set_output_intvl(output_intvl);
+    if (save_ptcl_intvl>0) dynamic_paras->set_ion_save(save_ptcl_intvl);
+    dynamic_paras->set_model(ptrs.dynamic_ptr->model);
+    dynamic_paras->set_output_file(ptrs.dynamic_ptr->filename);
+
+    assert(ptrs.ring.get()!=nullptr && "MUST CREATE THE RING BEFORE SIMULATION!");
+    if (ecool) {
+        assert(ptrs.e_beam.get()!=nullptr && "NEED TO CREATE THE E_BEAM BEFORE SIMULATION!");
+        assert(ptrs.cooler.get()!=nullptr && "NEED TO CREATE THE COOLER BEFORE SIMULATION!");
+//        n_sample = ptrs.ecool_ptr->n_sample;
+        assert(n_sample > 0 && "WRONG PARAMETER VALUE FOR ELECTRON COOLING RATE CALCULATION!");
+        ecool_paras = new EcoolRateParas(n_sample);
+        std::string force_formula = ptrs.ecool_ptr->force;
+        assert(std::find(FRICTION_FORCE_FORMULA.begin(),FRICTION_FORCE_FORMULA.end(),force_formula)!=FRICTION_FORCE_FORMULA.end()
+                   && "UNKNOWN FRICTION FORCE FORMULA SECTION_ECOOL!");
+        ForceFormula force;
+        if (force_formula == "PARKHOMCHUK") {
+            force = ForceFormula::PARKHOMCHUK;
+        }
+        force_paras = new ForceParas(force);
+    }
+
+    if(ibs) {
+        int nu = ptrs.ibs_ptr->nu;
+        int nv = ptrs.ibs_ptr->nv;
+        int nz = ptrs.ibs_ptr->nz;
+        double log_c = ptrs.ibs_ptr->log_c;
+        double k = ptrs.ibs_ptr->coupling;
+        double rx, ry, rz;
+
+        if (log_c>0) {
+            assert(nu>0 && nv>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
+            ibs_paras = new IBSParas(nu, nv, log_c);
+        }
+        else {
+            assert(nu>0 && nv>0 && nz>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
+            ibs_paras = new IBSParas(nu, nv, nz);
+        }
+        if (k>0) ibs_paras->set_k(k);
+    }
+
+    if (ibs && !ecool && dynamic_paras->model()==DynamicModel::MODEL_BEAM) {
+        assert(ptrs.dynamic_ptr->ref_bet_x>0 && ptrs.dynamic_ptr->ref_bet_y>0 && "WRONG VALUE FOR REFERENCE TWISS PARAMETERS");
+        dynamic_paras->twiss_ref.bet_x = ptrs.dynamic_ptr->ref_bet_x;
+        dynamic_paras->twiss_ref.bet_y = ptrs.dynamic_ptr->ref_bet_y;
+        dynamic_paras->twiss_ref.alf_x = ptrs.dynamic_ptr->ref_alf_x;
+        dynamic_paras->twiss_ref.alf_y = ptrs.dynamic_ptr->ref_alf_y;
+        dynamic_paras->twiss_ref.disp_x = ptrs.dynamic_ptr->ref_disp_x;
+        dynamic_paras->twiss_ref.disp_y = ptrs.dynamic_ptr->ref_disp_y;
+        dynamic_paras->twiss_ref.disp_dx = ptrs.dynamic_ptr->ref_disp_dx;
+        dynamic_paras->twiss_ref.disp_dy = ptrs.dynamic_ptr->ref_disp_dy;
+    }
+
+    dynamic(*ptrs.ion_beam, *ptrs.cooler, *ptrs.e_beam, *ptrs.ring);
+}
+
 void run(std::string &str, Set_ptrs &ptrs) {
     str = trim_blank(str);
     str = trim_tab(str);
@@ -403,6 +479,15 @@ void run(std::string &str, Set_ptrs &ptrs) {
     else if(str == "TOTAL_EXPANSION_RATE") {
         total_expansion_rate(ptrs);
     }
+    else if(str == "RUN_SIMULATION") {
+        run_simulation(ptrs);
+    }
+}
+
+void set_section_run(Set_ptrs &ptrs) {
+    std::fill(ptrs.ibs_rate.begin(), ptrs.ibs_rate.end(), 0);
+    std::fill(ptrs.ecool_rate.begin(), ptrs.ecool_rate.end(), 0);
+    std::fill(ptrs.total_rate.begin(), ptrs.total_rate.end(), 0);
 }
 
 void define_ring(string &str, Set_ring *ring_args) {
@@ -547,6 +632,125 @@ void set_ibs(string &str, Set_ibs *ibs_args) {
         }
     }
 
+}
+
+
+
+void set_simulation(string &str, Set_dynamic *dynamic_args) {
+    assert(dynamic_args!=nullptr && "SECTION_SIMULATION MUST BE CLAIMED!");
+    string::size_type idx = str.find("=");
+    assert(idx!=string::npos && "WRONG COMMAND IN SECTION_SIMULATION!");
+    string var = str.substr(0, idx);
+    string val = str.substr(idx+1);
+    var = trim_blank(var);
+    var = trim_tab(var);
+    val = trim_blank(val);
+    val = trim_tab(val);
+    assert(std::find(SIMULATION_ARGS.begin(),SIMULATION_ARGS.end(),var)!=SIMULATION_ARGS.end() && "WRONG COMMANDS IN SECTION_SIMULATION!");
+
+    if (var == "MODEL") {
+        if (val == "RMS") dynamic_args->model = DynamicModel::RMS;
+        else if(val == "MODEL_BEAM") dynamic_args->model = DynamicModel::MODEL_BEAM;
+        else assert("DYNAMIC MODEL NOT SUPPORTED IN SIMULATION!");
+    }
+    else if (var == "OUTPUT_FILE") {
+        dynamic_args->filename = val;
+    }
+    else if (var == "IBS" ) {
+        if (val == "ON") dynamic_args->ibs = true;
+        else if (val == "OFF") dynamic_args->ibs = false;
+        else assert("WRONG VALUE IN SECTION_SIMULATION!");
+    }
+    else if (var == "E_COOL") {
+        if (val == "ON") dynamic_args->ecool = true;
+        else if (val == "OFF") dynamic_args->ecool = false;
+        else assert("WRONG VALUE IN SECTION_SIMULATION!");
+    }
+    else {
+        if (math_parser == NULL) {
+            if (var == "TIME") {
+                dynamic_args->time = std::stod(val);
+            }
+            else if (var == "STEP_NUMBER") {
+                dynamic_args->n_step = std::stoi(val);
+            }
+            else if (var == "SAMPLE_NUMBER") {
+                dynamic_args->n_sample = std::stoi(val);
+            }
+            else if (var == "OUTPUT_INTERVAL") {
+                dynamic_args->output_intvl = std::stoi(val);
+            }
+            else if (var == "SAVE_PARTICLE_INTERVAL") {
+                dynamic_args->save_ptcl_intvl = std::stoi(val);
+            }
+            else if (var == "REF_BET_X") {
+                dynamic_args->ref_bet_x = std::stod(val);
+            }
+            else if (var == "REF_BET_Y") {
+                dynamic_args->ref_bet_y = std::stod(val);
+            }
+            else if (var == "REF_ALF_X") {
+                dynamic_args->ref_alf_x = std::stod(val);
+            }
+            else if (var == "REF_ALF_Y") {
+                dynamic_args->ref_alf_y = std::stod(val);
+            }
+            else if (var == "REF_DISP_X") {
+                dynamic_args->ref_disp_x = std::stod(val);
+            }
+            else if (var == "REF_DISP_Y") {
+                dynamic_args->ref_disp_y = std::stod(val);
+            }
+            else if (var == "REF_DISP_DX") {
+                dynamic_args->ref_disp_dx = std::stod(val);
+            }
+            else if (var == "REF_DISP_DY") {
+                dynamic_args->ref_disp_dy = std::stod(val);
+            }
+        }
+        else {
+            mupSetExpr(math_parser, val.c_str());
+            if (var == "TIME") {
+                dynamic_args->time = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "STEP_NUMBER") {
+                dynamic_args->n_step = static_cast<int>(mupEval(math_parser));
+            }
+            else if (var == "SAMPLE_NUMBER") {
+                dynamic_args->n_sample = static_cast<int>(mupEval(math_parser));
+            }
+            else if (var == "OUTPUT_INTERVAL") {
+                dynamic_args->output_intvl = static_cast<int>(mupEval(math_parser));
+            }
+            else if (var == "SAVE_PARTICLE_INTERVAL") {
+                dynamic_args->save_ptcl_intvl = static_cast<int>(mupEval(math_parser));
+            }
+            else if (var == "REF_BET_X") {
+                dynamic_args->ref_bet_x = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "REF_BET_Y") {
+                dynamic_args->ref_bet_y = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "REF_ALF_X") {
+                dynamic_args->ref_alf_x = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "REF_ALF_Y") {
+                dynamic_args->ref_alf_y = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "REF_DISP_X") {
+                dynamic_args->ref_disp_x = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "REF_DISP_Y") {
+                dynamic_args->ref_disp_y = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "REF_DISP_DX") {
+                dynamic_args->ref_disp_dx = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "REF_DISP_DY") {
+                dynamic_args->ref_disp_dy = static_cast<double>(mupEval(math_parser));
+            }
+        }
+    }
 }
 
 void set_ecool(string &str, Set_ecool *ecool_args){

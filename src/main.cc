@@ -16,8 +16,8 @@ extern DynamicParas * dynamic_paras;
 extern IBSParas * ibs_paras;
 extern EcoolRateParas * ecool_paras;
 extern ForceParas * force_paras;
-extern Twiss * twiss_ref;
-extern int n_ion_model;
+//extern std::unique_ptr<Twiss> twiss_ref;
+//extern int n_ion_model;
 
 extern std::map<std::string, Section> sections;
 extern muParserHandle_t math_parser;
@@ -75,7 +75,12 @@ int main(int argc, char** argv) {
                                 if (ptrs.ecool_ptr.get() == nullptr) ptrs.ecool_ptr.reset(new Set_ecool());
                                 break;
                             }
+                            case Section::SECTION_SIMULATION: {
+                                if (ptrs.dynamic_ptr.get() == nullptr) ptrs.dynamic_ptr.reset(new Set_dynamic());
+                                break;
+                            }
                             case Section::SECTION_RUN: {
+                                set_section_run(ptrs);
                                 break;
                             }
                             case Section::SECTION_SCRATCH: {
@@ -121,6 +126,10 @@ int main(int argc, char** argv) {
                             }
                             case Section::SECTION_ECOOL: {
                                 set_ecool(line, ptrs.ecool_ptr.get());
+                                break;
+                            }
+                            case Section::SECTION_SIMULATION: {
+                                set_simulation(line, ptrs.dynamic_ptr.get());
                                 break;
                             }
                             case Section::SECTION_RUN: {
@@ -395,13 +404,16 @@ int main(int argc, char** argv) {
 
                 dynamic_paras = new DynamicParas(3600, 360, true, false);
 
-                char file[100] = "test_dynamic_ibs.txt";
-                std::ofstream outfile;
-                outfile.open(file);
+//                char file[100] = "test_dynamic_ibs.txt";
+//                std::ofstream outfile;
+//                outfile.open(file);
                 Cooler *cooler=nullptr;
                 EBeam *e_beam=nullptr;
-                dynamic(p_beam, *cooler, *e_beam, ring, outfile);
-                outfile.close();
+//                dynamic(p_beam, *cooler, *e_beam, ring, outfile);
+//                outfile.close();
+
+                dynamic_paras->set_output_file("test_dynamic_ibs.txt");
+                dynamic(p_beam, *cooler, *e_beam, ring);
                 break;
             }
             case Test::DYNAMICECOOL: {
@@ -457,11 +469,14 @@ int main(int argc, char** argv) {
                 dynamic_paras = new DynamicParas(60, 120, false, true);
                 dynamic_paras->set_model(DynamicModel::MODEL_BEAM);
 
-                char file[100] = "test_dynamic_ecool_DC_model_beam.txt";
-                std::ofstream outfile;
-                outfile.open(file);
-                dynamic(p_beam, cooler, e_beam, ring, outfile);
-                outfile.close();
+//                char file[100] = "test_dynamic_ecool_DC_model_beam.txt";
+//                std::ofstream outfile;
+//                outfile.open(file);
+//                dynamic(p_beam, cooler, e_beam, ring, outfile);
+//                outfile.close();
+
+                dynamic_paras->set_output_file("test_dynamic_ecool_DC_model_beam.txt");
+                dynamic(p_beam, cooler, e_beam, ring);
 
                 break;
             }
@@ -570,7 +585,7 @@ int main(int argc, char** argv) {
     //            end_ibs();
                 std::cout<<"Total rate: [1/s] "<<rx_ibs+rate_x<<' '<<ry_ibs+rate_y<<' '<<rz_ibs+rate_s<<std::endl<<std::endl;
 
-                return 0;
+//                return 0;
 
                 //define dynamic simulation
                 double t = 1200*2;
@@ -578,22 +593,28 @@ int main(int argc, char** argv) {
                 bool ibs = true;
                 bool ecool = true;
                 dynamic_paras = new DynamicParas(t, n_step, ibs, ecool);
-    //            dynamic_paras->set_model(DynamicModel::MODEL_BEAM);
-                dynamic_paras->set_model(DynamicModel::RMS);
+                dynamic_paras->set_model(DynamicModel::MODEL_BEAM);
+//                dynamic_paras->set_model(DynamicModel::RMS);
 
-                char file[100] = "Collider_100GeV_strong_cooling_baseline_44Ecm_2nC_rms_02_long_cool_compensated.txt";
-                std::ofstream outfile;
-                outfile.open(file);
-    //            Cooler *cooler;
-    //            EBeam *e_beam;
-    //            twiss_ref = new Twiss();
-    //            twiss_ref->bet_x_ = 10;
-    //            twiss_ref->bet_y_ = 10;
-    //            twiss_ref->disp_x_ = 5;
-    //            n_ion_model = 5000;
-    //            dynamic(p_beam, *cooler, *e_beam, ring, outfile);
-                dynamic(p_beam, cooler, e_beam, ring, outfile);
-                outfile.close();
+//                char file[100] = "Collider_100GeV_strong_cooling_baseline_44Ecm_2nC_rms_02_long_cool_compensated.txt";
+//                std::ofstream outfile;
+//                outfile.open(file);
+//                Cooler *cooler;
+//                EBeam *e_beam;
+//                if(twiss_ref.get()==nullptr) twiss_ref.reset(new Twiss());
+//                twiss_ref->bet_x = 10;
+//                twiss_ref->bet_y = 10;
+//                twiss_ref->disp_x = 5;
+                dynamic_paras->twiss_ref.bet_x = 10;
+                dynamic_paras->twiss_ref.bet_y = 10;
+                dynamic_paras->twiss_ref.disp_x = 5;
+//                dynamic_paras->set_n_sample(5000);
+//                dynamic(p_beam, *cooler, *e_beam, ring, outfile);
+//                dynamic(p_beam, cooler, e_beam, ring, outfile);
+//                outfile.close();
+
+                dynamic_paras->set_output_file("Collider_100GeV_strong_cooling_baseline_44Ecm_2nC_rms_02_long_cool_compensated.txt");
+                dynamic(p_beam, cooler, e_beam, ring);
 
                 break;
             }

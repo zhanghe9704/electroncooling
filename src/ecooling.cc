@@ -17,7 +17,7 @@ std::unique_ptr<double []> x_spl, xp_spl, y_spl, yp_spl, ds_spl, dp_p_spl;
 //double *x_spl, *xp_spl, *y_spl, *yp_spl, *ds_spl, *dp_p_spl;
 double t_cooler;
 // model_beam_count <0 : create sample ions;
-int model_beam_count = -1;
+//int model_beam_count = -1;
 // rms_dynamic_count < 0: Initialize and Clean;  = 0: Initialize, no Clean; >=1 no Initialize, no Clean;
 int rms_dynamic_count = -1;
 bool dynamic_flag = false;
@@ -427,10 +427,10 @@ int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, EBeam &
 
 int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, Twiss &twiss){
 
-    double beta_xs = twiss.bet_x_;
-    double beta_ys = twiss.bet_y_;
-    double alf_xs = twiss.alf_x_;
-    double alf_ys = twiss.alf_y_;
+    double beta_xs = twiss.bet_x;
+    double beta_ys = twiss.bet_y;
+    double alf_xs = twiss.alf_x;
+    double alf_ys = twiss.alf_y;
     double emit_x = ion.emit_x();
     double emit_y = ion.emit_y();
 
@@ -468,10 +468,10 @@ int ion_beam_model_MonteCarlo_Gaussian(unsigned int n_sample, Beam &ion, Twiss &
 //        uniform_random_adjust(n_sample, ds);
 //    }
 
-    double dx = twiss.disp_x_;
-    double dy = twiss.disp_y_;
-    double dpx = twiss.disp_dx_;
-    double dpy = twiss.disp_dy_;
+    double dx = twiss.disp_x;
+    double dy = twiss.disp_y;
+    double dpx = twiss.disp_dx;
+    double dpy = twiss.disp_dy;
     adjust_disp(dx, x_bet.get(), dp_p.get(), x.get(), n_sample);
     adjust_disp(dy, y_bet.get(), dp_p.get(), y.get(), n_sample);
     adjust_disp(dpx, xp_bet.get(), dp_p.get(), xp.get(), n_sample);

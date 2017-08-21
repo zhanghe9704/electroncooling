@@ -8,6 +8,7 @@
 
 #include "beam.h"
 #include "cooler.h"
+#include "dynamic.h"
 #include "ecooling.h"
 #include "math_parser.h"
 #include "ring.h"
@@ -18,8 +19,7 @@
 
 
 
-class Set_ion{
- public:
+struct Set_ion{
     int n_charge = 0;
     double mass = 0;
     double k_energy = 0;
@@ -31,13 +31,11 @@ class Set_ion{
 //    bool define_ion_beam = false;
 };
 
-class Set_ring{
- public:
+struct Set_ring{
     std::string lattice_file = "";
 };
 
-class Set_ibs{
- public:
+struct Set_ibs{
      int nu = 0;
      int nv = 0;
      int nz = 0;
@@ -45,14 +43,12 @@ class Set_ibs{
      double coupling = -1;
 };
 
-class Set_ecool{
- public:
+struct Set_ecool{
      int n_sample = 0;
      std::string force = "PARKHOMCHUK";
 };
 
-class Set_cooler{
- public:
+struct Set_cooler{
      double length = 0;
      int section_number = 0;
      double magnetic_field = 0;
@@ -67,8 +63,7 @@ class Set_cooler{
 };
 
 
-class Set_e_beam{
- public:
+struct Set_e_beam{
      double gamma = 0;
      double tmp_tr = -1;
      double tmp_l = -1;
@@ -80,6 +75,26 @@ class Set_e_beam{
      double radius = 0;
      double length = 0;
      std::string shape = "";
+};
+
+struct Set_dynamic{
+    double time = 0;
+    int n_step = 0;
+    int n_sample = 0;
+    bool ibs = true;
+    bool ecool = true;
+    int output_intvl = 1;
+    int save_ptcl_intvl = -1;
+    std::string filename = "output_dynamic.txt";
+    DynamicModel model = DynamicModel::RMS;
+    double ref_bet_x = 0;
+    double ref_bet_y = 0;
+    double ref_alf_x = 0;
+    double ref_alf_y = 0;
+    double ref_disp_x = 0;
+    double ref_disp_y = 0;
+    double ref_disp_dx = 0;
+    double ref_disp_dy = 0;
 };
 
 class Set_ptrs{
@@ -101,11 +116,11 @@ class Set_ptrs{
      std::unique_ptr<Set_ecool> ecool_ptr = nullptr;
      std::unique_ptr<EcoolRateParas> ecool_paras = nullptr;
      std::unique_ptr<ForceParas> force_paras = nullptr;
-
+     std::unique_ptr<Set_dynamic> dynamic_ptr = nullptr;
 };
 
 enum class Section{NONE, SECTION_ION, SECTION_RING, SECTION_COOLER, SECTION_RUN, SECTION_IBS, SECTION_SCRATCH,
-    SECTION_E_BEAM_SHAPE, SECTION_E_BEAM, SECTION_ECOOL};
+    SECTION_E_BEAM_SHAPE, SECTION_E_BEAM, SECTION_ECOOL, SECTION_SIMULATION};
 
 std::string remove_comments(std::string input_line);
 std::string trim_blank(std::string input_line);
@@ -120,4 +135,6 @@ void define_cooler(std::string &str, Set_cooler *cooler_args);
 void create_cooler(Set_ptrs &ptrs);
 void define_e_beam(std::string &str, Set_e_beam *e_beam_args);
 void set_ecool(std::string &str, Set_ecool *ecool_args);
+void set_section_run(Set_ptrs &ptrs);
+void set_simulation(std::string &str, Set_dynamic *dynamic_args);
 #endif // UI_H_INCLUDED

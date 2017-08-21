@@ -25,6 +25,7 @@ public:
     double bunch_separate(){return bunch_separate_;}
     bool shift(){return shift_;}
     int n_long_sample(){return n_long_sample_;}
+    int set_n_sample(int n_sample){n_sample_ = n_sample; return 0;}
     int set_shift(bool b){shift_ = b; return 0;}
     int set_n_tr(unsigned int n_tr){n_tr_ = n_tr; n_sample_=n_tr_*n_tr_*n_long_; return 0;}
     int set_n_long(unsigned int n){n_long_=n; n_sample_=n_tr_*n_tr_*n_long_; return 0;}
@@ -40,15 +41,15 @@ public:
 };
 
 struct Twiss{
-    double bet_x_;
-    double bet_y_;
-    double alf_x_;
-    double alf_y_;
-    double disp_x_;
-    double disp_y_;
-    double disp_dx_;
-    double disp_dy_;
-    Twiss():bet_x_(0),bet_y_(0),alf_x_(0),alf_y_(0),disp_x_(0),disp_y_(0),disp_dx_(0),disp_dy_(0){};
+    double bet_x = 0;
+    double bet_y = 0;
+    double alf_x = 0;
+    double alf_y = 0;
+    double disp_x = 0;
+    double disp_y = 0;
+    double disp_dx = 0;
+    double disp_dy = 0;
+//    Twiss():bet_x_(0),bet_y_(0),alf_x_(0),alf_y_(0),disp_x_(0),disp_y_(0),disp_dx_(0),disp_dy_(0){};
 };
 
 int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &ion, Cooler &cooler, EBeam &ebeam,

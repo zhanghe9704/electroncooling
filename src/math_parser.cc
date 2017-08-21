@@ -144,6 +144,7 @@ void AddConst(muParserHandle_t hParser) {
     mupDefineConst(hParser, "k_pi", k_pi);
     mupDefineConst(hParser, "k_u", k_u);
     mupDefineConst(hParser, "k_me", k_me);
+    mupDefineConst(hParser, "k_ke", k_ke);
 }
 
 //Initialize the math parser environment
