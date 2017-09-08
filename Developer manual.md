@@ -1,4 +1,4 @@
-#Developer manual#
+#JSPEC v. 1.0.0 Developer manual#
 
 ## Environment  ##
 This code is devloped by C\++. Users need to write their own "main" program. To compile the code, please make sure your compiler supports c\++ 11 and  the option for c\++ 11 is turned on. For example, when using GCC, one needs to add "-std=c\++11" into the compiler options. A Code Blocks Project (cbp) file is included in the subfolder cooling_release, and the Code Blocks IDE with a proper compiler can be used to compiler the project. Makefiles for multiple platform can be generated using the tool "cbp2make". 
@@ -65,7 +65,7 @@ Beam p_beam(Z, A, KE, emit_nx0, emit_ny0, dp_p0, N_ptcl);
 ## Define the ring ##
 The class __Lattice__ and the class __Ring__ are provided in the "__ring.h__". 
 
-The TWISS parameters at different position of the machine in MADX tsf format can be read into the class Lattice. The TWISS parameters should be saved in the following sequency: "s, bet_x, alf_x, mu_x, d_x, dp_x, bet_y, alf_y, mu_y, d_y, dp_y". The following code define a class lattice that saves the TWISS parameters:
+The TWISS parameters at different position of the machine in MADX tsf format can be read into the class Lattice. The TWISS parameters should includes: "S", "BETX", "ALFX", "MUX", "DX", "DPX", "BETY", "ALFY", "BETY", "MUY", "DY", and "DPY". The sequence of these TWISS parameters in the tsf file does NOT matter, as long as they are all included. The following code define a class lattice that saves the TWISS parameters:
 ~~~~c++
 //The TWISS parameters are saved in MEICColliderRedesign1IP.tfs
 std::string filename = "MEICColliderRedesign1IP.tfs";  
