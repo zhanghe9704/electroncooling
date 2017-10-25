@@ -336,6 +336,31 @@ void output(double t, std::vector<double> &emit, std::vector<double> &r, bool bu
     outfile<<std::endl;
 }
 
+void save_ions_sdds(int n_sample, string filename) {
+    using std::endl;
+    std::ofstream output_particles;
+    output_particles.open(filename);
+    output_particles<<"SDDS1"<<endl;
+    output_particles<<"! Define colums:"<<endl
+        <<"&column name=x, type=double, units=m, description=NULL, &end"<<endl
+        <<"&column name=xp, type=double, units=NULL, description=NULL, &end"<<endl
+        <<"&column name=y, type=double, units=m, description=NULL, &end"<<endl
+        <<"&column name=yp, type=double, units=NULL, description=NULL, &end"<<endl
+        <<"&column name=ds, type=double, units=m, description=NULL, &end"<<endl
+        <<"&column name=dp/p, type=double, units=NULL, description=NULL, &end"<<endl
+        <<"!Declare ASCII data and end the header"<<endl
+        <<"&data mode=ascii, &end"<<endl
+        <<n_sample<<endl;
+    output_particles.precision(10);
+    output_particles<<std::showpos;
+    output_particles<<std::scientific;
+    for(int i=0; i<n_sample; ++i) {
+        output_particles<<x[i]<<' '<<xp[i]<<' '<<y[i]<<' '<<yp[i]<<' '<<ds[i]<<' '<<dp_p[i]<<std::endl;
+    }
+    output_particles.close();
+}
+
+
 void save_ions(int n_sample, string filename) {
     std::ofstream output_particles;
     output_particles.open(filename);
@@ -347,6 +372,24 @@ void save_ions(int n_sample, string filename) {
         output_particles<<x[i]<<' '<<xp[i]<<' '<<y[i]<<' '<<yp[i]<<' '<<ds[i]<<' '<<dp_p[i]<<std::endl;
     }
     output_particles.close();
+}
+
+
+void output_sddshead(int n, std::ofstream &outfile){
+    using std::endl;
+    outfile<<"SDDS1"<<endl;
+    outfile<<"! Define colums:"<<endl
+        <<"&column name=t, type=double, units=s, description=time, &end"<<endl
+        <<"&column name=emit_x, type=double, units=m*rad, description=\"normalized horizontal emittance\", &end"<<endl
+        <<"&column name=emit_y, type=double, units=m*rad, description=\"normalized vertical emittance\", &end"<<endl
+        <<"&column name=dp/p, type=double, units=NULL, description=\"momentum spread\", &end"<<endl
+        <<"&column name=sigma_s, type=double, units=m, description=\"RMS bunch length\", &end"<<endl
+        <<"&column name=rx, type=double, units=1/s, description=\"horizontal expansion rate\", &end"<<endl
+        <<"&column name=ry, type=double, units=1/s, description=\"vertical expansion rate\", &end"<<endl
+        <<"&column name=rs, type=double, units=1/s, description=\"lonitudinal expansion rate\", &end"<<endl
+        <<"!Declare ASCII data and end the header"<<endl
+        <<"&data mode=ascii, &end"<<endl
+        <<n<<endl;
 }
 
 int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
@@ -399,13 +442,14 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
 
     std::ofstream outfile;
     outfile.open(dynamic_paras->output_file());
-    outfile<<"t (s)              emit_x (m*rad)     emit_y (m*rad)     dp/p               sigma_s (m)        rx (1/s)           ry (1/s)           rz (1/s)"<<std::endl;
+    output_sddshead(n_step+1, outfile);
+//    outfile<<"t (s)              emit_x (m*rad)     emit_y (m*rad)     dp/p               sigma_s (m)        rx (1/s)           ry (1/s)           rz (1/s)"<<std::endl;
     outfile.precision(10);
     outfile<<std::showpos;
     outfile<<std::scientific;
     int output_itvl = dynamic_paras->output_intval();
     for(int i=0; i<n_step+1; ++i) {
-        if (ion_save_itvl>0 && i%ion_save_itvl==0) save_ions(dynamic_paras->n_sample(), "ions"+std::to_string(i)+".txt");
+        if (ion_save_itvl>0 && i%ion_save_itvl==0) save_ions_sdds(dynamic_paras->n_sample(), "ions"+std::to_string(i)+".txt");
         //record
         emit.at(0) = ion.emit_nx();
         emit.at(1) = ion.emit_ny();
@@ -433,7 +477,7 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
         std::cout<<i<<std::endl;
     }
 
-    if (ion_save_itvl>0 && n_step%ion_save_itvl!=0) save_ions(dynamic_paras->n_sample(), "ions"+std::to_string(n_step)+".txt");
+    if (ion_save_itvl>0 && n_step%ion_save_itvl!=0) save_ions_sdds(dynamic_paras->n_sample(), "ions"+std::to_string(n_step)+".txt");
     dynamic_flag = false;
     std::cout<<"Finished dynamic simulation."<<std::endl;
     outfile.close();
