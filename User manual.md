@@ -66,7 +66,7 @@ The third section is the operation section. In the operation section, one can cr
 
 [^footnote1]: The author intended to write this expression in this way in order to emphasize the difference between a scratch variable and a keyword. However, this expression may be confusing. So it is not recommended to use scratch variables with the same name of a keyword. 
 
-### IBS Expansion Rate Calculation###
+### IBS Expansion Rate Calculation
 
 To calculate the IBS expansion rate, one needs to define the ion beam and the ring. Then set the parameters for IBS rate calculation. Finally, in the operation section create the ion beam and the ring, and call the command to calculate the IBS expansion rate. 
 
