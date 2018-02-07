@@ -1,9 +1,9 @@
-# JSPEC v. 1.0.0 Developer manual #
+# JSPEC v. 1.0.0 Developer manual
 
-## Environment  ##
+## Environment 
 This code is devloped by C\++. Users need to write their own "main" program. To compile the code, please make sure your compiler supports c\++ 11 and  the option for c\++ 11 is turned on. For example, when using GCC, one needs to add "-std=c\++11" into the compiler options. A Code Blocks Project (cbp) file is included in the subfolder cooling_release, and the Code Blocks IDE with a proper compiler can be used to compiler the project. Makefiles for multiple platform can be generated using the tool "cbp2make". 
 
-## Constants ##
+## Constants
 The following physical and mathematical constants are defined in "__constants.h__":
 ~~~~c++
 const double k_ke = 8.9875517873681764E9;   //Coulomb's constant, in N*m^2/C^2
@@ -14,7 +14,7 @@ const double k_u = 931.49406121;            //Atomic mass unit, in MeV/c^2
 const double k_me = 0.510998928;            //electron mass, in MeV/c^2
 ~~~~
 
-## Global variables ##
+## Global variables
 
  For intrabeam scattering (IBS) and/or electron cooling dynamic simulations, it is required to use the following variables to save configurations of respective calculations. (Will be explained in the following sections.) The declaration of them, as shown in the code block below, should be included in the main program.  For rate calculation, they can be used, but not required. 
 
@@ -28,7 +28,7 @@ extern Twiss * twiss_ref;
 extern int n_ion_model;		
 ~~~~
 
-## Define the ion beam ##
+## Define the ion beam
 The class __Beam__ is provided in the "__beam.h__". An ion beam can be defined using this class. The user should set value for the following paramters: 
 * charge number of the ion 
 * mass number of the ion 
@@ -62,7 +62,7 @@ Beam p_beam(Z, A, KE, emit_nx0, emit_ny0, dp_p0, N_ptcl);
 
 
 
-## Define the ring ##
+## Define the ring
 The class __Lattice__ and the class __Ring__ are provided in the "__ring.h__". 
 
 The TWISS parameters at different position of the machine in MADX tsf format can be read into the class Lattice. The TWISS parameters should includes: "S", "BETX", "ALFX", "MUX", "DX", "DPX", "BETY", "ALFY", "BETY", "MUY", "DY", and "DPY". The sequence of these TWISS parameters in the tsf file does NOT matter, as long as they are all included. The following code define a class lattice that saves the TWISS parameters:
@@ -117,7 +117,7 @@ std::cout<<"ibs rate: "<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
 
 
 
-## Define the cooler ##
+## Define the cooler
 
 The __Cooler__ class is provide in "cooler.h". The following parameters are required to define an electron cooler: the length of the cooler, the number of coolers, the magnetic field inside the cooler, and the transverse beta functions at the cooler. One can also specifies the dispersion functions, the alpha functions, and the derivative of the dispersion functions at the cooler.  If not set, the default values for them are zeros. 
 
@@ -134,7 +134,7 @@ Cooler cooler(cooler_length,n_section,magnetic_field,beta_h,beta_v,dis_h, dis_v)
 
 
 
-## Define the electron beam ##
+## Define the electron beam
 
 The __EBeamShape__ class in "beam.h" provides an interface for different shapes of the electron beam. Currently the following three shapes have been defined: coasting electron beam with uniform density and cylinder shape, Gaussian bunch, and uniform bunch. (Other shapes can be defined easily as a derived class of __EBeamShape__ too.)  The respective classes for them  are __UniformCylinder__ , __GaussianBunch__ and __UniformBunch__ , all of which are derived classes of __EBeamShape__ .  Users can set values of different parameters for each shape, as follows.
 
@@ -173,7 +173,7 @@ EBeam e_beam(gamma_e, tmp_tr, tmp_long, uniform_cylinder); //Coasting electron b
 
 
 
-## Choose the friction force formula ##
+## Choose the friction force formula
 
 For now, only one formula is provided for friction force calculation, which is the Parkhomchuk formula for magnetized friction force.  Other formulas would be added in future. The user needs to choose the formula to use in electron cooling rate calculation. 
 
@@ -184,7 +184,7 @@ force_paras = new ForceParas(ForceFormula::PARKHOMCHUK);
 
 
 
-## Electron cooling rate calculation ##
+## Electron cooling rate calculation
 
 Two methods, the single-particle method and the Monte-Carlo method, are provided for electron cooling rate calculation, following the terminologies used in BETACOOL. The basic idea and the computation process are the same for the both methods: (1) generate sample ions, (2) calculate the friction force on each sample ion and the momentum change for each of them, (3) calculate the new emittance of the ion bunch, and (4) finally calculate the cooling rate as the emittance change rate. The difference between the two methods lies in the sampling of the ions and the calculation of the emittance.   
 
@@ -259,7 +259,7 @@ double rate_x, rate_y, rate_s; //Electron cooling rate in x, y, and s direction
 ecooling_rate(ecool_rate_paras, force_paras, i_beam, cooler, e_beam, ring, rate_x, rate_y, rate_s);
 ```
 
-## Simulation of the electron cooling process ##
+## Simulation of the electron cooling process
 
 The electron cooling process is simulated in a four-step procedure, which includes:
 
@@ -315,7 +315,7 @@ outfile.close();								//Close the output file
 
 The output file contains the following data in columns: time [s], emittance [m] in x direction, emittance [m] in y direction, momentum spread dp/p, rms bunch length [m] (for bunched ion beam only), expansion rate [1/s] in x direction, expansion rate [1/s] in y direction, and expansion rate [1/s] in longitudinal direction. 
 
-## Sample code ##
+## Sample code
 
 The following is a sample of the "main.cc" file. 
 

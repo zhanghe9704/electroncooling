@@ -85,7 +85,7 @@ section_run
 
 To calculate the total expansion rate, which is the summation of the IBS expansion rate and the electron cooling rate, one can call the command "total_expansion_rate" in section_run. 
 
-### Cooling Rate Calculation###
+### Cooling Rate Calculation
 
 To calculate the cooling rate, one needs to define the ion beam, the ring, the electron beam and the cooler. Then set the parameters for cooling rate calculation. Finally,  in the operation section create all the related elements aforementioned and call the command to calculate the cooling rate. 
 
@@ -110,7 +110,7 @@ section_run
 
 
 
-### Simulation###
+### Simulation
 
 One can simulate the evolution of the ion beam under the IBS effect and/or electron cooling effect during a predetermined time. The emittances, momentum spread, bunch length (for bunched ion beam), and the total expansion rate in all the three dimensions will be outputted into a text file. If desired, the coordinates of all the ion samples can also be saved into files. These parameters are set in section_simulation, and the simulation starts when the command "run_simulation" is called in section_run. 
 
