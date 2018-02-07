@@ -1,4 +1,4 @@
-# Jlab Simulation Package for Electron Cooling#
+# Jlab Simulation Package for Electron Cooling #
 
 ## About JSPEC  ##
 JSPEC is an open source C++ package for numerical simulations on the electron cooling process, including the intrabeam scattering (IBS) effect, developed at [Jefferson Lab (JLab)](http://www.jlab.org). 
@@ -26,6 +26,6 @@ Authors of [**BETACOOL**](http://betacool.jinr.ru/), we learned a lot from BETAC
 
 Authors of [**muParser**](http://beltoforion.de/article.php?a=muparser),  which is used in building the text-base UI. 
 
-## Contact## 
+## Contact ## 
 
 contact the author by hezhang.AT.jlab.org. 
