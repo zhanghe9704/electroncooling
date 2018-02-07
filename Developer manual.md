@@ -1,4 +1,4 @@
-#JSPEC v. 1.0.0 Developer manual#
+# JSPEC v. 1.0.0 Developer manual#
 
 ## Environment  ##
 This code is devloped by C\++. Users need to write their own "main" program. To compile the code, please make sure your compiler supports c\++ 11 and  the option for c\++ 11 is turned on. For example, when using GCC, one needs to add "-std=c\++11" into the compiler options. A Code Blocks Project (cbp) file is included in the subfolder cooling_release, and the Code Blocks IDE with a proper compiler can be used to compiler the project. Makefiles for multiple platform can be generated using the tool "cbp2make". 
