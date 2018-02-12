@@ -56,7 +56,7 @@ public:
         double n_particle);
 };
 
-enum class Shape {UNIFORM_CYLINDER, GAUSSIAN_BUNCH, UNIFORM_BUNCH, GAUSSIAN_CYLINDER};
+enum class Shape {UNIFORM_CYLINDER, GAUSSIAN_BUNCH, UNIFORM_BUNCH, GAUSSIAN_CYLINDER, ELLIPTIC_UNIFORM_BUNCH};
 
 class EBeamShape{
  public:
@@ -120,6 +120,23 @@ public:
     UniformBunch(double current, double radius, double length, double neutralisation=2):current_(current),radius_(radius),
             length_(length), neutralisation_(neutralisation){};
 
+};
+
+class EllipticUniformBunch: public EBeamShape{
+    double current_;
+    double rh_;         //half horizontal axis
+    double rv_;         //half vertical axis
+    double length_;     //bunch length
+    double neutralisation_;
+public:
+    //Calculate the charge density for a given position (x,y,z) in Lab frame.
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n);
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n, double cx, double cy, double cz);
+    Shape shape(){return Shape::ELLIPTIC_UNIFORM_BUNCH;}
+    double length(){return length_;}
+    bool bunched(){return true;}
+    EllipticUniformBunch(double current, double rh, double rv, double length, double neutralisation=2):current_(current),
+            rh_(rh),rv_(rv),neutralisation_(neutralisation){};
 };
 
 class EBeam:public Beam{

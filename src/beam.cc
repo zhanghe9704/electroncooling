@@ -76,8 +76,8 @@ int UniformBunch::density(double *x, double *y, double *z, Beam &ebeam, double *
     double density = current_/(k_pi*radius_*radius_*nq*k_e*ebeam.beta()*k_c);
     memset(ne, 0, n_particle*sizeof(double));
     for(unsigned int i=0; i<n_particle; ++i){
-        if(z[i]<=0.5*length_&&z[i]>=-0.5*length_)
-            if(x[i]*x[i]+y[i]*y[i]<=radius_*radius_) ne[i] = density;
+        if(z[i]<=0.5*length_ && z[i]>=-0.5*length_ && x[i]*x[i]+y[i]*y[i]<=radius_*radius_)
+            ne[i] = density;
     }
     return 0;
 }
@@ -94,12 +94,48 @@ int UniformBunch::density(double *x, double *y, double *z, Beam &ebeam, double *
     cz -= ebeam.center(2);
     memset(ne, 0, n_particle*sizeof(double));
     for(unsigned int i=0; i<n_particle; ++i){
-        if((z[i]+cz)<=0.5*length_&&(z[i]+cz)>=-0.5*length_)
-            if((x[i]+cx)*(x[i]+cx)+(y[i]+cy)*(y[i]+cy)<=radius_*radius_) ne[i] = density;
+        if((z[i]+cz)<=0.5*length_ && (z[i]+cz)>=-0.5*length_ && (x[i]+cx)*(x[i]+cx)+(y[i]+cy)*(y[i]+cy)<=radius_*radius_)
+            ne[i] = density;
     }
     return 0;
 }
 
+
+int EllipticUniformBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle){
+
+    int nq = ebeam.charge_number();
+    if (nq<0) nq *= -1;
+    double density = current_/(k_pi*rh_*rv_*nq*k_e*ebeam.beta()*k_c);
+    memset(ne, 0, n_particle*sizeof(double));
+    double inv_rh2 = 1.0/(rh_*rh_);
+    double inv_rv2 = 1.0/(rv_*rv_);
+    for(unsigned int i=0; i<n_particle; ++i){
+        if(z[i]<=0.5*length_ && z[i]>=-0.5*length_ && inv_rh2*x[i]*x[i]+inv_rv2*y[i]*y[i]<=1)
+            ne[i] = density;
+    }
+    return 0;
+}
+
+int EllipticUniformBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle,
+                                  double cx, double cy, double cz){
+    int nq = ebeam.charge_number();
+    if (nq<0) nq *= -1;
+    double density = current_/(k_pi*rh_*rv_*nq*k_e*ebeam.beta()*k_c);
+
+    //ion_center - electron_center
+    cx -= ebeam.center(0);
+    cy -= ebeam.center(1);
+    cz -= ebeam.center(2);
+    memset(ne, 0, n_particle*sizeof(double));
+    double inv_rh2 = 1.0/(rh_*rh_);
+    double inv_rv2 = 1.0/(rv_*rv_);
+    for(unsigned int i=0; i<n_particle; ++i){
+        if((z[i]+cz)<=0.5*length_ && (z[i]+cz)>=-0.5*length_ &&
+           inv_rh2*(x[i]+cx)*(x[i]+cx)+inv_rv2*(y[i]+cy)*(y[i]+cy)<=1)
+            ne[i] = density;
+    }
+    return 0;
+}
 
 EBeam::EBeam(double gamma, double tmp_tr, double tmp_long, EBeamShape &shape_defined):
     Beam(-1, k_me/k_u, (gamma-1)*k_me, 0, 0, 0, 0),tmp_tr_(tmp_tr),tmp_long_(tmp_long){
