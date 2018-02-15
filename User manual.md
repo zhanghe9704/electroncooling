@@ -176,13 +176,15 @@ section_run
 | gamma    | Lorentz factor gamma for the cooling electron beam |
 | tmp_tr   | Transverse temperature in [eV]           |
 | tmp_l    | Longitudinal temperature in [eV] for the cooling electron beam |
-| shape    | Electron beam shape. Choose from dc_uniform, bunched_gaussian, bunched_uniform. |
-| radius   | Radius of dc_uniform or bunched_uniform electron beam. |
-| current  | Current of dc_uniform or bunched_uniform electron beam. For bunched_uniform beam, set the current as if it is a dc_uniform beam. |
-| length   | Length of the bunched_uniform electron beam |
-| sigma_x  | RMS size in horizontal direction of bunched_gaussian electron beam |
-| sigma_y  | RMS size in vertical direction of bunched_gaussian electron beam |
-| sigma_z  | RMS bunch length of bunched_gaussian electron beam |
+| shape    | Electron beam shape. Choose from dc_uniform, bunched_gaussian, bunched_uniform, bunched_uniform_elliptic. |
+| radius   | Radius of dc_uniform or bunched_uniform electron beam in [m]. |
+| current  | Current of dc_uniform or bunched_uniform electron beam. For bunched_uniform beam, set the current as if it is a dc_uniform beam in [A]. |
+| length   | Length of the bunched_uniform electron beam in [m]. |
+| sigma_x  | RMS size in horizontal direction of bunched_gaussian electron beam in [m]. |
+| sigma_y  | RMS size in vertical direction of bunched_gaussian electron beam in [m]. |
+| sigma_z  | RMS bunch length of bunched_gaussian electron beam in [m]. |
+| rh       | Length of the semi-axis in horizontal direction in [m]. |
+| rv       | Length of the semi-axis in vertical direction in [m]. |
 
 **section_ibs**
 

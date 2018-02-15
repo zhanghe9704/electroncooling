@@ -14,8 +14,8 @@
 				<Option parameters="test_input2.txt" />
 				<Compiler>
 					<Add option="-std=c++0x" />
-					<Add option="-g" />
 					<Add option="-std=c++11" />
+					<Add option="-g" />
 					<Add directory="../src" />
 					<Add directory="../include" />
 				</Compiler>
@@ -36,7 +36,6 @@
 				<Option compiler="gnu_gcc_51_x64_compiler" />
 				<Option parameters="test_input2.txt" />
 				<Compiler>
-					<Add option="-O2" />
 					<Add option="-std=c++0x" />
 					<Add option="-std=c++11" />
 					<Add directory="../src" />
@@ -47,6 +46,7 @@
 					<Add directory="../include" />
 				</ResourceCompiler>
 				<Linker>
+					<Add option="-O3" />
 					<Add option="-lmuparser" />
 					<Add directory="../include" />
 					<Add directory="../lib" />

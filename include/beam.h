@@ -56,7 +56,9 @@ public:
         double n_particle);
 };
 
-enum class Shape {UNIFORM_CYLINDER, GAUSSIAN_BUNCH, UNIFORM_BUNCH, GAUSSIAN_CYLINDER};
+enum class Shape {UNIFORM_CYLINDER, GAUSSIAN_BUNCH, UNIFORM_BUNCH, GAUSSIAN_CYLINDER, ELLIPTIC_UNIFORM_BUNCH};
+
+enum class Velocity {CONST, USER_DEFINE, SPACE_CHARGE}  ;
 
 class EBeamShape{
  public:
@@ -122,11 +124,29 @@ public:
 
 };
 
+class EllipticUniformBunch: public EBeamShape{
+    double current_;
+    double rh_;         //half horizontal axis
+    double rv_;         //half vertical axis
+    double length_;     //bunch length
+    double neutralisation_;
+public:
+    //Calculate the charge density for a given position (x,y,z) in Lab frame.
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n);
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n, double cx, double cy, double cz);
+    Shape shape(){return Shape::ELLIPTIC_UNIFORM_BUNCH;}
+    double length(){return length_;}
+    bool bunched(){return true;}
+    EllipticUniformBunch(double current, double rh, double rv, double length, double neutralisation=2):current_(current),
+            rh_(rh),rv_(rv),length_(length),neutralisation_(neutralisation){};
+};
+
 class EBeam:public Beam{
     double tmp_tr_;            //Transverse temperature, in eV
     double tmp_long_;          //Longitudinal temperature, in eV
     double v_rms_tr_;        //Transverse RMS velocity, in m/s
     double v_rms_long_;      //Longitudinal RMS velocity, in m/s
+    Velocity velocity_ = Velocity::CONST;
 
  public:
     EBeamShape *shape_;            //Shape of the electron beam
@@ -134,6 +154,8 @@ class EBeam:public Beam{
     double tmp_long(){return tmp_long_;}
     double v_rms_tr(){return v_rms_tr_;}
     double v_rms_long(){return v_rms_long_;}
+    int set_velocity(Velocity velocity){velocity_ = velocity; return 0;}
+    Velocity velocity(){return velocity_;}
 
     int emit_nx(){perror("This function is not defined for cooling electron beam"); return 1;}
     int emit_ny(){perror("This function is not defined for cooling electron beam"); return 1;}
