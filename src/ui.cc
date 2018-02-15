@@ -27,10 +27,10 @@ std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD",
     "ALPHA_X", "ALPHA_Y", "DISP_DX", "DISP_DY"};
 //std::vector<string> SCRATCH_COMMANDS = {"PRINT", "LIST_VAR", "LIST_CONST"};
 //std::vector<string> E_BEAM_SHAPE_ARGS = {"SHAPE", "RADIUS", "CURRENT", "SIMGA_X", "SIGMA_Y", "SIGMA_Z", "LENGTH", "E_NUMBER"};
-std::vector<string> E_BEAM_SHAPE_TYPES = {"DC_UNIFORM", "BUNCHED_GAUSSIAN", "BUNCHED_UNIFORM"};
+std::vector<string> E_BEAM_SHAPE_TYPES = {"DC_UNIFORM", "BUNCHED_GAUSSIAN", "BUNCHED_UNIFORM", "BUNCHED_UNIFORM_ELLIPTIC"};
 //std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L"};
 std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L", "SHAPE", "RADIUS", "CURRENT", "SIMGA_X", "SIGMA_Y",
-    "SIGMA_Z", "LENGTH", "E_NUMBER"};
+    "SIGMA_Z", "LENGTH", "E_NUMBER", "RH", "RV"};
 std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
 std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
 std::vector<string> SIMULATION_ARGS = {"TIME", "STEP_NUMBER", "SAMPLE_NUMBER", "IBS", "E_COOL", "OUTPUT_INTERVAL",
@@ -116,6 +116,12 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             else if (var == "SIGMA_Z") {
                 e_beam_args->sigma_z = std::stod(val);
             }
+            else if (var == "RH") {
+                e_beam_args->sigma_x = std::stod(val);
+            }
+            else if (var == "RV") {
+                e_beam_args->sigma_y = std::stod(val);
+            }
             else if (var == "LENGTH") {
                 e_beam_args->length = std::stod(val);
             }
@@ -148,6 +154,12 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             }
             else if (var == "SIGMA_Z") {
                 e_beam_args->sigma_z = mupEval(math_parser);
+            }
+            else if (var == "RH") {
+                e_beam_args->sigma_x = mupEval(math_parser);
+            }
+            else if (var == "RV") {
+                e_beam_args->sigma_y = mupEval(math_parser);
             }
             else if (var == "LENGTH") {
                 e_beam_args->length = mupEval(math_parser);
@@ -197,6 +209,15 @@ void create_e_beam(Set_ptrs &ptrs) {
         double length = ptrs.e_beam_ptr->length;
         assert(current >= 0 && radius > 0 && length > 0 && "WRONG PARAMETER VALUE FOR BUNCHED_UNIFORM SHAPE");
         ptrs.e_beam_shape.reset(new UniformBunch(current, radius, length));
+        ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
+    }
+    else if(shape == "BUNCHED_UNIFORM_ELLIPTIC") {
+        double current = ptrs.e_beam_ptr->current;
+        double rh = ptrs.e_beam_ptr->sigma_x;
+        double rv = ptrs.e_beam_ptr->sigma_y;
+        double length = ptrs.e_beam_ptr->length;
+        assert(current >= 0 && rh > 0 && rv > 0 && length > 0 && "WRONG PARAMETER VALUE FOR BUNCHED_UNIFORM_ELLIPTIC SHAPE");
+        ptrs.e_beam_shape.reset(new EllipticUniformBunch(current, rh, rv, length));
         ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
     }
     std::cout<<"Electron beam created!"<<std::endl;
