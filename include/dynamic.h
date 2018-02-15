@@ -11,7 +11,7 @@
 #include "cooler.h"
 
 using std::string;
-enum class DynamicModel {RMS, MODEL_BEAM, TURN_BY_TURN};
+enum class DynamicModel {RMS, PARTICLE, MODEL_BEAM = PARTICLE, TURN_BY_TURN};
 
 class DynamicParas{
     double time_;

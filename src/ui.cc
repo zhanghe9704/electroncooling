@@ -36,7 +36,7 @@ std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
 std::vector<string> SIMULATION_ARGS = {"TIME", "STEP_NUMBER", "SAMPLE_NUMBER", "IBS", "E_COOL", "OUTPUT_INTERVAL",
     "SAVE_PARTICLE_INTERVAL", "OUTPUT_FILE", "MODEL", "REF_BET_X", "REF_BET_Y", "REF_ALF_X", "REF_ALF_Y",
     "REF_DISP_X", "REF_DISP_Y", "REF_DISP_DX", "REF_DISP_DY"};
-std::vector<string> DYNAMIC_VALUE = {"RMS", "MODEL_BEAM"};
+std::vector<string> DYNAMIC_VALUE = {"RMS", "PARTICLE", "MODEL_BEAM"};
 
 std::map<std::string, Section> sections{
     {"SECTION_ION",Section::SECTION_ION},
@@ -460,7 +460,7 @@ void run_simulation(Set_ptrs &ptrs) {
         if (k>0) ibs_paras->set_k(k);
     }
 
-    if (ibs && !ecool && dynamic_paras->model()==DynamicModel::MODEL_BEAM) {
+    if (ibs && !ecool && dynamic_paras->model()==DynamicModel::PARTICLE) {
         assert(ptrs.dynamic_ptr->ref_bet_x>0 && ptrs.dynamic_ptr->ref_bet_y>0 && "WRONG VALUE FOR REFERENCE TWISS PARAMETERS");
         dynamic_paras->twiss_ref.bet_x = ptrs.dynamic_ptr->ref_bet_x;
         dynamic_paras->twiss_ref.bet_y = ptrs.dynamic_ptr->ref_bet_y;
@@ -672,6 +672,7 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
     if (var == "MODEL") {
         if (val == "RMS") dynamic_args->model = DynamicModel::RMS;
         else if(val == "MODEL_BEAM") dynamic_args->model = DynamicModel::MODEL_BEAM;
+        else if(val == "PARTICLE") dynamic_args->model = DynamicModel::PARTICLE;
         else assert("DYNAMIC MODEL NOT SUPPORTED IN SIMULATION!");
     }
     else if (var == "OUTPUT_FILE") {

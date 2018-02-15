@@ -212,7 +212,7 @@ section_run
 | sample_number          | Number of the sample ions.               |
 | ibs                    | Choose to simulate the IBS effect or not by setting the value as "on" or "off". |
 | e_cool                 | Choose to simulate the electron cooling effect or not by setting the value as "on" or "off". |
-| model                  | "RMS" or "Model_beam" model to choose for the simulation. |
+| model                  | "RMS" or "Particle" model to choose for the simulation. |
 | output_file            | Output file name                         |
 | output_interval        | The interval of steps to write into the output file. Default is one. |
 | save_particle_interval | The interval of steps to save the 6D coordinates of the ions. No saving if the value is less than zero. Default is -1. |
@@ -306,7 +306,7 @@ section_simulation							# Set parameters for simulation
 	sample_number = 100000					# Number of ion samples
 	#save_particle_interval = 100			# Save the coordinates of the ions every 100 steps
 	output_file = simulation_test.txt		# File to save the simulation results
-	model = model_beam						# Select the model used in the simulation
+	model = particle						# Select the model used in the simulation
 section_run						# Operation section
 	run_simulation				# Start simulation
 ```

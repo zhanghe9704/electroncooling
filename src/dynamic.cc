@@ -58,7 +58,8 @@ int clear_record(bool bunched) {
     return 0;
 }
 
-int model_beam_ibs_scratches(int n_sample) {
+//int model_beam_ibs_scratches(int n_sample) {
+int particle_model_ibs_scratches(int n_sample) {
     x_bet.reset(new double[n_sample]);
     xp_bet.reset(new double[n_sample]);
     y_bet.reset(new double[n_sample]);
@@ -96,7 +97,8 @@ int sample_the_ions(Beam &ion, Ring &ring, Cooler &cooler){
         }
         break;
     }
-    case DynamicModel::MODEL_BEAM : {
+//    case DynamicModel::MODEL_BEAM : {}
+    case DynamicModel::PARTICLE : {
 //        int n_sample = n_ion_model;
         int n_sample = dynamic_paras->n_sample();
         if(dynamic_paras->ecool()) {
@@ -107,10 +109,11 @@ int sample_the_ions(Beam &ion, Ring &ring, Cooler &cooler){
         else {
 //            assert(n_ion_model>0&&"The number of the ions should be greater than zero! Define n_ion_model.");
             assert(n_sample>0&&"The number of the ions should be greater than zero! Define n_sample in Dynamic_paras.");
-            model_beam_ibs_scratches(n_sample);
+            particle_model_ibs_scratches(n_sample);
+//            model_beam_ibs_scratches(n_sample);
         }
         assert(dynamic_paras->twiss_ref.bet_x>0&& dynamic_paras->twiss_ref.bet_y>0
-               &&"Need to define the TWISS parameters for the reference point for model beam simulation!" );
+               &&"Need to define the TWISS parameters for the reference point for simulations using the particle model!");
         ion_beam_model_MonteCarlo_Gaussian(n_sample, ion, dynamic_paras->twiss_ref);
 //        rdn = new double[n_sample];
         if (rdn.get() == nullptr) rdn.reset(new double[n_sample]);
@@ -163,7 +166,8 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam, std:
         if(dynamic_paras->ecool()) ion_sample(*ecool_paras, ion, ring, cooler);
         break;
     }
-    case DynamicModel::MODEL_BEAM : {
+//    case DynamicModel::MODEL_BEAM : { }
+    case DynamicModel::PARTICLE : {
 //        unsigned int n_sample = n_ion_model;
         int n_sample = dynamic_paras->n_sample();
         if(dynamic_paras->ecool()) n_sample = ecool_paras->n_sample();
@@ -409,7 +413,7 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
 //    record_config(n_step, ion.bunched());
 
     //Set the twiss parameters for the reference point in model beam simulation
-    if(dynamic_paras->model()==DynamicModel::MODEL_BEAM) {
+    if(dynamic_paras->model()==DynamicModel::PARTICLE || dynamic_paras->model()==DynamicModel::MODEL_BEAM) {
         if(dynamic_paras->ecool()) {
             //set the reference point at the cooler
             dynamic_paras->twiss_ref.bet_x = cooler.beta_h();
