@@ -67,7 +67,7 @@ struct Set_e_beam{
      double gamma = 0;
      double tmp_tr = -1;
      double tmp_l = -1;
-     int n = 0;
+     double n = 0;
      double sigma_x = 0;
      double sigma_y = 0;
      double sigma_z = 0;

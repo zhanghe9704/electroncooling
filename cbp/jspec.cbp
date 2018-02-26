@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gnu_gcc_51_x64_compiler" />
-				<Option parameters="test_input2.txt" />
+				<Option parameters="particle_bunched_both.txt" />
 				<Compiler>
 					<Add option="-std=c++0x" />
 					<Add option="-std=c++11" />
@@ -34,8 +34,9 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gnu_gcc_51_x64_compiler" />
-				<Option parameters="test_input2.txt" />
+				<Option parameters="particle_bunched_both.txt" />
 				<Compiler>
+					<Add option="-O3" />
 					<Add option="-std=c++0x" />
 					<Add option="-std=c++11" />
 					<Add directory="../src" />
@@ -76,6 +77,7 @@
 		<Unit filename="../include/ibs.h" />
 		<Unit filename="../include/math_parser.h" />
 		<Unit filename="../include/muParserDLL.h" />
+		<Unit filename="../include/particle_model.h" />
 		<Unit filename="../include/ring.h" />
 		<Unit filename="../include/ui.h" />
 		<Unit filename="../src/beam.cc" />
@@ -86,6 +88,7 @@
 		<Unit filename="../src/ibs.cc" />
 		<Unit filename="../src/main.cc" />
 		<Unit filename="../src/math_parser.cc" />
+		<Unit filename="../src/particle_model.cc" />
 		<Unit filename="../src/ring.cc" />
 		<Unit filename="../src/ui.cc" />
 		<Extensions>
