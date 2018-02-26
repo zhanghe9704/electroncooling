@@ -209,13 +209,13 @@ section_run
 | ---------------------- | ---------------------------------------- |
 | time                   | Total time to simulate, in [s].          |
 | step_number            | Total number of steps. The time interval of each step is time/step_number. |
-| sample_number          | Number of the sample ions.               |
+| sample_number          | Number of the sample ions. This is only useful when using the Particle model to simulate the IBS expansion process without cooling. |
 | ibs                    | Choose to simulate the IBS effect or not by setting the value as "on" or "off". |
 | e_cool                 | Choose to simulate the electron cooling effect or not by setting the value as "on" or "off". |
 | model                  | "RMS" or "Particle" model to choose for the simulation. |
 | output_file            | Output file name                         |
 | output_interval        | The interval of steps to write into the output file. Default is one. |
-| save_particle_interval | The interval of steps to save the 6D coordinates of the ions. No saving if the value is less than zero. Default is -1. |
+| save_particle_interval | The interval of steps to save the 6D coordinates of the ions. No saving if the value is less than zero. Default is -1. This is only useful when using the Particle model in simulations. |
 | ref_bet_x              | TWISS parameters for the reference point. Only needed when the "model beam" method is selected and the electron cooling effect is not included in the simulation. |
 | ref_bet_y              | Same as above.                           |
 | ref_alf_x              | Same as above.                           |

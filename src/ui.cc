@@ -29,7 +29,7 @@ std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD",
 //std::vector<string> E_BEAM_SHAPE_ARGS = {"SHAPE", "RADIUS", "CURRENT", "SIMGA_X", "SIGMA_Y", "SIGMA_Z", "LENGTH", "E_NUMBER"};
 std::vector<string> E_BEAM_SHAPE_TYPES = {"DC_UNIFORM", "BUNCHED_GAUSSIAN", "BUNCHED_UNIFORM", "BUNCHED_UNIFORM_ELLIPTIC"};
 //std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L"};
-std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L", "SHAPE", "RADIUS", "CURRENT", "SIMGA_X", "SIGMA_Y",
+std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L", "SHAPE", "RADIUS", "CURRENT", "SIGMA_X", "SIGMA_Y",
     "SIGMA_Z", "LENGTH", "E_NUMBER", "RH", "RV"};
 std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
 std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
@@ -99,7 +99,7 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
     else {
         if (math_parser == NULL) {
             if(var == "E_NUMBER") {
-                e_beam_args->n = std::stoi(val);
+                e_beam_args->n = std::stod(val);
             }
             else if (var == "RADIUS") {
                 e_beam_args->radius = std::stod(val);
@@ -138,7 +138,7 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
         else {
             mupSetExpr(math_parser, val.c_str());
             if(var == "E_NUMBER") {
-                e_beam_args->n = static_cast<int>(mupEval(math_parser));
+                e_beam_args->n = mupEval(math_parser);
             }
             else if (var == "RADIUS") {
                 e_beam_args->radius = mupEval(math_parser);
@@ -146,7 +146,7 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             else if (var == "CURRENT") {
                 e_beam_args->current = mupEval(math_parser);
             }
-            else if (var == "SIMGA_X") {
+            else if (var == "SIGMA_X") {
                 e_beam_args->sigma_x = mupEval(math_parser);
             }
             else if (var == "SIGMA_Y") {
@@ -342,6 +342,7 @@ void create_cooler(Set_ptrs &ptrs) {
 
 void calculate_ibs(Set_ptrs &ptrs) {
     assert(ptrs.ring.get()!=nullptr && "MUST CREATE THE RING BEFORE CALCULATE IBS RATE!");
+    assert(ptrs.ibs_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR IBS RATE CALCULATION!");
     int nu = ptrs.ibs_ptr->nu;
     int nv = ptrs.ibs_ptr->nv;
     int nz = ptrs.ibs_ptr->nz;
@@ -372,6 +373,7 @@ void calculate_ibs(Set_ptrs &ptrs) {
 void calculate_ecool(Set_ptrs &ptrs) {
     assert(ptrs.cooler.get()!=nullptr && "MUST CREATE THE COOLER BEFORE CALCULATE ELECTRON COOLING RATE!");
     assert(ptrs.e_beam.get()!=nullptr && "MUST CREATE THE ELECTRON BEAM BEFORE CALCULATE ELECTRON COOLING RATE!");
+    assert(ptrs.ecool_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR ELECTRON COOLING RATE CALCULATION!");
     int n_sample = ptrs.ecool_ptr->n_sample;
     assert(n_sample > 0 && "WRONG PARAMETER VALUE FOR ELECTRON COOLING RATE CALCULATION!");
     EcoolRateParas ecool_paras(n_sample);
@@ -407,6 +409,7 @@ void total_expansion_rate(Set_ptrs &ptrs) {
 }
 
 void run_simulation(Set_ptrs &ptrs) {
+    assert(ptrs.dynamic_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR SIMULATION!");
     bool ibs = ptrs.dynamic_ptr->ibs;
     bool ecool = ptrs.dynamic_ptr->ecool;
     double t = ptrs.dynamic_ptr->time;
@@ -415,7 +418,7 @@ void run_simulation(Set_ptrs &ptrs) {
     int output_intvl = ptrs.dynamic_ptr->output_intvl;
     int save_ptcl_intvl = ptrs.dynamic_ptr->save_ptcl_intvl;
 
-    assert(t>0 && n_step>0 && n_sample>0 && output_intvl>0 && "WRONG PARAMETERS FOR SIMULAITON");
+    assert(t>0 && n_step>0 && output_intvl>0 && "WRONG PARAMETERS FOR SIMULAITON!");
     dynamic_paras = new DynamicParas(t, n_step, ibs, ecool);
     dynamic_paras->set_model(ptrs.dynamic_ptr->model);
     dynamic_paras->set_n_sample(n_sample);
@@ -424,11 +427,15 @@ void run_simulation(Set_ptrs &ptrs) {
     dynamic_paras->set_model(ptrs.dynamic_ptr->model);
     dynamic_paras->set_output_file(ptrs.dynamic_ptr->filename);
 
+    if(dynamic_paras->model()==DynamicModel::PARTICLE && !ecool)
+        assert(n_sample>0 && "SET N_SAMPLE FOR SIMULATION!");
+
     assert(ptrs.ring.get()!=nullptr && "MUST CREATE THE RING BEFORE SIMULATION!");
     if (ecool) {
         assert(ptrs.e_beam.get()!=nullptr && "NEED TO CREATE THE E_BEAM BEFORE SIMULATION!");
         assert(ptrs.cooler.get()!=nullptr && "NEED TO CREATE THE COOLER BEFORE SIMULATION!");
-//        n_sample = ptrs.ecool_ptr->n_sample;
+        assert(ptrs.ecool_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR ELECTRON COOLING RATE CALCULATION!");
+        n_sample = ptrs.ecool_ptr->n_sample;
         assert(n_sample > 0 && "WRONG PARAMETER VALUE FOR ELECTRON COOLING RATE CALCULATION!");
         ecool_paras = new EcoolRateParas(n_sample);
         std::string force_formula = ptrs.ecool_ptr->force;
@@ -442,6 +449,7 @@ void run_simulation(Set_ptrs &ptrs) {
     }
 
     if(ibs) {
+        assert(ptrs.ibs_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR IBS RATE CALCULATION!");
         int nu = ptrs.ibs_ptr->nu;
         int nv = ptrs.ibs_ptr->nv;
         int nz = ptrs.ibs_ptr->nz;

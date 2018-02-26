@@ -26,7 +26,7 @@ extern muParserHandle_t math_parser;
 //extern std::vector<std::string> ion_pars;
 
 
-enum class Test {IBS, ECOOL, BOTH, DYNAMICIBS, DYNAMICECOOL, DYNAMICBOTH};
+enum class Test {IBS, ECOOL, BOTH, DYNAMICIBS, DYNAMICECOOL, DYNAMICBOTH, DYNAMICIBSBUNCHED};
 
 int main(int argc, char** argv) {
 
@@ -37,7 +37,9 @@ int main(int argc, char** argv) {
         Set_ptrs ptrs;
 //        muParserHandle_t hParser = NULL;
 //        Set_ion *ion_ptr = nullptr;
-
+        if (math_parser == NULL) {
+            initialize_parser(math_parser);
+        }
         while (std::getline(input_file,line)) {
             if(!line.empty() && line[line.size()-1] == '\r') line.erase(line.size()-1);
             if (!line.empty()) {
@@ -84,10 +86,9 @@ int main(int argc, char** argv) {
                                 break;
                             }
                             case Section::SECTION_SCRATCH: {
-                                if (math_parser == NULL) {
-//                                        std::cout<< "Initialize math parser!" << std::endl;
-                                    initialize_parser(math_parser);
-                                }
+//                                if (math_parser == NULL) {
+//                                    initialize_parser(math_parser);
+//                                }
                                 break;
                             }
                             default : {
@@ -160,7 +161,7 @@ int main(int argc, char** argv) {
 
     }
     else {
-        Test test = Test::DYNAMICBOTH;
+        Test test = Test::DYNAMICIBSBUNCHED;
         switch (test){
             case Test::BOTH: {
                 // define proton beam;
@@ -373,6 +374,46 @@ int main(int argc, char** argv) {
                 std::cout<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
 //                end_ibs();
                 break;
+            }
+            case Test::DYNAMICIBSBUNCHED: {
+                // define proton beam;
+                double m0, KE, emit_nx0, emit_ny0, dp_p0, sigma_s0, N_ptcl;
+                int Z;
+                Z = 1;
+                m0 = 938.272;
+                KE = 3e4;
+                emit_nx0 = 0.4962695094e-6;
+                emit_ny0 = 0.4962695094e-6;
+                dp_p0 = 4e-4;
+                sigma_s0 = 1.994525702e-2;
+                N_ptcl = 6.56E9;
+                Beam p_beam(Z,m0/k_u, KE, emit_nx0, emit_ny0, dp_p0, sigma_s0, N_ptcl);
+
+                 // define the lattice of the proton ring
+                std::string filename = "MEICColliderRedesign1IP.tfs";
+                Lattice lattice(filename);
+
+                //Define the ring
+                Ring ring(lattice, p_beam);
+
+                //Set IBS parameters.
+                int nu = 200;
+                int nv = 200;
+                int nz = 40;
+                double log_c = 39.9/2;
+                ibs_paras = new IBSParas(nu, nv, log_c);
+
+                dynamic_paras = new DynamicParas(3600, 360, true, false);
+
+//                char file[100] = "test_dynamic_ibs.txt";
+//                std::ofstream outfile;
+//                outfile.open(file);
+                Cooler *cooler=nullptr;
+                EBeam *e_beam=nullptr;
+                dynamic(p_beam, *cooler, *e_beam, ring);
+//                outfile.close();
+                break;
+
             }
             case Test::DYNAMICIBS : {
                 // define proton beam;
