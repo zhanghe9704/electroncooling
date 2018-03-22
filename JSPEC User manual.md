@@ -145,7 +145,7 @@ section_run
 | norm_emit_y      | Normalized vertical emittance in [m*rad] of the ion beam |
 | momentum_spread  | momentum spread of the ion beam          |
 | particle_number  | Total particle number for coasting ion beam or the particle number of one bunch for bunched ion beam. |
-| rms_bunch_length | RMS bunch length for bunched ion beam    |
+| rms_bunch_length | RMS bunch length for bunched ion beam in [m] |
 
 **section_ring**
 
@@ -209,7 +209,7 @@ section_run
 | ---------------------- | ---------------------------------------- |
 | time                   | Total time to simulate, in [s].          |
 | step_number            | Total number of steps. The time interval of each step is time/step_number. |
-| sample_number          | Number of the sample ions. This is only useful when using the Particle model to simulate the IBS expansion process without cooling. |
+| sample_number          | Number of the sample ions. The parameter must be set when using the Particle model to simulate the IBS expansion process without cooling. When setting this parameter with cooling effect, the "sample_number" parameter in the "section_ecool" will be overwritten by this value. |
 | ibs                    | Choose to simulate the IBS effect or not by setting the value as "on" or "off". |
 | e_cool                 | Choose to simulate the electron cooling effect or not by setting the value as "on" or "off". |
 | model                  | "RMS" or "Particle" model to choose for the simulation. |

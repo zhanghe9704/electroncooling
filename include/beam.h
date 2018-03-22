@@ -70,6 +70,7 @@ class EBeamShape{
     virtual Shape shape()=0;
     virtual bool bunched() = 0;
     virtual double length()=0; //For bunched electron beam, return full length of the electron bunch.
+    virtual double neutralisation()=0;
     EBeamShape(){};
 };
 
@@ -81,6 +82,9 @@ class UniformCylinder: public EBeamShape{
     int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle);
     int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle, double cx, double cy,
                 double cz);
+    double current(){return current_;}
+    double radius(){return radius_;}
+    double neutralisation(){return neutralisation_;}
     Shape shape(){return Shape::UNIFORM_CYLINDER;}
     double length(){perror("length() not defined for UniformCylinder, which is coasting"); return 0;}
     bool bunched(){return false;}
@@ -93,6 +97,7 @@ class GaussianBunch: public EBeamShape{
     double sigma_x_;
     double sigma_y_;
     double sigma_s_;
+    double neutralisation_;
  public:
     int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle);
     int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle, double cx, double cy,
@@ -100,6 +105,7 @@ class GaussianBunch: public EBeamShape{
     Shape shape(){return Shape::GAUSSIAN_BUNCH;}
     double length(){return 6*sigma_s_;}
     bool bunched(){return true;}
+    double neutralisation(){return neutralisation_;}
     GaussianBunch(double n_electron, double sigma_x, double sigma_y, double sigma_s):n_electron_(n_electron),
                 sigma_x_(sigma_x),sigma_y_(sigma_y),sigma_s_(sigma_s){};
 
@@ -107,7 +113,7 @@ class GaussianBunch: public EBeamShape{
 
 
 class UniformBunch: public EBeamShape{
-    double current_;                   //Current of the beam in A
+    double current_;                   //Current of the beam in A, assuming the beam is DC.
     double radius_;              //Radius of the beam in meter
     double length_;
     double neutralisation_;
@@ -118,6 +124,9 @@ public:
     Shape shape(){return Shape::UNIFORM_BUNCH;}
     double length(){return length_;}
     bool bunched(){return true;}
+    double current(){return current_;}
+    double radius(){return radius_;}
+    double neutralisation(){return neutralisation_;}
 //    UniformCylinder(double I, double radius, double neutralisation):Shape(ShapeList::uniformCylinder),I(I),radius(radius),neutralisation(neutralisation){};
     UniformBunch(double current, double radius, double length, double neutralisation=2):current_(current),radius_(radius),
             length_(length), neutralisation_(neutralisation){};
@@ -137,6 +146,7 @@ public:
     Shape shape(){return Shape::ELLIPTIC_UNIFORM_BUNCH;}
     double length(){return length_;}
     bool bunched(){return true;}
+    double neutralisation(){return neutralisation_;}
     EllipticUniformBunch(double current, double rh, double rv, double length, double neutralisation=2):current_(current),
             rh_(rh),rv_(rv),length_(length),neutralisation_(neutralisation){};
 };

@@ -435,8 +435,11 @@ void run_simulation(Set_ptrs &ptrs) {
         assert(ptrs.e_beam.get()!=nullptr && "NEED TO CREATE THE E_BEAM BEFORE SIMULATION!");
         assert(ptrs.cooler.get()!=nullptr && "NEED TO CREATE THE COOLER BEFORE SIMULATION!");
         assert(ptrs.ecool_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR ELECTRON COOLING RATE CALCULATION!");
-        n_sample = ptrs.ecool_ptr->n_sample;
-        assert(n_sample > 0 && "WRONG PARAMETER VALUE FOR ELECTRON COOLING RATE CALCULATION!");
+        if (n_sample<=0) {
+            n_sample = ptrs.ecool_ptr->n_sample;
+            assert(n_sample > 0 && "WRONG PARAMETER VALUE FOR ELECTRON COOLING RATE CALCULATION!");
+            dynamic_paras->set_n_sample(n_sample);
+        }
         ecool_paras = new EcoolRateParas(n_sample);
         std::string force_formula = ptrs.ecool_ptr->force;
         assert(std::find(FRICTION_FORCE_FORMULA.begin(),FRICTION_FORCE_FORMULA.end(),force_formula)!=FRICTION_FORCE_FORMULA.end()

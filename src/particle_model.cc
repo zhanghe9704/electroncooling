@@ -21,7 +21,7 @@ void initialize_particle_model(Beam &ion) {
     if(dynamic_paras->ecool()) {
         assert(ecool_paras->ion_sample()==IonSample::MONTE_CARLO);
         config_ecooling(*ecool_paras, ion);
-        n_sample = ecool_paras->n_sample();
+//        n_sample = ecool_paras->n_sample();
     }
     else {
         assert(n_sample>0&&"The number of the ions should be greater than zero! Define n_sample in Dynamic_paras.");
