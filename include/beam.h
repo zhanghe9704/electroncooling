@@ -56,7 +56,8 @@ public:
         double n_particle);
 };
 
-enum class Shape {UNIFORM_CYLINDER, GAUSSIAN_BUNCH, UNIFORM_BUNCH, GAUSSIAN_CYLINDER, ELLIPTIC_UNIFORM_BUNCH};
+enum class Shape {UNIFORM_CYLINDER, GAUSSIAN_BUNCH, UNIFORM_BUNCH, GAUSSIAN_CYLINDER, ELLIPTIC_UNIFORM_BUNCH,
+    UNIFORM_HOLLOW, UNIFORM_HOLLOW_BUNCH};
 
 enum class Velocity {CONST, USER_DEFINE, SPACE_CHARGE}  ;
 
@@ -90,6 +91,47 @@ class UniformCylinder: public EBeamShape{
     bool bunched(){return false;}
     UniformCylinder(double current, double radius, double neutralisation=2):current_(current),radius_(radius),
                     neutralisation_(neutralisation){};
+};
+
+class UniformHollow: public EBeamShape {
+    double current_;    //Peak current, the current as if the beam is coasting.
+    double in_radius_;
+    double out_radius_;
+    double neutralisation_;
+ public:
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle);
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle, double cx, double cy,
+                double cz);
+    double current(){return current_;}
+    double out_radius(){return out_radius_;}
+    double in_radius(){return in_radius_;}
+    double neutralisation(){return neutralisation_;}
+    Shape shape(){return Shape::UNIFORM_HOLLOW;}
+    double length(){perror("length() not defined for UniformHollow, which is coasting"); return 0;}
+    bool bunched(){return false;}
+    UniformHollow(double current, double in_radius, double out_radius, double neutralisation=2):current_(current),
+        in_radius_(in_radius), out_radius_(out_radius),neutralisation_(neutralisation){};
+};
+
+class UniformHollowBunch: public EBeamShape {
+    double current_;
+    double in_radius_;
+    double out_radius_;
+    double neutralisation_;
+    double length_;
+ public:
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle);
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle, double cx, double cy,
+                double cz);
+    double current(){return current_;}
+    double out_radius(){return out_radius_;}
+    double in_radius(){return in_radius_;}
+    double neutralisation(){return neutralisation_;}
+    Shape shape(){return Shape::UNIFORM_HOLLOW_BUNCH;}
+    double length(){return length_;}
+    bool bunched(){return true;}
+    UniformHollowBunch(double current, double in_radius, double out_radius, double length, double neutralisation=2):current_(current),
+        in_radius_(in_radius), out_radius_(out_radius),length_(length), neutralisation_(neutralisation){};
 };
 
 class GaussianBunch: public EBeamShape{

@@ -43,10 +43,11 @@ int Beam::set_center(int i, double x) {
 int UniformCylinder::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle){
     int nq = ebeam.charge_number();
     if (nq<0) nq *= -1;
-    double density = current_/(k_pi*radius_*radius_*nq*k_e*ebeam.beta()*k_c);
+    double r2 = radius_*radius_;
+    double density = current_/(k_pi*r2*nq*k_e*ebeam.beta()*k_c);
     memset(ne, 0, n_particle*sizeof(double));
     for(unsigned int i=0; i<n_particle; ++i){
-        if(x[i]*x[i]+y[i]*y[i]<=radius_*radius_) ne[i] = density;
+        if(x[i]*x[i]+y[i]*y[i]<=r2) ne[i] = density;
     }
     return 0;
 }
@@ -55,14 +56,59 @@ int UniformCylinder::density(double *x, double *y, double *z, Beam &ebeam, doubl
                              double cy, double cz){
     int nq = ebeam.charge_number();
     if (nq<0) nq *= -1;
-    double density = current_/(k_pi*radius_*radius_*nq*k_e*ebeam.beta()*k_c);
+    double r2 = radius_*radius_;
+    double density = current_/(k_pi*r2*nq*k_e*ebeam.beta()*k_c);
     memset(ne, 0, n_particle*sizeof(double));
     //ion_center - electron_center
     cx -= ebeam.center(0);
     cy -= ebeam.center(1);
     cz -= ebeam.center(2);
     for(unsigned int i=0; i<n_particle; ++i){
-        if((x[i]+cx)*(x[i]+cx)+(y[i]+cy)*(y[i]+cy)<=radius_*radius_) ne[i] = density;
+        if((x[i]+cx)*(x[i]+cx)+(y[i]+cy)*(y[i]+cy)<=r2) ne[i] = density;
+    }
+    return 0;
+}
+
+int UniformHollow::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle) {
+    int nq = ebeam.charge_number();
+    double out_r2 = out_radius_*out_radius_;
+    double in_r2 = in_radius_*in_radius_;
+    double area = k_pi*(out_r2-in_r2);
+    double density;
+    if (area!=0)
+        density = current_/(area*nq*k_e*ebeam.beta()*k_c);
+    else
+        density = 0;
+    if (density<0) density *= -1;
+    memset(ne, 0, n_particle*sizeof(double));
+
+    for(unsigned int i=0; i<n_particle; ++i){
+        double r2 = x[i]*x[i]+y[i]*y[i];
+        if(r2<=out_r2 && r2>=in_r2) ne[i] = density;
+    }
+    return 0;
+}
+
+int UniformHollow::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle, double cx,
+                             double cy, double cz) {
+    int nq = ebeam.charge_number();
+    double out_r2 = out_radius_*out_radius_;
+    double in_r2 = in_radius_*in_radius_;
+    double area = k_pi*(out_r2-in_r2);
+    double density;
+    if (area!=0)
+        density = current_/(area*nq*k_e*ebeam.beta()*k_c);
+    else
+        density = 0;
+    if (density<0) density *= -1;
+    memset(ne, 0, n_particle*sizeof(double));
+     //ion_center - electron_center
+    cx -= ebeam.center(0);
+    cy -= ebeam.center(1);
+    cz -= ebeam.center(2);
+    for(unsigned int i=0; i<n_particle; ++i){
+        double r2 = (x[i]+cx)*(x[i]+cx)+(y[i]+cy)*(y[i]+cy);
+        if(r2<=out_r2 && r2>=in_r2) ne[i] = density;
     }
     return 0;
 }
@@ -73,10 +119,13 @@ int UniformBunch::density(double *x, double *y, double *z, Beam &ebeam, double *
 
     int nq = ebeam.charge_number();
     if (nq<0) nq *= -1;
-    double density = current_/(k_pi*radius_*radius_*nq*k_e*ebeam.beta()*k_c);
+    double r2 = radius_*radius_;
+    double density = current_/(k_pi*r2*nq*k_e*ebeam.beta()*k_c);
     memset(ne, 0, n_particle*sizeof(double));
+    double left_end = -0.5*length_;
+    double right_end = 0.5*length_;
     for(unsigned int i=0; i<n_particle; ++i){
-        if(z[i]<=0.5*length_ && z[i]>=-0.5*length_ && x[i]*x[i]+y[i]*y[i]<=radius_*radius_)
+        if(z[i]<=right_end && z[i]>= left_end && x[i]*x[i]+y[i]*y[i]<=r2)
             ne[i] = density;
     }
     return 0;
@@ -86,19 +135,75 @@ int UniformBunch::density(double *x, double *y, double *z, Beam &ebeam, double *
                           double cy, double cz){
     int nq = ebeam.charge_number();
     if (nq<0) nq *= -1;
-    double density = current_/(k_pi*radius_*radius_*nq*k_e*ebeam.beta()*k_c);
+    double r2 = radius_*radius_;
+    double density = current_/(k_pi*r2*nq*k_e*ebeam.beta()*k_c);
 
     //ion_center - electron_center
     cx -= ebeam.center(0);
     cy -= ebeam.center(1);
     cz -= ebeam.center(2);
     memset(ne, 0, n_particle*sizeof(double));
+    double left_end = -0.5*length_;
+    double right_end = 0.5*length_;
     for(unsigned int i=0; i<n_particle; ++i){
-        if((z[i]+cz)<=0.5*length_ && (z[i]+cz)>=-0.5*length_ && (x[i]+cx)*(x[i]+cx)+(y[i]+cy)*(y[i]+cy)<=radius_*radius_)
+        if((z[i]+cz)<=right_end && (z[i]+cz)>=left_end && (x[i]+cx)*(x[i]+cx)+(y[i]+cy)*(y[i]+cy)<=r2)
             ne[i] = density;
     }
     return 0;
 }
+
+int UniformHollowBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle){
+
+    int nq = ebeam.charge_number();
+    double out_r2 = out_radius_*out_radius_;
+    double in_r2 = in_radius_*in_radius_;
+    double area = k_pi*(out_r2-in_r2);
+    double density;
+    if (area!=0)
+        density = current_/(area*nq*k_e*ebeam.beta()*k_c);
+    else
+        density = 0;
+    if (density<0) density *= -1;
+    memset(ne, 0, n_particle*sizeof(double));
+
+    double left_end = -0.5*length_;
+    double right_end = 0.5*length_;
+    for(unsigned int i=0; i<n_particle; ++i){
+        double r2 = x[i]*x[i]+y[i]*y[i];
+        if(z[i]<=right_end && z[i]>=left_end &&r2<=out_r2 && r2>=in_r2) ne[i] = density;
+    }
+    return 0;
+}
+
+int UniformHollowBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle, double cx,
+                          double cy, double cz){
+
+    int nq = ebeam.charge_number();
+    double out_r2 = out_radius_*out_radius_;
+    double in_r2 = in_radius_*in_radius_;
+    double area = k_pi*(out_r2-in_r2);
+    double density;
+    if (area!=0)
+        density = current_/(area*nq*k_e*ebeam.beta()*k_c);
+    else
+        density = 0;
+    if (density<0) density *= -1;
+    //ion_center - electron_center
+    cx -= ebeam.center(0);
+    cy -= ebeam.center(1);
+    cz -= ebeam.center(2);
+    memset(ne, 0, n_particle*sizeof(double));
+
+    double left_end = -0.5*length_;
+    double right_end = 0.5*length_;
+    for(unsigned int i=0; i<n_particle; ++i){
+        double r2 = (x[i]+cx)*(x[i]+cx)+(y[i]+cy)*(y[i]+cy);
+        double z_shifted = z[i]+cz;
+        if(z_shifted<=right_end && z_shifted>=left_end &&r2<=out_r2 && r2>=in_r2) ne[i] = density;
+    }
+    return 0;
+}
+
 
 
 int EllipticUniformBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle){
@@ -109,8 +214,10 @@ int EllipticUniformBunch::density(double *x, double *y, double *z, Beam &ebeam, 
     memset(ne, 0, n_particle*sizeof(double));
     double inv_rh2 = 1.0/(rh_*rh_);
     double inv_rv2 = 1.0/(rv_*rv_);
+    double left_end = -0.5*length_;
+    double right_end = 0.5*length_;
     for(unsigned int i=0; i<n_particle; ++i){
-        if(z[i]<=0.5*length_ && z[i]>=-0.5*length_ && inv_rh2*x[i]*x[i]+inv_rv2*y[i]*y[i]<=1)
+        if(z[i]<=right_end && z[i]>=left_end && inv_rh2*x[i]*x[i]+inv_rv2*y[i]*y[i]<=1)
             ne[i] = density;
     }
     return 0;
@@ -129,8 +236,10 @@ int EllipticUniformBunch::density(double *x, double *y, double *z, Beam &ebeam, 
     memset(ne, 0, n_particle*sizeof(double));
     double inv_rh2 = 1.0/(rh_*rh_);
     double inv_rv2 = 1.0/(rv_*rv_);
+    double left_end = -0.5*length_;
+    double right_end = 0.5*length_;
     for(unsigned int i=0; i<n_particle; ++i){
-        if((z[i]+cz)<=0.5*length_ && (z[i]+cz)>=-0.5*length_ &&
+        if((z[i]+cz)<=right_end && (z[i]+cz)>=left_end &&
            inv_rh2*(x[i]+cx)*(x[i]+cx)+inv_rv2*(y[i]+cy)*(y[i]+cy)<=1)
             ne[i] = density;
     }
@@ -146,11 +255,12 @@ EBeam::EBeam(double gamma, double tmp_tr, double tmp_long, EBeamShape &shape_def
 
 int GaussianBunch::density(double *x, double *y, double *z, Beam &beam, double *ne, unsigned int n_particle){
     double amp = n_electron_/(sqrt(8*k_pi*k_pi*k_pi)*sigma_x_*sigma_y_*sigma_s_);
-    double sigma_x2 = sigma_x_*sigma_y_;
-    double sigma_y2 = sigma_y_*sigma_y_;
-    double sigma_s2 = sigma_s_*sigma_s_;
+    double sigma_x2 = -1/(2*sigma_x_*sigma_y_);
+    double sigma_y2 = -1/(2*sigma_y_*sigma_y_);
+    double sigma_s2 = -1/(2*sigma_s_*sigma_s_);
     for(unsigned int i=0; i<n_particle; ++i){
-        ne[i] = amp*exp(-0.5*(x[i]*x[i]/sigma_x2+y[i]*y[i]/sigma_y2+z[i]*z[i]/sigma_s2));
+//        ne[i] = amp*exp(-0.5*(x[i]*x[i]/sigma_x2+y[i]*y[i]/sigma_y2+z[i]*z[i]/sigma_s2));
+        ne[i] = amp*exp(x[i]*x[i]*sigma_x2+y[i]*y[i]*sigma_y2+z[i]*z[i]*sigma_s2);
     }
     return 0;
 }
@@ -158,15 +268,16 @@ int GaussianBunch::density(double *x, double *y, double *z, Beam &beam, double *
 int GaussianBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle, double cx,
                            double cy, double cz){
     double amp = n_electron_/(sqrt(8*k_pi*k_pi*k_pi)*sigma_x_*sigma_y_*sigma_s_);
-    double sigma_x2 = sigma_x_*sigma_y_;
-    double sigma_y2 = sigma_y_*sigma_y_;
-    double sigma_s2 = sigma_s_*sigma_s_;
+    double sigma_x2 = -1/(2*sigma_x_*sigma_y_);
+    double sigma_y2 = -1/(2*sigma_y_*sigma_y_);
+    double sigma_s2 = -1/(2*sigma_s_*sigma_s_);
     //ion_center - electron_center
     cx -= ebeam.center(0);
     cy -= ebeam.center(1);
     cz -= ebeam.center(2);
     for(unsigned int i=0; i<n_particle; ++i){
-        ne[i] = amp*exp(-0.5*((x[i]+cx)*(x[i]+cx)/sigma_x2+(y[i]+cy)*(y[i]+cy)/sigma_y2+(z[i]+cz)*(z[i]+cz)/sigma_s2));
+        ne[i] = amp*exp((x[i]+cx)*(x[i]+cx)*sigma_x2+(y[i]+cy)*(y[i]+cy)*sigma_y2+(z[i]+cz)*(z[i]+cz)*sigma_s2);
+//        ne[i] = amp*exp(-0.5*((x[i]+cx)*(x[i]+cx)/sigma_x2+(y[i]+cy)*(y[i]+cy)/sigma_y2+(z[i]+cz)*(z[i]+cz)/sigma_s2));
     }
     return 0;
 }
