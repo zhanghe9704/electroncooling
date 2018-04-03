@@ -1,0 +1,55 @@
+section_scratch
+	m_ion = 938.272
+	ke_ion = 2000
+	gamma_ion = ke_ion/m_ion + 1
+section_ion
+	charge_number = 1
+	mass = m_ion
+   	kinetic_energy = ke_ion
+	norm_emit_x = 2.15e-06
+	norm_emit_y = 2.15e-06
+	momentum_spread = 0.001
+	particle_number = 2.8e+12
+section_ring
+	lattice = test.tfs
+section_ibs
+	nu = 100
+	nv = 100
+	nz = 40
+	log_c = 20.6
+	coupling = 0
+section_cooler
+	length = 10
+	section_number = 1
+	magnetic_field = 1
+	bet_x = 10
+	bet_y = 10
+section_e_beam
+	gamma = gamma_ion
+	tmp_tr = 0.1
+	tmp_l = 0.1
+	shape = dc_uniform
+	radius = 0.009
+	current = 2
+section_ecool
+	sample_number = 10000
+	force_formula = PARKHOMCHUK
+section_run
+ 	create_ion_beam
+	create_ring
+	calculate_ibs
+	create_e_beam
+	create_cooler
+	calculate_ecool
+	total_expansion_rate
+section_simulation
+	ibs = on
+	e_cool = on
+	time = 180
+	step_number = 180
+#	sample_number = 100000
+    save_particle_interval = 10
+	output_file = simulation_test.txt
+	model = rms
+section_run
+	run_simulation

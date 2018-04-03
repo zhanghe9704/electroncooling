@@ -22,13 +22,23 @@ Users can also use cmake to compile the files (tested in Ubuntu 16.06). In the p
 >
 > `make`
 
+## How to run
 
+To run JSPEC, you can put your input file in the same folder with the JSPEC executable file and run the following commands in the folder:
+
+> ` jspec.exe inputfilename` 
+
+You also need another file in [*MAD X*](https://madx.web.cern.ch/madx/) tfs format, which defines the ion ring optics. You can put it in the same folder too. About how to write your input file, please refer to the JSPEC User Manual. 
 
 ## Acknowledgement
 
 Authors of [**BETACOOL**](http://betacool.jinr.ru/), we learned a lot from BETACOOL. 
 
 Authors of [**muParser**](http://beltoforion.de/article.php?a=muparser),  which is used in building the text-base UI. 
+
+Dr. David Bruwihler and Dr. Paul Moeller at [*Radiasoft*](http://radiasoft.net/), who developed an [*online version of JSPEC with GUI*](https://beta.sirepo.com/#/jspec) on their cloud server, [*Sirepo*](https://beta.sirepo.com/). 
+
+
 
 ## Contact 
 
