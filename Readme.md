@@ -40,6 +40,8 @@ Dr. David Bruwihler and Dr. Paul Moeller at [*Radiasoft*](http://radiasoft.net/)
 
 
 
-## Contact 
+## Contact the authors 
 
-contact the author by hezhang.AT.jlab.org. 
+Dr. He Huang at [*Old Dominion University*](www.odu.edu) by hhuang.AT.odu.edu
+
+Dr. He Zhang at [*Jefferson Lab*](www.jlab.org) by hezhang.AT.jlab.org. 
