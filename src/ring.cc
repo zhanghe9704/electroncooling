@@ -17,23 +17,27 @@ Lattice::Lattice(std::string filename) {
     std::map<std::string, int> keywords = {{"BETX",0}, {"ALFX",0}, {"MUX",0}, {"DX",0}, {"DPX",0}, {"BETY",0}, {"ALFY",0},
                                             {"MUY",0}, {"DY",0}, {"DPY",0}, {"S",0}};
 
-
+    std::map<int, std::string> sorted_key;
     bool read = false;
     unsigned long int cnt = 0;
+    int start_reading = -2;
     while(std::getline(infile,line)){
+        if (line.empty()) continue;
+        if (infile.eof()) break;
         std::istringstream iss(line);
         std::string name;
         std::string keyword;
         double num;
+        if (!read) ++start_reading;
+        if (2==start_reading) read = true;  //Start reading data from the second line after "*..." .
+        if (start_reading<1) start_reading = -1;
         iss>>name;
-//        if (name.compare("\"MACHINE$START\"")==0) read=true;
-        std::size_t found = name.find("$START");
-        if (found!=std::string::npos) read=true;
 
-        found = name.find("*");
+        std::size_t found = name.find("*");
         if (found!=std::string::npos) {
+            start_reading = 0;
             iss >> name;
-            iss >> keyword;
+//            iss >> keyword;
             int cnt_keywords = 0;
             int cnt_position = 0;
             while(cnt_keywords!=keywords.size()) {
@@ -51,37 +55,42 @@ Lattice::Lattice(std::string filename) {
                 ++cnt_position;
             }
             assert(cnt_keywords==keywords.size()&&"TWISS PARAMETERS NOT COMPLETE!");
+            for (auto iter=keywords.begin(); iter!=keywords.end(); ++iter)
+                sorted_key.insert({iter->second, iter->first});
         }
 
         if(read){
-            iss>>keyword;
             int cnt_position = 0;
-            int cnt_keywords = 0;
-            while(!iss.eof()) {
-                iss>>num;
-                if(cnt_position == keywords["BETX"]) {betx_.push_back(num); ++cnt_keywords;}
-                else if(cnt_position == keywords["ALFX"]) {alfx_.push_back(num); ++cnt_keywords;}
-                else if(cnt_position == keywords["MUX"]) {mux_.push_back(num); ++cnt_keywords;}
-                else if(cnt_position == keywords["DX"]) {dx_.push_back(num); ++cnt_keywords;}
-                else if(cnt_position == keywords["DPX"]) {dpx_.push_back(num); ++cnt_keywords;}
-                else if(cnt_position == keywords["BETY"]) {bety_.push_back(num); ++cnt_keywords;}
-                else if(cnt_position == keywords["ALFY"]) {alfy_.push_back(num); ++cnt_keywords;}
-                else if(cnt_position == keywords["MUY"]) {muy_.push_back(num); ++cnt_keywords;}
-                else if(cnt_position == keywords["DY"]) {dy_.push_back(num); ++cnt_keywords;}
-                else if(cnt_position == keywords["DPY"]) {dpy_.push_back(num); ++cnt_keywords;}
-                else if(cnt_position == keywords["S"]) {s_.push_back(num); ++cnt_keywords;}
-                if (cnt_keywords == keywords.size()) {++cnt; break;}
+            for (auto iter=sorted_key.begin(); iter!=sorted_key.end(); ++iter) {
+                while (cnt_position<iter->first) {
+                    iss>>keyword;
+                    ++cnt_position;
+                }
+                iss>>keyword;
+                try {
+                  num = std::stod(keyword.c_str());
+                }
+                catch (...) {
+                  num = 0;
+                }
+                if(cnt_position == keywords["BETX"]) {betx_.push_back(num);}
+                else if(cnt_position == keywords["ALFX"]) {alfx_.push_back(num);}
+                else if(cnt_position == keywords["MUX"]) {mux_.push_back(num);}
+                else if(cnt_position == keywords["DX"]) {dx_.push_back(num);}
+                else if(cnt_position == keywords["DPX"]) {dpx_.push_back(num);}
+                else if(cnt_position == keywords["BETY"]) {bety_.push_back(num);}
+                else if(cnt_position == keywords["ALFY"]) {alfy_.push_back(num);}
+                else if(cnt_position == keywords["MUY"]) {muy_.push_back(num);}
+                else if(cnt_position == keywords["DY"]) {dy_.push_back(num);}
+                else if(cnt_position == keywords["DPY"]) {dpy_.push_back(num);}
+                else if(cnt_position == keywords["S"]) {s_.push_back(num);}
+                else {assert(false&&"Error in lattice file parsing!");}
                 ++cnt_position;
             }
-        }
-        found = name.find("$END");
-        if (found!=std::string::npos){
-//        if(name.compare("\"MACHINE$END\"")==0){
-            n_element_ = cnt;
-            read = false;
-            break;
+            ++cnt;
         }
     }
+    n_element_ = cnt;
     circ_ = s_.at(n_element_-1) - s_.at(0);
     for(int i=0; i<n_element_-1; ++i){
         l_element_.push_back(s_.at(i+1)-s_.at(i));
