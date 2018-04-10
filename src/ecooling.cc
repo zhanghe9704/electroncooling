@@ -124,6 +124,7 @@ double emit(double * x, double * xp, unsigned int n){
         dlt2_xp += xp_adj*xp_adj;
         dlt_xxp += x_adj*xp_adj;
     }
+//    emit = sqrt(fabs(dlt2_x*dlt2_xp-dlt_xxp*dlt_xxp))/n;
     emit = sqrt(dlt2_x*dlt2_xp-dlt_xxp*dlt_xxp)/n;
     return emit;
 }
@@ -740,9 +741,12 @@ int apply_kick(unsigned int n_sample, Beam &ion) {
 //        xp[i] += force_x[i]*t_cooler/p0;
 //        yp[i] += force_y[i]*t_cooler/p0;
 //        dp_p[i] += force_z[i]*t_cooler/p0;
-        xp[i] = xp[i]!=0?xp[i]*exp(force_x[i]*t_cooler/(p0*xp[i])):xp[i];
-        yp[i] = yp[i]!=0?yp[i]*exp(force_y[i]*t_cooler/(p0*yp[i])):yp[i];
-        dp_p[i] = dp_p[i]!=0?dp_p[i]*exp(force_z[i]*t_cooler/(p0*dp_p[i])):dp_p[i];
+//        xp[i] = xp[i]!=0?xp[i]*exp(force_x[i]*t_cooler/(p0*xp[i])):xp[i];
+//        yp[i] = yp[i]!=0?yp[i]*exp(force_y[i]*t_cooler/(p0*yp[i])):yp[i];
+//        dp_p[i] = dp_p[i]!=0?dp_p[i]*exp(force_z[i]*t_cooler/(p0*dp_p[i])):dp_p[i];
+        xp[i] = !iszero(xp[i])?xp[i]*exp(force_x[i]*t_cooler/(p0*xp[i])):xp[i];
+        yp[i] = !iszero(yp[i])?yp[i]*exp(force_y[i]*t_cooler/(p0*yp[i])):yp[i];
+        dp_p[i] = !iszero(dp_p[i])?dp_p[i]*exp(force_z[i]*t_cooler/(p0*dp_p[i])):dp_p[i];
     }
     return 0;
 }

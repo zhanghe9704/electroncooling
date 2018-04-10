@@ -34,7 +34,7 @@ void initialize_particle_model(Beam &ion) {
 }
 
 void referece_twiss(Cooler &cooler) {
-    if(dynamic_paras->model()==DynamicModel::PARTICLE) {
+    if(dynamic_paras->model()==DynamicModel::PARTICLE||dynamic_paras->model()==DynamicModel::TURN_BY_TURN) {
         if(dynamic_paras->ecool()) {
             //set the reference point at the cooler
             dynamic_paras->twiss_ref.bet_x = cooler.beta_h();
@@ -63,13 +63,6 @@ void particle_model_ibs_scratches() {
     yp.reset(new double[n_sample]);
     srand(time(NULL));
 }
-
-//void ibs_kick(int n_sample, double rate, double twiss, double dt, double emit, double* p) {
-//    int k = rate>0?2:-2;
-//    double theta = sqrt(k*rate*dt*emit/twiss);
-//    gaussian_random(n_sample, rdn.get(), 1, 0);
-//    for(int i=0; i<n_sample; ++i) p[i] += theta*rdn[i];
-//}
 
 void ibs_kick(int n_sample, double rate, double twiss, double dt, double emit, double* p) {
 
@@ -108,9 +101,12 @@ void adjust_freq(double &freq, EBeam ebeam) {
 
 void apply_cooling_kick(double t_cooler, double freq, double dt) {
     for(unsigned int i=0; i<n_sample; ++i) {
-        xp[i] = xp[i]!=0?xp[i]*exp(force_x[i]*t_cooler*dt*freq/(xp[i]*p0)):xp[i];
-        yp[i] = yp[i]!=0?yp[i]*exp(force_y[i]*t_cooler*dt*freq/(yp[i]*p0)):yp[i];
-        dp_p[i] = dp_p[i]!=0?dp_p[i]*exp(force_z[i]*t_cooler*dt*freq/(dp_p[i]*p0)):dp_p[i];
+        xp[i] = !iszero(xp[i])?xp[i]*exp(force_x[i]*t_cooler*dt*freq/(xp[i]*p0)):xp[i];
+        yp[i] = !iszero(yp[i])?yp[i]*exp(force_y[i]*t_cooler*dt*freq/(yp[i]*p0)):yp[i];
+        dp_p[i] = !iszero(dp_p[i])?dp_p[i]*exp(force_z[i]*t_cooler*dt*freq/(dp_p[i]*p0)):dp_p[i];
+//        xp[i] = xp[i]!=0?xp[i]*exp(force_x[i]*t_cooler*dt*freq/(xp[i]*p0)):xp[i];
+//        yp[i] = yp[i]!=0?yp[i]*exp(force_y[i]*t_cooler*dt*freq/(yp[i]*p0)):yp[i];
+//        dp_p[i] = dp_p[i]!=0?dp_p[i]*exp(force_z[i]*t_cooler*dt*freq/(dp_p[i]*p0)):dp_p[i];
     }
 }
 
