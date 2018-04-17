@@ -40,18 +40,6 @@ public:
         }
 };
 
-struct Twiss{
-    double bet_x = 0;
-    double bet_y = 0;
-    double alf_x = 0;
-    double alf_y = 0;
-    double disp_x = 0;
-    double disp_y = 0;
-    double disp_dx = 0;
-    double disp_dy = 0;
-//    Twiss():bet_x_(0),bet_y_(0),alf_x_(0),alf_y_(0),disp_x_(0),disp_y_(0),disp_dx_(0),disp_dy_(0){};
-};
-
 int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &ion, Cooler &cooler, EBeam &ebeam,
                   Ring &ring, double &rate_x, double &rate_y, double &rate_s);
 //int end_ecooling(EcoolRateParas &ecool_paras, Beam &ion);

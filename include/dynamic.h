@@ -27,6 +27,8 @@ class DynamicParas{
 //    int n_sample_;
  public:
     Twiss twiss_ref;
+//    Tunes tunes;
+//    RF rf;
     int n_step(){return n_step_;}
     double time(){return time_;}
     double dt(){return dt_;}

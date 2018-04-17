@@ -47,12 +47,27 @@ class Lattice{
 
 };
 
+struct Tunes {
+    double qx = 0;
+    double qy = 0;
+    double qs = 0;
+};
+
+struct RF {
+    double v = 0; //Voltage in [V].
+    int h = 1; //Harmonic number
+    double phi = 0; //phase
+    double gamma_tr = 0; //Transition gamma
+};
+
 class Ring{
     double beta_s_ = 0;         //Synchrotron function, use to calculate rms bunch length from momentum spread
     double circ_ = 0;        //Circumference of the ring;
  public:
     Beam *beam_;
     Lattice *lattice_;
+    Tunes *tunes = nullptr;
+    RF *rf = nullptr;
 //    std::shared_ptr<Beam> beam_;
 //    std::shared_ptr<Lattice> lattice_;
     double beta_s(){assert(beam_->bunched()); return beta_s_;}
@@ -60,4 +75,16 @@ class Ring{
     Ring(double circ, Beam &beam_defined);
     Ring(Lattice &lattice_defined, Beam &beam_defined);
 };
+
+struct Twiss{
+    double bet_x = 0;
+    double bet_y = 0;
+    double alf_x = 0;
+    double alf_y = 0;
+    double disp_x = 0;
+    double disp_y = 0;
+    double disp_dx = 0;
+    double disp_dy = 0;
+};
+
 #endif // RING_H

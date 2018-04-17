@@ -1,8 +1,9 @@
 #include "dynamic.h"
 #include <chrono>
 #include "constants.h"
-#include "particle_model.h"
 #include "functions.h"
+#include "particle_model.h"
+#include "turn_by_turn.h"
 
 DynamicParas *dynamic_paras = nullptr;
 IBSParas *ibs_paras = nullptr;
@@ -17,22 +18,6 @@ extern double t_cooler;
 extern std::unique_ptr<double []> x_bet, xp_bet, y_bet, yp_bet, ds, dp_p, x, y, xp, yp;
 extern std::unique_ptr<double []> force_x, force_y, force_z;
 
-////int model_beam_ibs_scratches(int n_sample) {
-//int particle_model_ibs_scratches(int n_sample) {
-//    x_bet.reset(new double[n_sample]);
-//    xp_bet.reset(new double[n_sample]);
-//    y_bet.reset(new double[n_sample]);
-//    yp_bet.reset(new double[n_sample]);
-//    ds.reset(new double[n_sample]);
-//    dp_p.reset(new double[n_sample]);
-//    x.reset(new double[n_sample]);
-//    y.reset(new double[n_sample]);
-//    xp.reset(new double[n_sample]);
-//    yp.reset(new double[n_sample]);
-//    srand(time(NULL));
-//    return 0;
-//}
-
 int sample_the_ions(Beam &ion, Ring &ring, Cooler &cooler){
     switch (dynamic_paras->model()) {
     case DynamicModel::RMS : {
@@ -42,23 +27,12 @@ int sample_the_ions(Beam &ion, Ring &ring, Cooler &cooler){
         }
         break;
     }
-//    case DynamicModel::MODEL_BEAM : {}
+    case DynamicModel::TURN_BY_TURN : { //Same with PARTICLE model, except that coasting beam is sampled along the ring.
+        initialize_turn_by_turn_model(ion, ring);
+        break;
+    }
     case DynamicModel::PARTICLE : {
         initialize_particle_model(ion);
-//        int n_sample = dynamic_paras->n_sample();
-//        if(dynamic_paras->ecool()) {
-//            assert(ecool_paras->ion_sample()==IonSample::MONTE_CARLO);
-//            config_ecooling(*ecool_paras, ion);
-//            n_sample = ecool_paras->n_sample();
-//        }
-//        else {
-//            assert(n_sample>0&&"The number of the ions should be greater than zero! Define n_sample in Dynamic_paras.");
-//            particle_model_ibs_scratches(n_sample);
-//        }
-//        assert(dynamic_paras->twiss_ref.bet_x>0&& dynamic_paras->twiss_ref.bet_y>0
-//               &&"Need to define the TWISS parameters for the reference point for simulations using the particle model!");
-//        ion_beam_model_MonteCarlo_Gaussian(n_sample, ion, dynamic_paras->twiss_ref);
-//        if (rdn.get() == nullptr) rdn.reset(new double[n_sample]);
         break;
     }
     default: {
@@ -69,12 +43,6 @@ int sample_the_ions(Beam &ion, Ring &ring, Cooler &cooler){
     return 0;
 }
 
-//void ibs_kick(int n_sample, double rate, double twiss, double dt, double emit, double* p) {
-//    int k = rate>0?2:-2;
-//    double theta = sqrt(k*rate*dt*emit/twiss);
-//    gaussian_random(n_sample, rdn.get(), 1, 0);
-//    for(int i=0; i<n_sample; ++i) p[i] += theta*rdn[i];
-//}
 
 int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam, std::vector<double> &r_ibs,
                 std::vector<double> &r_ecool) {
@@ -106,60 +74,24 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam, std:
         if(dynamic_paras->ecool()) ion_sample(*ecool_paras, ion, ring, cooler);
         break;
     }
-//    case DynamicModel::MODEL_BEAM : { }
     case DynamicModel::PARTICLE : {
-//        unsigned int n_sample = n_ion_model;
-//        int n_sample = dynamic_paras->n_sample();
-//        if(dynamic_paras->ecool()) n_sample = ecool_paras->n_sample();
-//        double p0 = ion.gamma()*ion.mass()*1e6*k_e*ion.beta()/k_c;
-
         if(dynamic_paras->ecool()) {
              double freq = k_c*ion.beta()/ring.circ()*cooler.section_number();
              //restore the coordinates
              restore_cord(t_cooler);
-//             for(unsigned int i=0; i<n_sample; ++i) {
-//                 xp[i] -= force_x[i]*t_cooler/p0;
-//                 yp[i] -= force_y[i]*t_cooler/p0;
-//                 dp_p[i] -= force_z[i]*t_cooler/p0;
-//             }
              //Adjust the frequency for bunched electron to coasting ion
              if(ebeam.bunched()&&(!ion.bunched())) {
                 adjust_freq(freq, ebeam);
-//                double sample_length = ebeam.length();
-//                double bunch_separate = ecool_paras->bunch_separate();
-//                if(sample_length<0) perror("electron bunch length must be positive!");
-//                if(bunch_separate>sample_length) {
-//                    double duty_factor = sample_length/bunch_separate;
-//                    freq *= duty_factor;
-//                }
-//                else {
-//                    perror("Electron bunch length is larger than the distance between electron bunches");
-//                }
              }
             //Apply cooling kicks
             if(dynamic_paras->ecool()) {
                 apply_cooling_kick(t_cooler, freq, dt);
-//                for(unsigned int i=0; i<n_sample; ++i) {
-//                    xp[i] = xp[i]!=0?xp[i]*exp(force_x[i]*t_cooler*dt*freq/(xp[i]*p0)):xp[i];
-//                    yp[i] = yp[i]!=0?yp[i]*exp(force_y[i]*t_cooler*dt*freq/(yp[i]*p0)):yp[i];
-//                    dp_p[i] = dp_p[i]!=0?dp_p[i]*exp(force_z[i]*t_cooler*dt*freq/(dp_p[i]*p0)):dp_p[i];
-//                }
             }
          }
 
         //Apply ibs kicks
         if(dynamic_paras->ibs()) {
             apply_ibs_kick(dt, ion, r_ibs);
-//            assert(dynamic_paras->twiss_ref.bet_x>0&& dynamic_paras->twiss_ref.bet_y>0
-//                   &&"TWISS parameters for the reference point not defined! Define twiss_ref.");
-//            double rx_ibs = r_ibs.at(0);
-//            double ry_ibs = r_ibs.at(1);
-//            double rs_ibs = r_ibs.at(2);
-//
-//            ibs_kick(n_sample, rx_ibs, dynamic_paras->twiss_ref.bet_x, dt, ion.emit_x(), xp.get());
-//            ibs_kick(n_sample, ry_ibs, dynamic_paras->twiss_ref.bet_y, dt, ion.emit_y(), yp.get());
-//            ibs_kick(n_sample, rs_ibs, 1, dt, ion.dp_p()*ion.dp_p(), dp_p.get());
-
         }
 
         move_particles(ion, ring);
@@ -220,16 +152,18 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam, std:
 
         //update beam parameters
         update_beam_parameters(ion);
-//        double emit_x = emit(x_bet.get(), xp_bet.get(), n_sample);
-//        double emit_y = emit(y_bet.get(), yp_bet.get(), n_sample);
-//        dp = sqrt(emit_p(dp_p.get(), n_sample));
-//        if(ion.bunched()) sigma_s = sqrt(emit_p(ds.get(), n_sample));
-//
-//        ion.set_emit_x(emit_x);
-//        ion.set_emit_y(emit_y);
-//        ion.set_dp_p(dp);
-//        if(ion.bunched()) ion.set_sigma_s(sigma_s);
+        break;
+    }
+    case DynamicModel::TURN_BY_TURN : {
+        //Apply ibs kicks
+        if(dynamic_paras->ibs()) {
+            apply_ibs_kick(dt, ion, r_ibs);
+        }
+        //Move particles
+        turn_by_turn_move_particles(ion, ring, cooler);
 
+        //update beam parameters
+        update_beam_parameters(ion);
         break;
     }
     default: {
@@ -327,6 +261,8 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
     double t = 0;
     int ion_save_itvl = dynamic_paras->ion_save_intvl();
     int output_itvl = dynamic_paras->output_intval();
+    if (dynamic_paras->model()==DynamicModel::TURN_BY_TURN)
+        dt = ring.circ()/(ion.beta()*k_c);
 
     //Prepare outputting
     std::ofstream outfile;
@@ -336,16 +272,11 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
     outfile<<std::showpos;
     outfile<<std::scientific;
 
-    //Set the twiss parameters for the reference point in model beam simulation
+    //Set the twiss parameters for the reference point in particle model simulation
     referece_twiss(cooler);
 
     if(!ecool && dynamic_paras->model()==DynamicModel::PARTICLE)
         assert(dynamic_paras->n_sample()>0 && "Sample particle number must be greater than zero!");
-
-//    if(!ecool && dynamic_paras->model()==DynamicModel::RMS) {}
-//    else assert(dynamic_paras->n_sample()>0 && "Sample particle number must be greater than zero!");
-
-//    if(ecool) ecool_paras->set_n_sample(dynamic_paras->n_sample());
 
     //sample the ion
     sample_the_ions(ion, ring, cooler);

@@ -21,22 +21,23 @@ std::vector<string> ION_ARGS = {"CHARGE_NUMBER", "MASS", "KINETIC_ENERGY", "NORM
     "MOMENTUM_SPREAD", "PARTICLE_NUMBER", "RMS_BUNCH_LENGTH"};
 std::vector<string> RUN_COMMANDS = {"CREATE_ION_BEAM", "CREATE_RING", "CREATE_E_BEAM", "CREATE_COOLER",
     "CALCULATE_IBS", "CALCULATE_ECOOL", "TOTAL_EXPANSION_RATE", "RUN_SIMULATION"};
-std::vector<string> RING_ARGS = {"LATTICE"};
+std::vector<string> RING_ARGS = {"LATTICE", "QX", "QY", "QS", "GAMMA_TR", "RF_V", "RF_H", "RF_PHI"};
 std::vector<string> IBS_ARGS = {"NU","NV","NZ","LOG_C","COUPLING"};
 std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD", "BET_X", "BET_Y", "DISP_X", "DISP_Y",
     "ALPHA_X", "ALPHA_Y", "DISP_DX", "DISP_DY"};
 //std::vector<string> SCRATCH_COMMANDS = {"PRINT", "LIST_VAR", "LIST_CONST"};
 //std::vector<string> E_BEAM_SHAPE_ARGS = {"SHAPE", "RADIUS", "CURRENT", "SIMGA_X", "SIGMA_Y", "SIGMA_Z", "LENGTH", "E_NUMBER"};
-std::vector<string> E_BEAM_SHAPE_TYPES = {"DC_UNIFORM", "BUNCHED_GAUSSIAN", "BUNCHED_UNIFORM", "BUNCHED_UNIFORM_ELLIPTIC"};
+std::vector<string> E_BEAM_SHAPE_TYPES = {"DC_UNIFORM", "BUNCHED_GAUSSIAN", "BUNCHED_UNIFORM", "BUNCHED_UNIFORM_ELLIPTIC",
+    "DC_UNIFORM_HOLLOW", "BUNCHED_UNIFORM_HOLLOW"};
 //std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L"};
 std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L", "SHAPE", "RADIUS", "CURRENT", "SIGMA_X", "SIGMA_Y",
-    "SIGMA_Z", "LENGTH", "E_NUMBER", "RH", "RV"};
+    "SIGMA_Z", "LENGTH", "E_NUMBER", "RH", "RV", "R_INNER", "R_OUTTER"};
 std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
 std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
 std::vector<string> SIMULATION_ARGS = {"TIME", "STEP_NUMBER", "SAMPLE_NUMBER", "IBS", "E_COOL", "OUTPUT_INTERVAL",
     "SAVE_PARTICLE_INTERVAL", "OUTPUT_FILE", "MODEL", "REF_BET_X", "REF_BET_Y", "REF_ALF_X", "REF_ALF_Y",
     "REF_DISP_X", "REF_DISP_Y", "REF_DISP_DX", "REF_DISP_DY"};
-std::vector<string> DYNAMIC_VALUE = {"RMS", "PARTICLE", "MODEL_BEAM"};
+std::vector<string> DYNAMIC_VALUE = {"RMS", "PARTICLE", "MODEL_BEAM", "TURN_BY_TURN"};
 
 std::map<std::string, Section> sections{
     {"SECTION_ION",Section::SECTION_ION},
@@ -117,10 +118,10 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
                 e_beam_args->sigma_z = std::stod(val);
             }
             else if (var == "RH") {
-                e_beam_args->sigma_x = std::stod(val);
+                e_beam_args->rh = std::stod(val);
             }
             else if (var == "RV") {
-                e_beam_args->sigma_y = std::stod(val);
+                e_beam_args->rv = std::stod(val);
             }
             else if (var == "LENGTH") {
                 e_beam_args->length = std::stod(val);
@@ -133,6 +134,12 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             }
             else if (var == "TMP_L") {
                 e_beam_args->tmp_l = std::stod(val);
+            }
+            else if (var == "R_INNER") {
+                e_beam_args->r_inner = std::stod(val);
+            }
+            else if (var == "R_OUTTER") {
+                e_beam_args->r_outter = std::stod(val);
             }
         }
         else {
@@ -156,10 +163,10 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
                 e_beam_args->sigma_z = mupEval(math_parser);
             }
             else if (var == "RH") {
-                e_beam_args->sigma_x = mupEval(math_parser);
+                e_beam_args->rh = mupEval(math_parser);
             }
             else if (var == "RV") {
-                e_beam_args->sigma_y = mupEval(math_parser);
+                e_beam_args->rv = mupEval(math_parser);
             }
             else if (var == "LENGTH") {
                 e_beam_args->length = mupEval(math_parser);
@@ -172,6 +179,12 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             }
             else if (var == "TMP_L") {
                 e_beam_args->tmp_l = mupEval(math_parser);
+            }
+            else if (var == "R_INNER") {
+                e_beam_args->r_inner = mupEval(math_parser);
+            }
+            else if (var == "R_OUTTER") {
+                e_beam_args->r_outter = mupEval(math_parser);
             }
         }
     }
@@ -213,11 +226,28 @@ void create_e_beam(Set_ptrs &ptrs) {
     }
     else if(shape == "BUNCHED_UNIFORM_ELLIPTIC") {
         double current = ptrs.e_beam_ptr->current;
-        double rh = ptrs.e_beam_ptr->sigma_x;
-        double rv = ptrs.e_beam_ptr->sigma_y;
+        double rh = ptrs.e_beam_ptr->rh;
+        double rv = ptrs.e_beam_ptr->rv;
         double length = ptrs.e_beam_ptr->length;
         assert(current >= 0 && rh > 0 && rv > 0 && length > 0 && "WRONG PARAMETER VALUE FOR BUNCHED_UNIFORM_ELLIPTIC SHAPE");
         ptrs.e_beam_shape.reset(new EllipticUniformBunch(current, rh, rv, length));
+        ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
+    }
+    else if(shape == "DC_UNIFORM_HOLLOW") {
+        double current = ptrs.e_beam_ptr->current;
+        double r_inner = ptrs.e_beam_ptr->r_inner;
+        double r_outter = ptrs.e_beam_ptr->r_outter;
+        assert(r_inner>0 && r_outter>0 && current>=0 && r_outter>r_inner && "WRONG PARAMETER VALUE FOR DC_UNIFORM_HOLLOW SHAPE");
+        ptrs.e_beam_shape.reset(new UniformHollow(current, r_inner, r_outter));
+        ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
+    }
+    else if(shape == "BUNCHED_UNIFORM_HOLLOW") {
+        double current = ptrs.e_beam_ptr->current;
+        double r_inner = ptrs.e_beam_ptr->r_inner;
+        double r_outter = ptrs.e_beam_ptr->r_outter;
+        double length = ptrs.e_beam_ptr->length;
+        assert(r_inner>0 && r_outter>0 && current>=0 && r_outter>r_inner && length>0 && "WRONG PARAMETER VALUE FOR DC_UNIFORM_HOLLOW SHAPE");
+        ptrs.e_beam_shape.reset(new UniformHollowBunch(current, r_inner, r_outter, length));
         ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
     }
     std::cout<<"Electron beam created!"<<std::endl;
@@ -319,6 +349,23 @@ void create_ring(Set_ptrs &ptrs) {
 //    std::cout<< ptrs.lattice->betx(0) <<std::endl;
     assert(ptrs.ion_beam.get()!=nullptr && "MUST DEFINE THE ION BEFORE CREATE THE RING!");
     ptrs.ring.reset(new Ring(*ptrs.lattice, *ptrs.ion_beam));
+    if(ptrs.ring_ptr->qx>0 || ptrs.ring_ptr->qy>0 || ptrs.ring_ptr->qs>0) {
+        assert(ptrs.ring_ptr->qx>0 && ptrs.ring_ptr->qy>0 && "Transverse tunes must be greater than zero!");
+        ptrs.tunes.reset(new Tunes());
+        ptrs.tunes->qx = ptrs.ring_ptr->qx;
+        ptrs.tunes->qy = ptrs.ring_ptr->qy;
+        ptrs.tunes->qs = ptrs.ring_ptr->qs;
+        ptrs.ring->tunes = ptrs.tunes.get();
+    }
+    if(ptrs.ring_ptr->rf_v>0) {
+        assert(ptrs.ring_ptr->rf_v>0 && ptrs.ring_ptr->gamma_tr>0 && "RF Voltage and transition gamma should be greater than zero");
+        ptrs.rf.reset(new RF());
+        ptrs.rf->v = ptrs.ring_ptr->rf_v;
+        ptrs.rf->h = ptrs.ring_ptr->rf_h;
+        ptrs.rf->phi = ptrs.ring_ptr->rf_phi;
+        ptrs.rf->gamma_tr = ptrs.ring_ptr->gamma_tr;
+        ptrs.ring->rf = ptrs.rf.get();
+    }
     std::cout<<"Ring created!"<<std::endl;
 }
 
@@ -417,6 +464,17 @@ void run_simulation(Set_ptrs &ptrs) {
     int n_sample = ptrs.dynamic_ptr->n_sample;
     int output_intvl = ptrs.dynamic_ptr->output_intvl;
     int save_ptcl_intvl = ptrs.dynamic_ptr->save_ptcl_intvl;
+
+    if(ptrs.dynamic_ptr->model == DynamicModel::TURN_BY_TURN) {
+        double dt = ptrs.ring->circ()/(ptrs.ion_beam->beta()*k_c);
+        if (n_step>0) {
+            t = n_step * dt;
+        }
+        else if (t>0) {
+            n_step = ceil(t/dt);
+            t = n_step * dt;
+        }
+    }
 
     assert(t>0 && n_step>0 && output_intvl>0 && "WRONG PARAMETERS FOR SIMULAITON!");
     dynamic_paras = new DynamicParas(t, n_step, ibs, ecool);
@@ -536,6 +594,56 @@ void define_ring(string &str, Set_ring *ring_args) {
     assert(std::find(RING_ARGS.begin(),RING_ARGS.end(),var)!=RING_ARGS.end() && "WRONG COMMANDS IN SECTION_RING!");
     if (var=="LATTICE") {
         ring_args->lattice_file = val;
+    }
+    else {
+       if(math_parser==NULL) {
+            if (var=="QX") {
+                ring_args->qx = std::stod(val);
+            }
+            if (var=="QY") {
+                ring_args->qy = std::stod(val);
+            }
+            if (var=="QS") {
+                ring_args->qs = std::stod(val);
+            }
+            if (var=="GAMMA_TR") {
+                ring_args->gamma_tr = std::stod(val);
+            }
+            if (var=="RF_V") {
+                ring_args->rf_v = std::stod(val);
+            }
+            if (var=="RF_H") {
+                ring_args->rf_h = std::stoi(val);
+            }
+            if (var=="RF_PHI") {
+                ring_args->rf_phi = std::stod(val);
+            }
+       }
+       else {
+            mupSetExpr(math_parser, val.c_str());
+            if (var=="QX") {
+                ring_args->qx = mupEval(math_parser);
+            }
+            if (var=="QY") {
+                ring_args->qy = mupEval(math_parser);
+            }
+            if (var=="QS") {
+                ring_args->qs = mupEval(math_parser);
+            }
+            if (var=="GAMMA_TR") {
+                ring_args->gamma_tr = mupEval(math_parser);
+            }
+            if (var=="RF_V") {
+                ring_args->rf_v = mupEval(math_parser);
+            }
+            if (var=="RF_H") {
+                ring_args->rf_h = mupEval(math_parser);
+            }
+            if (var=="RF_PHI") {
+                ring_args->rf_phi = mupEval(math_parser);
+            }
+       }
+
     }
 }
 
@@ -666,8 +774,6 @@ void set_ibs(string &str, Set_ibs *ibs_args) {
 
 }
 
-
-
 void set_simulation(string &str, Set_dynamic *dynamic_args) {
     assert(dynamic_args!=nullptr && "SECTION_SIMULATION MUST BE CLAIMED!");
     string::size_type idx = str.find("=");
@@ -684,6 +790,7 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
         if (val == "RMS") dynamic_args->model = DynamicModel::RMS;
         else if(val == "MODEL_BEAM") dynamic_args->model = DynamicModel::MODEL_BEAM;
         else if(val == "PARTICLE") dynamic_args->model = DynamicModel::PARTICLE;
+        else if(val == "TURN_BY_TURN") dynamic_args->model = DynamicModel::TURN_BY_TURN;
         else assert("DYNAMIC MODEL NOT SUPPORTED IN SIMULATION!");
     }
     else if (var == "OUTPUT_FILE") {
