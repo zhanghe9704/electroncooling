@@ -33,6 +33,13 @@ struct Set_ion{
 
 struct Set_ring{
     std::string lattice_file = "";
+    double qx = 0;
+    double qy = 0;
+    double qs = 0;
+    double rf_v = 0;
+    double rf_phi = 0;
+    int rf_h = 1;
+    double gamma_tr = 0;
 };
 
 struct Set_ibs{
@@ -74,6 +81,10 @@ struct Set_e_beam{
      double current = 0;
      double radius = 0;
      double length = 0;
+     double rh = 0;
+     double rv = 0;
+     double r_inner = 0;
+     double r_outter = 0;
      std::string shape = "";
 };
 
