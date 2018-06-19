@@ -79,7 +79,6 @@
 		<Unit filename="../include/muParserDLL.h" />
 		<Unit filename="../include/particle_model.h" />
 		<Unit filename="../include/ring.h" />
-		<Unit filename="../include/turn_by_turn.h" />
 		<Unit filename="../include/ui.h" />
 		<Unit filename="../src/beam.cc" />
 		<Unit filename="../src/dynamic.cc" />
@@ -91,7 +90,6 @@
 		<Unit filename="../src/math_parser.cc" />
 		<Unit filename="../src/particle_model.cc" />
 		<Unit filename="../src/ring.cc" />
-		<Unit filename="../src/turn_by_turn.cc" />
 		<Unit filename="../src/ui.cc" />
 		<Extensions>
 			<code_completion />
