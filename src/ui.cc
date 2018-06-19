@@ -141,6 +141,9 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             else if (var == "R_OUTTER") {
                 e_beam_args->r_outter = std::stod(val);
             }
+            else {
+                assert(false&&"Wrong arguments in section_e_beam!");
+            }
         }
         else {
             mupSetExpr(math_parser, val.c_str());
@@ -185,6 +188,9 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             }
             else if (var == "R_OUTTER") {
                 e_beam_args->r_outter = mupEval(math_parser);
+            }
+            else {
+                assert(false&&"Wrong arguments in section_e_beam!");
             }
         }
     }
@@ -290,6 +296,9 @@ void define_ion_beam(std::string &str, Set_ion *ion_args){
         else if (var=="RMS_BUNCH_LENGTH") {
             ion_args->ds = std::stod(val);
         }
+        else {
+            assert(false&&"Wrong arguments in section_ion!");
+        }
     }
     else {
         mupSetExpr(math_parser, val.c_str());
@@ -316,6 +325,9 @@ void define_ion_beam(std::string &str, Set_ion *ion_args){
         }
         else if (var=="RMS_BUNCH_LENGTH") {
             ion_args->ds = mupEval(math_parser);
+        }
+        else {
+            assert(false&&"Wrong arguments in section_ion!");
         }
     }
 }
@@ -572,6 +584,9 @@ void run(std::string &str, Set_ptrs &ptrs) {
     else if(str == "RUN_SIMULATION") {
         run_simulation(ptrs);
     }
+    else {
+        assert(false&&"Wrong arguments in section_run!");
+    }
 }
 
 void set_section_run(Set_ptrs &ptrs) {
@@ -618,6 +633,9 @@ void define_ring(string &str, Set_ring *ring_args) {
             if (var=="RF_PHI") {
                 ring_args->rf_phi = std::stod(val);
             }
+            else {
+                assert(false&&"Wrong arguments in section_ring!");
+            }
        }
        else {
             mupSetExpr(math_parser, val.c_str());
@@ -641,6 +659,9 @@ void define_ring(string &str, Set_ring *ring_args) {
             }
             if (var=="RF_PHI") {
                 ring_args->rf_phi = mupEval(math_parser);
+            }
+            else {
+                assert(false&&"Wrong arguments in section_ring!");
             }
        }
 
@@ -692,6 +713,9 @@ void define_cooler(std::string &str, Set_cooler *cooler_args) {
         else if (var == "DISP_DY") {
             cooler_args->disp_dy = std::stod(val);
         }
+        else {
+            assert(false&&"Wrong arguments in section_cooler!");
+        }
     }
     else {
         mupSetExpr(math_parser, val.c_str());
@@ -728,6 +752,9 @@ void define_cooler(std::string &str, Set_cooler *cooler_args) {
         else if (var == "DISP_DY") {
             cooler_args->disp_dy = mupEval(math_parser);
         }
+        else {
+            assert(false&&"Wrong arguments in section_cooler!");
+        }
     }
 }
 
@@ -755,6 +782,12 @@ void set_ibs(string &str, Set_ibs *ibs_args) {
         else if(var == "LOG_C") {
             ibs_args->log_c = std::stod(val);
         }
+        else if(var == "COUPLING") {
+            ibs_args->coupling = std::stod(val);
+        }
+        else {
+            assert(false&&"Wrong arguments in section_ibs!");
+        }
     }
     else {
         mupSetExpr(math_parser, val.c_str());
@@ -769,6 +802,12 @@ void set_ibs(string &str, Set_ibs *ibs_args) {
         }
         else if(var == "LOG_C") {
             ibs_args->log_c = mupEval(math_parser);
+        }
+        else if(var == "COUPLING") {
+            ibs_args->coupling = mupEval(math_parser);
+        }
+        else {
+            assert(false&&"Wrong arguments in section_ibs!");
         }
     }
 
@@ -847,6 +886,9 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
             else if (var == "REF_DISP_DY") {
                 dynamic_args->ref_disp_dy = std::stod(val);
             }
+            else {
+                assert(false&&"Wrong arguments in section_simulation!");
+            }
         }
         else {
             mupSetExpr(math_parser, val.c_str());
@@ -889,6 +931,9 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
             else if (var == "REF_DISP_DY") {
                 dynamic_args->ref_disp_dy = static_cast<double>(mupEval(math_parser));
             }
+            else {
+                assert(false&&"Wrong arguments in section_simulation!");
+            }
         }
     }
 }
@@ -913,11 +958,17 @@ void set_ecool(string &str, Set_ecool *ecool_args){
             if (var == "SAMPLE_NUMBE") {
                 ecool_args->n_sample = std::stod(val);
             }
+            else {
+                assert(false&&"Wrong arguments in section_ecool!");
+            }
         }
         else {
             mupSetExpr(math_parser, val.c_str());
             if (var == "SAMPLE_NUMBER") {
                 ecool_args->n_sample = static_cast<double>(mupEval(math_parser));
+            }
+            else {
+                assert(false&&"Wrong arguments in section_ecool!");
             }
         }
     }
