@@ -56,7 +56,7 @@ void turn_by_turn_move_particles(Beam &ion, Ring &ring, Cooler &cooler) {
         y_bet[i] = y[i] - dy*dp_p[i];
         yp_bet[i] = yp[i] - dpy*dp_p[i];
     }
-    //random phase advance
+    //one turn phase advance
     double alf_x = dynamic_paras->twiss_ref.alf_x;
     double alf_y = dynamic_paras->twiss_ref.alf_y;
     double beta_x = dynamic_paras->twiss_ref.bet_x;

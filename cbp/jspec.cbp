@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gnu_gcc_51_x64_compiler" />
-				<Option parameters="esr.in" />
+				<Option parameters="test_turn_by_turn_1.txt" />
 				<Compiler>
 					<Add option="-std=c++0x" />
 					<Add option="-std=c++11" />
@@ -34,7 +34,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gnu_gcc_51_x64_compiler" />
-				<Option parameters="esr.in" />
+				<Option parameters="test_turn_by_turn_1.txt" />
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-std=c++0x" />
