@@ -598,22 +598,22 @@ void define_ring(string &str, Set_ring *ring_args) {
             if (var=="QX") {
                 ring_args->qx = std::stod(val);
             }
-            if (var=="QY") {
+            else if (var=="QY") {
                 ring_args->qy = std::stod(val);
             }
-            if (var=="QS") {
+            else if (var=="QS") {
                 ring_args->qs = std::stod(val);
             }
-            if (var=="GAMMA_TR") {
+            else if (var=="GAMMA_TR") {
                 ring_args->gamma_tr = std::stod(val);
             }
-            if (var=="RF_V") {
+            else if (var=="RF_V") {
                 ring_args->rf_v = std::stod(val);
             }
-            if (var=="RF_H") {
+            else if (var=="RF_H") {
                 ring_args->rf_h = std::stoi(val);
             }
-            if (var=="RF_PHI") {
+            else if (var=="RF_PHI") {
                 ring_args->rf_phi = std::stod(val);
             }
             else {
@@ -625,22 +625,22 @@ void define_ring(string &str, Set_ring *ring_args) {
             if (var=="QX") {
                 ring_args->qx = mupEval(math_parser);
             }
-            if (var=="QY") {
+            else if (var=="QY") {
                 ring_args->qy = mupEval(math_parser);
             }
-            if (var=="QS") {
+            else if (var=="QS") {
                 ring_args->qs = mupEval(math_parser);
             }
-            if (var=="GAMMA_TR") {
+            else if (var=="GAMMA_TR") {
                 ring_args->gamma_tr = mupEval(math_parser);
             }
-            if (var=="RF_V") {
+            else if (var=="RF_V") {
                 ring_args->rf_v = mupEval(math_parser);
             }
-            if (var=="RF_H") {
+            else if (var=="RF_H") {
                 ring_args->rf_h = mupEval(math_parser);
             }
-            if (var=="RF_PHI") {
+            else if (var=="RF_PHI") {
                 ring_args->rf_phi = mupEval(math_parser);
             }
             else {
