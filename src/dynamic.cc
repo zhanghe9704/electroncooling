@@ -286,7 +286,7 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
     dynamic_flag = true;
 
     for(int i=0; i<n_step+1; ++i) {
-        if (ion_save_itvl>0 && i%ion_save_itvl==0 && dynamic_paras->model()==DynamicModel::PARTICLE)
+        if (ion_save_itvl>0 && i%ion_save_itvl==0 && dynamic_paras->model()!=DynamicModel::RMS)
             save_ions_sdds(dynamic_paras->n_sample(), "ions"+std::to_string(i)+".txt");
 
         //record
@@ -312,7 +312,7 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
         std::cout<<i<<std::endl;
     }
 
-    if (ion_save_itvl>0 && n_step%ion_save_itvl!=0 && dynamic_paras->model()==DynamicModel::PARTICLE)
+    if (ion_save_itvl>0 && n_step%ion_save_itvl!=0 && dynamic_paras->model()!=DynamicModel::RMS)
         save_ions_sdds(dynamic_paras->n_sample(), "ions"+std::to_string(n_step)+".txt");
     dynamic_flag = false;
     outfile.close();

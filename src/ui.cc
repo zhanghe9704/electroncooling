@@ -361,22 +361,35 @@ void create_ring(Set_ptrs &ptrs) {
 //    std::cout<< ptrs.lattice->betx(0) <<std::endl;
     assert(ptrs.ion_beam.get()!=nullptr && "MUST DEFINE THE ION BEFORE CREATE THE RING!");
     ptrs.ring.reset(new Ring(*ptrs.lattice, *ptrs.ion_beam));
+
+    ptrs.tunes.reset(new Tunes());
+    ptrs.ring->tunes = ptrs.tunes.get();
+    ptrs.rf.reset(new RF());
+    ptrs.ring->rf = ptrs.rf.get();
     if(ptrs.ring_ptr->qx>0 || ptrs.ring_ptr->qy>0 || ptrs.ring_ptr->qs>0) {
         assert(ptrs.ring_ptr->qx>0 && ptrs.ring_ptr->qy>0 && "Transverse tunes must be greater than zero!");
-        ptrs.tunes.reset(new Tunes());
+//        ptrs.ring.qx = ptrs.ring_ptr->qx;
+//        ptrs.ring.qy = ptrs.ring_ptr->qy;
+//        ptrs.ring.qs = ptrs.ring_ptr->qs;
+//        ptrs.tunes.reset(new Tunes());
         ptrs.tunes->qx = ptrs.ring_ptr->qx;
         ptrs.tunes->qy = ptrs.ring_ptr->qy;
         ptrs.tunes->qs = ptrs.ring_ptr->qs;
-        ptrs.ring->tunes = ptrs.tunes.get();
+//        ptrs.ring->tunes = ptrs.tunes.get();
     }
     if(ptrs.ring_ptr->rf_v>0) {
         assert(ptrs.ring_ptr->rf_v>0 && ptrs.ring_ptr->gamma_tr>0 && "RF Voltage and transition gamma should be greater than zero");
-        ptrs.rf.reset(new RF());
+//        ptrs.ring.v = ptrs.ring_ptr->rf_v;
+//        ptrs.ring.h = ptrs.ring_ptr->rf_h;
+//        ptrs.ring.phi = ptrs.ring_ptr->rf_phi;
+//        ptrs.ring.gamma_tr = ptrs.ring_ptr->gamma_tr;
+
+//        ptrs.rf.reset(new RF());
         ptrs.rf->v = ptrs.ring_ptr->rf_v;
         ptrs.rf->h = ptrs.ring_ptr->rf_h;
         ptrs.rf->phi = ptrs.ring_ptr->rf_phi;
         ptrs.rf->gamma_tr = ptrs.ring_ptr->gamma_tr;
-        ptrs.ring->rf = ptrs.rf.get();
+//        ptrs.ring->rf = ptrs.rf.get();
     }
     std::cout<<"Ring created!"<<std::endl;
 }

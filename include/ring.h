@@ -66,6 +66,8 @@ class Ring{
  public:
     Beam *beam_;
     Lattice *lattice_;
+//    Tunes tunes;
+//    RF rf;
     Tunes *tunes = nullptr;
     RF *rf = nullptr;
 //    std::shared_ptr<Beam> beam_;
