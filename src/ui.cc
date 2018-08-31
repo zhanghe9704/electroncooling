@@ -28,10 +28,11 @@ std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD",
 //std::vector<string> SCRATCH_COMMANDS = {"PRINT", "LIST_VAR", "LIST_CONST"};
 //std::vector<string> E_BEAM_SHAPE_ARGS = {"SHAPE", "RADIUS", "CURRENT", "SIMGA_X", "SIGMA_Y", "SIGMA_Z", "LENGTH", "E_NUMBER"};
 std::vector<string> E_BEAM_SHAPE_TYPES = {"DC_UNIFORM", "BUNCHED_GAUSSIAN", "BUNCHED_UNIFORM", "BUNCHED_UNIFORM_ELLIPTIC",
-    "DC_UNIFORM_HOLLOW", "BUNCHED_UNIFORM_HOLLOW"};
+    "DC_UNIFORM_HOLLOW", "BUNCHED_UNIFORM_HOLLOW", "BUNCHED_USER_DEFINED"};
 //std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L"};
 std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L", "SHAPE", "RADIUS", "CURRENT", "SIGMA_X", "SIGMA_Y",
-    "SIGMA_Z", "LENGTH", "E_NUMBER", "RH", "RV", "R_INNER", "R_OUTTER"};
+    "SIGMA_Z", "LENGTH", "E_NUMBER", "RH", "RV", "R_INNER", "R_OUTTER", "PARTICLE_FILE", "TOTAL_PARTICLE_NUMBER",
+    "BOX_PARTICLE_NUMBER", "LINE_SKIP", "VEL_POS_CORR"};
 std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
 std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
 std::vector<string> SIMULATION_ARGS = {"TIME", "STEP_NUMBER", "SAMPLE_NUMBER", "IBS", "E_COOL", "OUTPUT_INTERVAL",
@@ -97,6 +98,9 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
            && "UNDEFINED ELECTRON BEAM SHAPE!");
         e_beam_args->shape = val;
     }
+    else if (var == "PARTICLE_FILE") {
+        e_beam_args->particle_file = val;
+    }
     else {
         if (math_parser == NULL) {
             if(var == "E_NUMBER") {
@@ -140,6 +144,29 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             }
             else if (var == "R_OUTTER") {
                 e_beam_args->r_outter = std::stod(val);
+            }
+            else if (var == "TOTAL_PARTICLE_NUMBER") {
+                e_beam_args->n_particle = std::stoi(val);
+            }
+            else if (var == "LINE_SKIP") {
+                e_beam_args->line_skip = std::stoi(val);
+            }
+            else if (var == "BOX_PARTICLE_NUMBER") {
+                e_beam_args->particle_perbox = std::stoi(val);
+            }
+            else if (var == "VEL_POS_CORR") {
+                int v = std::stoi(val);
+                switch (v) {
+                case 0 : {
+                    e_beam_args->corr = false;
+                }
+                case 1 : {
+                    e_beam_args->corr = true;
+                }
+                default : {
+                    assert(false&& "WRONG VALUE FOR VEL_POS_CORR FOR E_BEAM!");
+                }
+                }
             }
             else {
                 assert(false&&"Wrong arguments in section_e_beam!");
@@ -188,6 +215,29 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             }
             else if (var == "R_OUTTER") {
                 e_beam_args->r_outter = mupEval(math_parser);
+            }
+            else if (var == "TOTAL_PARTICLE_NUMBER") {
+                e_beam_args->n_particle = mupEval(math_parser);
+            }
+            else if (var == "LINE_SKIP") {
+                e_beam_args->line_skip = mupEval(math_parser);
+            }
+            else if (var == "BOX_PARTICLE_NUMBER") {
+                e_beam_args->particle_perbox = mupEval(math_parser);
+            }
+            else if (var == "VEL_POS_CORR") {
+                int v = mupEval(math_parser);
+                switch (v) {
+                case 0 : {
+                    e_beam_args->corr = false;
+                }
+                case 1 : {
+                    e_beam_args->corr = true;
+                }
+                default : {
+                    assert(false&& "WRONG VALUE FOR VEL_POS_CORR FOR E_BEAM!");
+                }
+                }
             }
             else {
                 assert(false&&"Wrong arguments in section_e_beam!");
@@ -255,6 +305,25 @@ void create_e_beam(Set_ptrs &ptrs) {
         assert(r_inner>0 && r_outter>0 && current>=0 && r_outter>r_inner && length>0 && "WRONG PARAMETER VALUE FOR DC_UNIFORM_HOLLOW SHAPE");
         ptrs.e_beam_shape.reset(new UniformHollowBunch(current, r_inner, r_outter, length));
         ptrs.e_beam.reset(new EBeam(gamma, tmp_tr, tmp_l, *ptrs.e_beam_shape.get()));
+    }
+    else if(shape == "BUNCHED_USER_DEFINED") {
+        double n_electron = ptrs.e_beam_ptr->n;
+        std::string filename = ptrs.e_beam_ptr->particle_file;
+        int line_skip = ptrs.e_beam_ptr->line_skip;
+        int n_particle = ptrs.e_beam_ptr->n_particle;
+        int s = ptrs.e_beam_ptr->particle_perbox;
+        double length = ptrs.e_beam_ptr->length;
+        assert(n_electron>0 && line_skip>=0 && n_particle>0 && s>0 && length>=0 && "WRONG PARAMETER VALUE FOR BUNCHED_USER_DEFINED SHAPE");
+        if(length>0)
+            ptrs.e_beam_shape.reset(new ParticleBunch(n_electron, filename, n_particle, length, line_skip, s));
+        else
+            ptrs.e_beam_shape.reset(new ParticleBunch(n_electron, filename, n_particle, line_skip, s));
+        if(ptrs.e_beam_ptr->corr) {
+            ParticleBunch* prtl_bunch = nullptr;
+            prtl_bunch = dynamic_cast<ParticleBunch*>(ptrs.e_beam_shape.get());
+            prtl_bunch->set_corr(true);
+        }
+        ptrs.e_beam.reset(new EBeam(gamma,*ptrs.e_beam_shape.get()));
     }
     std::cout<<"Electron beam created!"<<std::endl;
 }

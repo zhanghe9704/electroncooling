@@ -161,7 +161,7 @@ int main(int argc, char** argv) {
 
     }
     else {
-        Test test = Test::DYNAMICIBSBUNCHED;
+        Test test = Test::BOTH;
         switch (test){
             case Test::BOTH: {
                 // define proton beam;
@@ -173,7 +173,8 @@ int main(int argc, char** argv) {
                 emit_nx0 = 1.2e-6;
                 emit_ny0 = 0.6e-6;
                 dp_p0 = 5e-4;
-                sigma_s0 = 2.5e-2;
+                sigma_s0 = 0.84e-2;
+//                sigma_s0 = 2.5e-2;
                 N_ptcl = 6.56E9;
                 Beam p_beam(Z,m0/k_u, KE, emit_nx0, emit_ny0, dp_p0, sigma_s0, N_ptcl);
 
@@ -191,13 +192,13 @@ int main(int argc, char** argv) {
                 double log_c = 39.9/2;
                 ibs_paras = new IBSParas(nu, nv, log_c);
 
-                //Calculate IBS rate.
-
-                double rx_ibs, ry_ibs, rz_ibs;
-//                config_ibs(lattice);
-                ibs_rate(lattice, p_beam, *ibs_paras, rx_ibs, ry_ibs, rz_ibs);
-                std::cout<<"ibs rate: "<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
-//                end_ibs();
+//                //Calculate IBS rate.
+//
+//                double rx_ibs, ry_ibs, rz_ibs;
+////                config_ibs(lattice);
+//                ibs_rate(lattice, p_beam, *ibs_paras, rx_ibs, ry_ibs, rz_ibs);
+//                std::cout<<"ibs rate: "<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
+////                end_ibs();
 
 
                 //define the cooler
@@ -206,22 +207,33 @@ int main(int argc, char** argv) {
                 double magnetic_field = 1;
                 double beta_h = 100;
                 double beta_v = 100;
-                double dis_h = 2.5;
+                double dis_h = 0;
+//                double dis_h = 2.5;
                 double dis_v = 0;
                 Cooler cooler(cooler_length,n_section,magnetic_field,beta_h,beta_v,dis_h, dis_v);
 
-                //define electron beam
-                double n_electron = 2.62E9;
-                double sigma_x = 0.035E-2;
-                double sigma_y = 0.035E-2;
-                double sigma_s = 0.84E-2;
-                GaussianBunch gaussian_bunch(n_electron, sigma_x, sigma_y, sigma_s);
-                double gamma_e = p_beam.gamma();
-                double tmp_tr = 0.5;
-                double tmp_long = 0.1;
-                EBeam e_beam(gamma_e, tmp_tr, tmp_long, gaussian_bunch);
+////                //define electron beam
+//                double n_electron = 2.62E9;
+//                double sigma_x = 0.035E-2;
+//                double sigma_y = 0.035E-2;
+//                double sigma_s = 0.84E-2;
+//                GaussianBunch gaussian_bunch(n_electron, sigma_x, sigma_y, sigma_s);
+//                double gamma_e = p_beam.gamma();
+//                double tmp_tr = 0.1;
+//                double tmp_long = 0.5;
+//                EBeam e_beam(gamma_e, tmp_tr, tmp_long, gaussian_bunch);
 
-                unsigned int n_sample = 1000000;
+                std::string electron_file = "electrons_2e7.txt";
+                double ns = 1e6;
+                double n_electron = 2.62E9;
+                int s = 100;
+                int line_skip = 0;
+                ParticleBunch particle_bunch(n_electron, electron_file, ns, line_skip, s);
+                double gamma_e = p_beam.gamma();
+                EBeam e_beam(gamma_e, particle_bunch);
+
+
+                unsigned int n_sample = 10000;
                 ecool_paras = new EcoolRateParas(n_sample);
                 //define friction force formula
                 force_paras = new ForceParas(ForceFormula::PARKHOMCHUK);
@@ -230,10 +242,12 @@ int main(int argc, char** argv) {
                 ecooling_rate(*ecool_paras, *force_paras, p_beam, cooler, e_beam, ring, rate_x, rate_y, rate_s);
                 std::cout<<"rate_x = "<<rate_x<<" rate_y = "<<rate_y<<" rate_s = "<<rate_s<<std::endl;
 
-                rate_x += rx_ibs;
-                rate_y += ry_ibs;
-                rate_s += rz_ibs;
-                std::cout<<"rate_x = "<<rate_x<<" rate_y = "<<rate_y<<" rate_s = "<<rate_s<<std::endl;
+//                rate_x += rx_ibs;
+//                rate_y += ry_ibs;
+//                rate_s += rz_ibs;
+//                std::cout<<"rate_x = "<<rate_x<<" rate_y = "<<rate_y<<" rate_s = "<<rate_s<<std::endl;
+
+
 
     //            double t = 7200;
     //            int n_step = 720;

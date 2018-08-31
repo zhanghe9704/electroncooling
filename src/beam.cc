@@ -2,6 +2,9 @@
 #include "beam.h"
 #include <cmath>
 #include <cstring>
+#include "arbitrary_electron_beam.h"
+
+#include <fstream>
 
 Beam::Beam(int charge_number, double mass_number, double kinetic_energy, double emit_nx, double emit_ny, double dp_p,
            double sigma_s, double n_particle): charge_number_(charge_number), mass_number_(mass_number),
@@ -250,7 +253,23 @@ EBeam::EBeam(double gamma, double tmp_tr, double tmp_long, EBeamShape &shape_def
     Beam(-1, k_me/k_u, (gamma-1)*k_me, 0, 0, 0, 0),tmp_tr_(tmp_tr),tmp_long_(tmp_long){
     shape_ = &shape_defined;
     v_rms_long_ = sqrt(tmp_long_/this->mass())*0.001*k_c;
-    v_rms_tr_ = sqrt(tmp_tr/this->mass())*0.001*k_c;
+    v_rms_tr_ = sqrt(tmp_tr_/this->mass())*0.001*k_c;
+    if(shape_defined.shape()==Shape::PARTICLE_BUNCH) {
+        velocity_ = Velocity::USER_DEFINE;
+        temperature_ = Temperature::USER_DEFINE;
+    }
+}
+
+EBeam::EBeam(double gamma, EBeamShape &shape_defined):Beam(-1, k_me/k_u, (gamma-1)*k_me, 0, 0, 0, 0) {
+    shape_ = &shape_defined;
+    tmp_tr_ = 0;
+    tmp_long_ = 0;
+    v_rms_long_ = sqrt(tmp_long_/this->mass())*0.001*k_c;
+    v_rms_tr_ = sqrt(tmp_tr_/this->mass())*0.001*k_c;
+    if(shape_defined.shape()==Shape::PARTICLE_BUNCH) {
+        velocity_ = Velocity::USER_DEFINE;
+        temperature_ = Temperature::USER_DEFINE;
+    }
 }
 
 int GaussianBunch::density(double *x, double *y, double *z, Beam &beam, double *ne, unsigned int n_particle){
@@ -279,5 +298,149 @@ int GaussianBunch::density(double *x, double *y, double *z, Beam &ebeam, double 
         ne[i] = amp*exp((x[i]+cx)*(x[i]+cx)*sigma_x2+(y[i]+cy)*(y[i]+cy)*sigma_y2+(z[i]+cz)*(z[i]+cz)*sigma_s2);
 //        ne[i] = amp*exp(-0.5*((x[i]+cx)*(x[i]+cx)/sigma_x2+(y[i]+cy)*(y[i]+cy)/sigma_y2+(z[i]+cz)*(z[i]+cz)/sigma_s2));
     }
+    return 0;
+}
+
+ParticleBunch::ParticleBunch(double n_electron, std::string filename, unsigned long int n, double length, int line_skip,
+                             int s, double neutralisation):n_electron_(n_electron), filename_(filename), n_(n),
+                             length_(length), line_skip_(line_skip), s_(s), neutralisation_(neutralisation){
+    x.reserve(n);
+    y.reserve(n);
+    z.reserve(n);
+    vx.reserve(n);
+    vy.reserve(n);
+    vz.reserve(n);
+    list_e_.reserve(n);
+    n_ = load_electrons(x, y, z, vx, vy, vz, n, filename, line_skip);
+    create_e_tree(x, y, z, n_, s_, tree_, list_e_);
+}
+
+ParticleBunch::ParticleBunch(double n_electron, std::string filename, unsigned long int n, int line_skip, int s,
+                             double neutralisation): n_electron_(n_electron), filename_(filename), n_(n),
+                             line_skip_(line_skip), s_(s), neutralisation_(neutralisation){
+    x.reserve(n);
+    y.reserve(n);
+    z.reserve(n);
+    vx.reserve(n);
+    vy.reserve(n);
+    vz.reserve(n);
+    list_e_.reserve(n);
+    n_ = load_electrons(x, y, z, vx, vy, vz, n, filename, line_skip);
+
+    create_e_tree(x, y, z, n_, s_, tree_, list_e_);
+    auto itr = z.begin();
+    double z_max = *itr;
+    double z_min = *itr;
+    ++itr;
+    for(; itr!=z.end(); ++itr) {
+        if(*itr>z_max) z_max = *itr;
+        if(*itr<z_min) z_min = *itr;
+    }
+    length_ = z_max - z_min;
+}
+
+ParticleBunch::reload(double n_electron, std::string filename, unsigned long int n, double length, double neutralisation, int line_skip,
+     int s){
+    n_electron_ = n_electron;
+    tree_.clear();
+    x.clear();
+    y.clear();
+    z.clear();
+    vx.clear();
+    vy.clear();
+    vz.clear();
+    x.reserve(n);
+    y.reserve(n);
+    z.reserve(n);
+    vx.reserve(n);
+    vy.reserve(n);
+    vz.reserve(n);
+    n_ = load_electrons(x, y, z, vx, vy, vz, n, filename, line_skip);
+    filename_ = filename;
+    length_ = length;
+    neutralisation_ = neutralisation;
+    line_skip_ = line_skip;
+    s_ = s;
+    create_e_tree(x, y, z, n_, s_, tree_, list_e_);
+}
+
+ParticleBunch::reload(double n_electron, std::string filename, unsigned long int n, double neutralisation, int line_skip,
+     int s){
+    n_electron_ = n_electron;
+    tree_.clear();
+    x.clear();
+    y.clear();
+    z.clear();
+    vx.clear();
+    vy.clear();
+    vz.clear();
+    x.reserve(n);
+    y.reserve(n);
+    z.reserve(n);
+    vx.reserve(n);
+    vy.reserve(n);
+    vz.reserve(n);
+
+    n_ = load_electrons(x, y, z, vx, vy, vz, n, filename, line_skip);
+    filename_ = filename;
+    neutralisation_ = neutralisation;
+    line_skip_ = line_skip;
+    s_ = s;
+    create_e_tree(x, y, z, n_, s_, tree_, list_e_);
+    auto itr = z.begin();
+    double z_max = *itr;
+    double z_min = *itr;
+    ++itr;
+    for(; itr!=z.end(); ++itr) {
+        if(*itr>z_max) z_max = *itr;
+        if(*itr<z_min) z_min = *itr;
+    }
+    length_ = z_max - z_min;
+}
+
+int ParticleBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n) {
+    double rate = n_electron_/n_;
+    std::vector<unsigned int> list_i;
+    unsigned int idx_out;
+    create_ion_tree(x, y, z, n, tree_, list_i, idx_out);
+    if (v_x_corr_)
+        {::density(tree_, list_e_, vx, vy, vz, n_, list_i, idx_out, n, ne, v_avg_z, v_rms_t, v_rms_l);}
+    else
+        {::density(tree_, list_e_, vx, vy, vz, n_, list_i, idx_out, n, ne, v_rms_t, v_rms_l);}
+//    tpr_l.clear();
+//    tpr_t.clear();
+//    double c2_inv = 1.0/(k_c*k_c);
+//    for(auto& v: v_rms_l) tpr_l.push_back(k_me*v*v*1e6*c2_inv);
+//    for(auto& v: v_rms_t) tpr_t.push_back(k_me*v*v*1e6*c2_inv);
+
+    for(unsigned int i=0; i<n; ++i) ne[i] *= rate;
+
+    return 0;
+}
+
+int ParticleBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n, double cx, double cy,
+                       double cz) {
+    double rate = n_electron_/n_;
+    for(unsigned int i=0; i<n; ++i) {
+        x[i] -= cx;
+        y[i] -= cy;
+        z[i] -= cz;
+    }
+    std::vector<unsigned int> list_i;
+    unsigned int idx_out;
+    create_ion_tree(x, y, z, n, tree_, list_i, idx_out);
+    if (v_x_corr_)
+        {::density(tree_, list_e_, vx, vy, vz, n_, list_i, idx_out, n, ne, v_avg_z, v_rms_t, v_rms_l);}
+    else
+        {::density(tree_, list_e_, vx, vy, vz, n_, list_i, idx_out, n, ne, v_rms_t, v_rms_l);}
+    for(unsigned int i=0; i<n; ++i) {
+        x[i] += cx;
+        y[i] += cy;
+        z[i] += cz;
+    }
+    double c2_inv = 1.0/(k_c*k_c);
+    for(auto& v: v_rms_l) tpr_l.push_back(k_me*v*v*1e6*c2_inv);
+    for(auto& v: v_rms_t) tpr_t.push_back(k_me*v*v*1e6*c2_inv);
+    for(unsigned int i=0; i<n; ++i) ne[i] *= rate;
     return 0;
 }

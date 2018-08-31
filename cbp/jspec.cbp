@@ -11,7 +11,6 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gnu_gcc_51_x64_compiler" />
-				<Option parameters="test_input2.txt" />
 				<Compiler>
 					<Add option="-std=c++0x" />
 					<Add option="-std=c++11" />
@@ -67,6 +66,7 @@
 			<Add option="-g" />
 			<Add option="-std=c++11" />
 		</Compiler>
+		<Unit filename="../include/arbitrary_electron_beam.h" />
 		<Unit filename="../include/beam.h" />
 		<Unit filename="../include/constants.h" />
 		<Unit filename="../include/cooler.h" />
@@ -80,6 +80,7 @@
 		<Unit filename="../include/particle_model.h" />
 		<Unit filename="../include/ring.h" />
 		<Unit filename="../include/ui.h" />
+		<Unit filename="../src/arbitrary_electron_beam.cc" />
 		<Unit filename="../src/beam.cc" />
 		<Unit filename="../src/dynamic.cc" />
 		<Unit filename="../src/ecooling.cc" />

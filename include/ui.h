@@ -72,8 +72,8 @@ struct Set_cooler{
 
 struct Set_e_beam{
      double gamma = 0;
-     double tmp_tr = -1;
-     double tmp_l = -1;
+     double tmp_tr = 0;
+     double tmp_l = 0;
      double n = 0;
      double sigma_x = 0;
      double sigma_y = 0;
@@ -85,7 +85,12 @@ struct Set_e_beam{
      double rv = 0;
      double r_inner = 0;
      double r_outter = 0;
+     int line_skip = 0;
+     int n_particle = 0;
+     int particle_perbox = 100;
      std::string shape = "";
+     std::string particle_file = "";
+     bool corr = false;
 };
 
 struct Set_dynamic{
