@@ -65,29 +65,6 @@ int parkhomchuk(int charge_number, unsigned long int ion_number, double *v_tr, d
 
     std::cout<<"fixed temp force called!"<<std::endl;
 
-//    std::ofstream out;
-//	out.open("force_vtr.txt");
-//	out.precision(10);
-//    out<<std::showpos;
-//    out<<std::scientific;
-//    for(int i=0; i<ion_number; ++i)
-//        out<<v_tr[i]<<std::endl;
-//    out.close();
-//    out.open("force_vl.txt");
-//	out.precision(10);
-//    out<<std::showpos;
-//    out<<std::scientific;
-//    for(int i=0; i<ion_number; ++i)
-//        out<<v_long[i]<<std::endl;
-//    out.close();
-//    out.open("force_density.txt");
-//	out.precision(10);
-//    out<<std::showpos;
-//    out<<std::scientific;
-//    for(int i=0; i<ion_number; ++i)
-//        out<<density_e[i]<<std::endl;
-//    out.close();
-
     for(unsigned long int i=0; i<ion_number; ++i){
         double v2 = v_tr[i]*v_tr[i]+v_long[i]*v_long[i];
         if(v2>0){

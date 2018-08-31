@@ -693,8 +693,6 @@ int force(unsigned int n_sample, Beam &ion, EBeam &ebeam, Cooler &cooler, ForceP
     force_paras.set_time_cooler(t_cooler);
 
     if(ebeam.shape_->shape() == Shape::PARTICLE_BUNCH) {
-//        force_paras.set_d_perp_e(sqrt(0.5/k_me)*0.001*k_c);
-//        force_paras.set_d_paral_e(sqrt(0.1/k_me)*0.001*k_c);
         ParticleBunch* prtl_bunch = dynamic_cast<ParticleBunch*>(ebeam.shape_);
         force_paras.set_ptr_d_paral_e(prtl_bunch->v_rms_l);
         force_paras.set_ptr_d_perp_e(prtl_bunch->v_rms_t);
@@ -707,22 +705,6 @@ int force(unsigned int n_sample, Beam &ion, EBeam &ebeam, Cooler &cooler, ForceP
     //Calculate friction force
 //    friction_force(ion.charge_number(),n_sample,v_tr, v_long, ne, force_paras, force_x, force_z);
     friction_force(ion.charge_number(),n_sample,v_tr.get(), v_long.get(), ne.get(), force_paras, force_x.get(), force_z.get());
-
-//    std::ofstream out;
-//	out.open("force_tr.txt");
-//	out.precision(10);
-//    out<<std::showpos;
-//    out<<std::scientific;
-//    for(int i=0; i<n_sample; ++i)
-//        out<<force_x[i]<<std::endl;
-//    out.close();
-//    out.open("force_l.txt");
-//	out.precision(10);
-//    out<<std::showpos;
-//    out<<std::scientific;
-//    for(int i=0; i<n_sample; ++i)
-//        out<<force_z[i]<<std::endl;
-//    out.close();
 
     return 0;
 }
@@ -972,10 +954,7 @@ int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &io
         bunched_to_coasting(ecool_paras, ion, ebeam, cooler, force_paras);
         force(n_sample, ion, ebeam, cooler, force_paras);
     }
-//    if(!ion.bunched()&&ebeam.bunched())
-//        bunched_to_coasting(ecool_paras, ion, ebeam, cooler, force_paras);
-//    else
-//        force(n_sample, ion, ebeam, cooler, force_paras);
+
     //Transfer back to lab frame
 //    lab_frame(ecool_paras.n_sample(), ebeam, ion);
     lab_frame(n_sample, ebeam.gamma());
