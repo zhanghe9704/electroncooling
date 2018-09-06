@@ -77,8 +77,8 @@ int assign_ecool_scratches(unsigned int n){
 //    v_tr = new double[n];
 //    memset(v_tr, 0, n*sizeof(double));
 
-//    srand(time(NULL));
-    srand(1);
+    srand(time(NULL));
+//    srand(1);
     return 0;
 }
 

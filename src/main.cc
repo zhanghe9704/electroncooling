@@ -212,7 +212,7 @@ int main(int argc, char** argv) {
                 double dis_v = 0;
                 Cooler cooler(cooler_length,n_section,magnetic_field,beta_h,beta_v,dis_h, dis_v);
 
-////                //define electron beam
+//////                //define electron beam
 //                double n_electron = 2.62E9;
 //                double sigma_x = 0.035E-2;
 //                double sigma_y = 0.035E-2;
@@ -226,7 +226,7 @@ int main(int argc, char** argv) {
                 std::string electron_file = "electrons_2e7.txt";
                 double ns = 1e6;
                 double n_electron = 2.62E9;
-                int s = 100;
+                int s = 500;
                 int line_skip = 0;
                 ParticleBunch particle_bunch(n_electron, electron_file, ns, line_skip, s);
                 double gamma_e = p_beam.gamma();

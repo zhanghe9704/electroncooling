@@ -63,8 +63,6 @@ int parkhomchuk(int charge_number, unsigned long int ion_number, double *v_tr, d
     double wp_const = 4*k_pi*k_c*k_c*k_e*k_ke/(k_me*1e6);
     double rho_min_const = charge_number*k_e*k_ke*k_c*k_c/(k_me*1e6);
 
-    std::cout<<"fixed temp force called!"<<std::endl;
-
     for(unsigned long int i=0; i<ion_number; ++i){
         double v2 = v_tr[i]*v_tr[i]+v_long[i]*v_long[i];
         if(v2>0){

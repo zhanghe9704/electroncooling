@@ -230,12 +230,15 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
                 switch (v) {
                 case 0 : {
                     e_beam_args->corr = false;
+                    break;
                 }
                 case 1 : {
                     e_beam_args->corr = true;
+                    break;
                 }
                 default : {
                     assert(false&& "WRONG VALUE FOR VEL_POS_CORR FOR E_BEAM!");
+                    break;
                 }
                 }
             }
