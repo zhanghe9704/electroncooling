@@ -219,8 +219,8 @@ public:
     bool corr(){return v_x_corr_;}
     bool set_corr(bool corr = true){v_x_corr_ = corr;}
     double neutralisation(){return neutralisation_;}
-    reload(double n_electron, std::string filename, unsigned long int n, double length, double neutralisation, int line_skip = 0, int s = 100);
-    reload(double n_electron, std::string filename, unsigned long int n, double neutralisation, int line_skip = 0, int s = 100);
+    void reload(double n_electron, std::string filename, unsigned long int n, double length, double neutralisation, int line_skip = 0, int s = 100);
+    void reload(double n_electron, std::string filename, unsigned long int n, double neutralisation, int line_skip = 0, int s = 100);
     ParticleBunch(double n_electron, std::string filename, unsigned long int n, double length, int line_skip = 0, int s = 100, double neutralisation=2);
     ParticleBunch(double n_electron, std::string filename, unsigned long int n, int line_skip = 0, int s = 100, double neutralisation=2);
 };

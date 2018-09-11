@@ -339,7 +339,7 @@ ParticleBunch::ParticleBunch(double n_electron, std::string filename, unsigned l
     length_ = z_max - z_min;
 }
 
-ParticleBunch::reload(double n_electron, std::string filename, unsigned long int n, double length, double neutralisation, int line_skip,
+void ParticleBunch::reload(double n_electron, std::string filename, unsigned long int n, double length, double neutralisation, int line_skip,
      int s){
     n_electron_ = n_electron;
     tree_.clear();
@@ -364,7 +364,7 @@ ParticleBunch::reload(double n_electron, std::string filename, unsigned long int
     create_e_tree(x, y, z, n_, s_, tree_, list_e_);
 }
 
-ParticleBunch::reload(double n_electron, std::string filename, unsigned long int n, double neutralisation, int line_skip,
+void ParticleBunch::reload(double n_electron, std::string filename, unsigned long int n, double neutralisation, int line_skip,
      int s){
     n_electron_ = n_electron;
     tree_.clear();
