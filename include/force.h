@@ -1,6 +1,7 @@
 #ifndef FORCE_H
 #define FORCE_H
 
+#include <vector>
 #include "constants.h"
 
 enum class ForceFormula {PARKHOMCHUK};
@@ -27,8 +28,10 @@ class ForceParas{
     int set_magnetic_field(double x){magnetic_field_=x; return 0;}
     int set_d_perp_e(double x){d_perp_e_ = x; return 0;}
     int set_d_paral_e(double x){d_paral_e_ = x; return 0;}
-    int set_ptr_d_perp_e(double &x){ptr_d_perp_e_ = &x; return 0;}
-    int set_ptr_d_paral_e(double &x){ptr_d_paral_e_ = &x; return 0;}
+    int set_ptr_d_perp_e(double* x){ptr_d_perp_e_ = x; return 0;}
+    int set_ptr_d_paral_e(double* x){ptr_d_paral_e_ = x; return 0;}
+    int set_ptr_d_perp_e(std::vector<double>& x){ptr_d_perp_e_ = &*x.begin(); return 0;}
+    int set_ptr_d_paral_e(std::vector<double>& x){ptr_d_paral_e_ = &*x.begin(); return 0;}
     int set_time_cooler(double x){time_cooler_ = x; return 0;}
     ForceParas(ForceFormula formula):formula_(formula){};
 };

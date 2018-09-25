@@ -85,7 +85,12 @@ struct Set_e_beam{
      double rv = 0;
      double r_inner = 0;
      double r_outter = 0;
+     int line_skip = 0;
+     int n_particle = 0;
+     int particle_perbox = 100;
      std::string shape = "";
+     std::string particle_file = "";
+     bool corr = false;
 };
 
 struct Set_dynamic{
@@ -151,3 +156,4 @@ void set_ecool(std::string &str, Set_ecool *ecool_args);
 void set_section_run(Set_ptrs &ptrs);
 void set_simulation(std::string &str, Set_dynamic *dynamic_args);
 #endif // UI_H_INCLUDED
+

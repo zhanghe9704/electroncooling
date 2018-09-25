@@ -2,6 +2,9 @@
 #include <cmath>
 #include <cstdio>
 
+#include <iostream>
+#include <fstream>
+
 int parkhomchuk(int charge_number, unsigned long int ion_number, double *v_tr, double *v_long, double *density_e,
                 double temperature, double magnetic_field, double *d_perp_e, double *d_paral_e, double time_cooler,
                 double *force_tr, double *force_long) {

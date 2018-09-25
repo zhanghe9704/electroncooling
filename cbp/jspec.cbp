@@ -12,6 +12,7 @@
 				<Option type="1" />
 				<Option compiler="gnu_gcc_51_x64_compiler" />
 				<Option parameters="test_turn_by_turn_1.txt" />
+
 				<Compiler>
 					<Add option="-std=c++0x" />
 					<Add option="-std=c++11" />
@@ -33,8 +34,8 @@
 				<Option output="bin/Release/jspec" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
-				<Option compiler="gnu_gcc_51_x64_compiler" />
 				<Option parameters="test_turn_by_turn_1.txt" />
+
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-std=c++0x" />
@@ -67,6 +68,7 @@
 			<Add option="-g" />
 			<Add option="-std=c++11" />
 		</Compiler>
+		<Unit filename="../include/arbitrary_electron_beam.h" />
 		<Unit filename="../include/beam.h" />
 		<Unit filename="../include/constants.h" />
 		<Unit filename="../include/cooler.h" />
@@ -81,6 +83,7 @@
 		<Unit filename="../include/ring.h" />
 		<Unit filename="../include/turn_by_turn.h" />
 		<Unit filename="../include/ui.h" />
+		<Unit filename="../src/arbitrary_electron_beam.cc" />
 		<Unit filename="../src/beam.cc" />
 		<Unit filename="../src/dynamic.cc" />
 		<Unit filename="../src/ecooling.cc" />

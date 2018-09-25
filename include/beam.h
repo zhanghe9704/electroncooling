@@ -4,6 +4,9 @@
 #include "constants.h"
 #include <cstdio>
 #include <memory>
+#include <string>
+#include <vector>
+#include "arbitrary_electron_beam.h"
 
 class Beam{
     int charge_number_;   //Number of charges
@@ -57,9 +60,10 @@ public:
 };
 
 enum class Shape {UNIFORM_CYLINDER, GAUSSIAN_BUNCH, UNIFORM_BUNCH, GAUSSIAN_CYLINDER, ELLIPTIC_UNIFORM_BUNCH,
-    UNIFORM_HOLLOW, UNIFORM_HOLLOW_BUNCH};
+    UNIFORM_HOLLOW, UNIFORM_HOLLOW_BUNCH, PARTICLE_BUNCH};
 
 enum class Velocity {CONST, USER_DEFINE, SPACE_CHARGE}  ;
+enum class Temperature {CONST, USER_DEFINE, SPACE_CHARGE}  ;
 
 class EBeamShape{
  public:
@@ -153,7 +157,6 @@ class GaussianBunch: public EBeamShape{
 
 };
 
-
 class UniformBunch: public EBeamShape{
     double current_;                   //Current of the beam in A, assuming the beam is DC.
     double radius_;              //Radius of the beam in meter
@@ -193,12 +196,42 @@ public:
             rh_(rh),rv_(rv),length_(length),neutralisation_(neutralisation){};
 };
 
+class ParticleBunch: public EBeamShape {
+    double n_electron_;
+    std::string filename_;
+    unsigned long int n_;
+    double length_;
+    bool v_x_corr_ = false;    //Velocity position correlation
+    double neutralisation_;
+    int line_skip_;
+    vector<Box> tree_;
+    vector<unsigned long int> list_e_;
+    int s_;
+public:
+    std::vector<double> x, y, z, vx, vy, vz;  //Electron phase space coordinates
+    std::vector<double> v_avg_z, v_rms_l, v_rms_t, tpr_l, tpr_t;  //Velocity and temperate w.r.t. ions.
+    //Calculate the charge density for a given position (x,y,z) in Lab frame.
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n);
+    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n, double cx, double cy, double cz);
+    Shape shape(){return Shape::PARTICLE_BUNCH;}
+    double length(){return length_;}
+    bool bunched(){return true;}
+    bool corr(){return v_x_corr_;}
+    bool set_corr(bool corr = true){v_x_corr_ = corr;}
+    double neutralisation(){return neutralisation_;}
+    reload(double n_electron, std::string filename, unsigned long int n, double length, double neutralisation, int line_skip = 0, int s = 100);
+    reload(double n_electron, std::string filename, unsigned long int n, double neutralisation, int line_skip = 0, int s = 100);
+    ParticleBunch(double n_electron, std::string filename, unsigned long int n, double length, int line_skip = 0, int s = 100, double neutralisation=2);
+    ParticleBunch(double n_electron, std::string filename, unsigned long int n, int line_skip = 0, int s = 100, double neutralisation=2);
+};
+
 class EBeam:public Beam{
     double tmp_tr_;            //Transverse temperature, in eV
     double tmp_long_;          //Longitudinal temperature, in eV
     double v_rms_tr_;        //Transverse RMS velocity, in m/s
     double v_rms_long_;      //Longitudinal RMS velocity, in m/s
     Velocity velocity_ = Velocity::CONST;
+    Temperature temperature_ = Temperature::CONST;
 
  public:
     EBeamShape *shape_;            //Shape of the electron beam
@@ -206,8 +239,10 @@ class EBeam:public Beam{
     double tmp_long(){return tmp_long_;}
     double v_rms_tr(){return v_rms_tr_;}
     double v_rms_long(){return v_rms_long_;}
-    int set_velocity(Velocity velocity){velocity_ = velocity; return 0;}
+    void set_velocity(Velocity velocity){velocity_ = velocity;}
+    void set_temperature(Temperature temp){temperature_ = temp;}
     Velocity velocity(){return velocity_;}
+    Temperature temperature(){return temperature_;}
 
     int emit_nx(){perror("This function is not defined for cooling electron beam"); return 1;}
     int emit_ny(){perror("This function is not defined for cooling electron beam"); return 1;}
@@ -220,5 +255,6 @@ class EBeam:public Beam{
     double length(){return shape_->length();}
 
     EBeam(double gamma, double tmp_tr, double tmp_long, EBeamShape &shape_defined);
+    EBeam(double gamma, EBeamShape &shape_defined);
 };
 #endif // BEAM_H

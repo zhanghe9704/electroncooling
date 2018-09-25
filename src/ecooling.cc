@@ -9,6 +9,8 @@
 #include "functions.h"
 #include "ring.h"
 
+#include <fstream>
+
 std::unique_ptr<double []> x_bet, xp_bet, y_bet, yp_bet, ds, dp_p, x, y, xp, yp, ne;
 std::unique_ptr<double []> force_x, force_y, force_z, v_tr, v_long;
 std::unique_ptr<double []> x_spl, xp_spl, y_spl, yp_spl, ds_spl, dp_p_spl;
@@ -76,6 +78,7 @@ int assign_ecool_scratches(unsigned int n){
 //    memset(v_tr, 0, n*sizeof(double));
 
     srand(time(NULL));
+//    srand(1);
     return 0;
 }
 
@@ -600,8 +603,37 @@ int electron_density(EcoolRateParas &ecool_paras, Beam &ion, EBeam &ebeam) {
 int space_to_dynamic(unsigned int n_sample, Beam &ion) {
     double v = ion.beta()*k_c;
     for(unsigned int i=0; i<n_sample; ++i) {
+//        v_long[i] = dp_p[i]*v/(ion.gamma()*ion.gamma());  //Convert from dp/p to dv/v
+//        v_long[i] /= (1-(v_long[i]+v)*ion.beta()/k_c);    //Convert to beam frame, when v_long<<v, canceled with the above line.
         v_long[i] = dp_p[i]*v;
         v_tr[i] = sqrt(xp[i]*xp[i]+yp[i]*yp[i])*v;
+    }
+    return 0;
+}
+
+int space_to_dynamic(unsigned int n_sample, Beam &ion, EBeam &ebeam) {
+    double v = ion.beta()*k_c;
+    ParticleBunch* prtl_bunch = nullptr;
+    if(ebeam.shape_->shape() == Shape::PARTICLE_BUNCH)
+        prtl_bunch = dynamic_cast<ParticleBunch*>(ebeam.shape_);
+    for(unsigned int i=0; i<n_sample; ++i) {
+        v_tr[i] = sqrt(xp[i]*xp[i]+yp[i]*yp[i])*v;
+        v_long[i] = dp_p[i]*v;
+    }
+
+    if(prtl_bunch->corr())
+        for(unsigned int i=0; i<n_sample; ++i)
+            v_long[i] -= prtl_bunch->v_avg_z.at(i);
+    return 0;
+}
+
+int restore_velocity(unsigned int n_sample, EBeam &ebeam) {
+    ParticleBunch* prtl_bunch = nullptr;
+    if(ebeam.shape_->shape() == Shape::PARTICLE_BUNCH) {
+        prtl_bunch = dynamic_cast<ParticleBunch*>(ebeam.shape_);    //Electron beam is defined by particles from file.
+        if(prtl_bunch->corr())
+            for(unsigned int i=0; i<n_sample; ++i)
+                v_long[i] += prtl_bunch->v_avg_z.at(i);         //Restore the original longitudinal ion velocity.
     }
     return 0;
 }
@@ -658,13 +690,22 @@ int lab_frame(unsigned int n_sample, double gamma_e) {
 int force(unsigned int n_sample, Beam &ion, EBeam &ebeam, Cooler &cooler, ForceParas &force_paras) {
     //set parameters for friction force calculation
     force_paras.set_magnetic_field(cooler.magnetic_field());
-    force_paras.set_d_perp_e(ebeam.v_rms_tr());
-    force_paras.set_d_paral_e(ebeam.v_rms_long());
     force_paras.set_time_cooler(t_cooler);
+
+    if(ebeam.shape_->shape() == Shape::PARTICLE_BUNCH) {
+        ParticleBunch* prtl_bunch = dynamic_cast<ParticleBunch*>(ebeam.shape_);
+        force_paras.set_ptr_d_paral_e(prtl_bunch->v_rms_l);
+        force_paras.set_ptr_d_perp_e(prtl_bunch->v_rms_t);
+    }
+    else {
+        force_paras.set_d_perp_e(ebeam.v_rms_tr());
+        force_paras.set_d_paral_e(ebeam.v_rms_long());
+    }
 
     //Calculate friction force
 //    friction_force(ion.charge_number(),n_sample,v_tr, v_long, ne, force_paras, force_x, force_z);
     friction_force(ion.charge_number(),n_sample,v_tr.get(), v_long.get(), ne.get(), force_paras, force_x.get(), force_z.get());
+
     return 0;
 }
 
@@ -904,12 +945,16 @@ int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &io
 //    beam_frame(ecool_paras.n_sample(), ebeam, ion);
     beam_frame(n_sample, ebeam.gamma());
     //Calculate friction force
-//    force(n_sample, ion, ebeam, cooler, force_paras);
+    force(n_sample, ion, ebeam, cooler, force_paras);
+    //Restore the longitudinal velocity if it has been changed due to electron velocity gradient
+    restore_velocity(n_sample, ebeam);
+
     //Special treatment for bunched electron beam to cool coasting ion beam
-    if(!ion.bunched()&&ebeam.bunched())
+    if(!ion.bunched()&&ebeam.bunched()) {
         bunched_to_coasting(ecool_paras, ion, ebeam, cooler, force_paras);
-    else
         force(n_sample, ion, ebeam, cooler, force_paras);
+    }
+
     //Transfer back to lab frame
 //    lab_frame(ecool_paras.n_sample(), ebeam, ion);
     lab_frame(n_sample, ebeam.gamma());
