@@ -12,21 +12,136 @@
 #include <vector>
 
 //Load electrons from a given file
+
+long int read_binary_file(std::vector<double> &x, std::vector<double> &y, std::vector<double> &z, std::vector<double> &vx,
+                     std::vector<double> &vy, std::vector<double> &vz, std::string filename, long int n = 0, long int skip = 0,
+                     int n_buffer = 1000);
+
+long int read_ascii_file(std::vector<double>& x, std::vector<double>& y, std::vector<double>& z, std::vector<double>& vx,
+                     std::vector<double>& vy, std::vector<double>& vz, std::string filename, long int n = 0,
+                     int line_skip = 0);
+
 unsigned long int load_electrons(std::vector<double>& x, std::vector<double>& y, std::vector<double>& z, std::vector<double>& vx,
-                                 std::vector<double>& vy, std::vector<double>& vz, unsigned long int n, std::string filename,
+                                 std::vector<double>& vy, std::vector<double>& vz, std::string filename, long int n,
+                                int skip, bool binary, int n_buffer) {
+    long int n_loaded = 0;
+    if (binary) {
+        n_loaded = read_binary_file(x, y, z, vx, vy, vz, filename, n, skip, n_buffer);
+    }
+    else {
+        n_loaded = read_ascii_file(x, y, z, vx, vy, vz, filename, n, skip);
+    }
+
+    return n_loaded;
+
+}
+
+////Load electrons from a given file
+//unsigned long int load_electrons(std::vector<double>& x, std::vector<double>& y, std::vector<double>& z, std::vector<double>& vx,
+//                                 std::vector<double>& vy, std::vector<double>& vz, unsigned long int n, std::string filename,
+//                                int line_skip){
+//    std::ifstream infile;
+//    infile.open(filename.c_str());
+//    if(!infile) assert(false&&"Error: fail to load the electrons from the given file!");
+//
+//    std::string line;
+//    for(int i=0; i<line_skip; ++i) std::getline(infile, line);
+//
+//    unsigned long int n_loaded = 0;
+//    std::string val_str;
+//    double val;
+//    int j = 0;
+//    while(n_loaded<n && std::getline(infile,line)) {
+//        if (line.empty()) continue;
+//        if (infile.eof()) break;
+//        std::istringstream iss(line);
+//        for(int i=0; i<6; ++i) {
+//            iss>>val_str;
+//            try {
+//              val = std::stod(val_str.c_str());
+//            }
+//            catch (...) {
+//              val = 0;
+//            }
+//            switch (i) {
+//            case 0: {
+//                x.push_back(val);
+//                break;
+//            }
+//            case 1: {
+//                y.push_back(val);
+//                break;
+//            }
+//            case 2: {
+//                z.push_back(val);
+//                break;
+//            }
+//            case 3: {
+//                vx.push_back(val);
+//                break;
+//            }
+//            case 4: {
+//                vy.push_back(val);
+//                break;
+//            }
+//            case 5: {
+//                vz.push_back(val);
+//                break;
+//            }
+//            }
+//        }
+//        ++n_loaded;
+//        ++j;
+//    }
+//    return n_loaded;
+//}
+
+
+long int read_ascii_file(std::vector<double>& x, std::vector<double>& y, std::vector<double>& z, std::vector<double>& vx,
+                                 std::vector<double>& vy, std::vector<double>& vz, std::string filename, long int n,
                                 int line_skip){
     std::ifstream infile;
     infile.open(filename.c_str());
-    if(!infile) assert(false&&"Error: fail to load the electrons from the given file!");
+    if(!infile) assert(false&&"Error in reading 6D coordinates from ascii file: fail to open the given file!");
 
     std::string line;
+    std::getline(infile,line);
+    std::istringstream iss(line);
+    long int n_line = 0;
+    std::string val_str;
+    iss>>val_str;
+    try {
+        n_line = std::stol(val_str.c_str());
+    }
+    catch (...) {
+        assert(false&&"Error in reading 6D coordinates from ascii file: the 1st line should be the number of particle coordinates stored in the file (an integer) !");
+    }
+
+
+    if (n>0) {
+        assert(n<=n_line&&"Error in reading electron 6D coordinates from ascii file: No enough data!");
+        n_line = n;
+    }
+
+    x.clear();
+    y.clear();
+    z.clear();
+    vx.clear();
+    vy.clear();
+    vz.clear();
+    x.reserve(n_line);
+    y.reserve(n_line);
+    z.reserve(n_line);
+    vx.reserve(n_line);
+    vy.reserve(n_line);
+    vz.reserve(n_line);
+
     for(int i=0; i<line_skip; ++i) std::getline(infile, line);
 
-    unsigned long int n_loaded = 0;
-    std::string val_str;
+    long int n_loaded = 0;
     double val;
     int j = 0;
-    while(n_loaded<n && std::getline(infile,line)) {
+    while(n_loaded<n_line && std::getline(infile,line)) {
         if (line.empty()) continue;
         if (infile.eof()) break;
         std::istringstream iss(line);
@@ -70,6 +185,70 @@ unsigned long int load_electrons(std::vector<double>& x, std::vector<double>& y,
     }
     return n_loaded;
 }
+
+void read_buffer(std::ifstream &binary_file, std::vector<double> &buffer, std::vector<double> &x, std::vector<double> &y,
+                 std::vector<double> &z, std::vector<double> &vx, std::vector<double> &vy, std::vector<double> &vz) {
+    binary_file.read((char*)buffer.data(), buffer.size()*sizeof(double));
+    assert(binary_file&&"Error in reading electron 6D coordinates from binary file!");
+    for(auto itr=buffer.begin(); itr!=buffer.end();) {
+        x.push_back(*itr);
+        itr++;
+        y.push_back(*itr);
+        itr++;
+        z.push_back(*itr);
+        itr++;
+        vx.push_back(*itr);
+        itr++;
+        vy.push_back(*itr);
+        itr++;
+        vz.push_back(*itr);
+        itr++;
+    }
+}
+
+
+long int read_binary_file(std::vector<double> &x, std::vector<double> &y, std::vector<double> &z, std::vector<double> &vx,
+                     std::vector<double> &vy, std::vector<double> &vz, std::string filename, long int n, long int skip, int n_buffer) {
+    std::ifstream binary_file(filename.c_str(), std::ios::in | std::ios::binary);
+    long int n_row = 0;
+    binary_file.read((char*)&n_row,4);  //Read the number of rows, signed long it: 32 bits/4 bytes
+    assert(binary_file&&"Error in reading electron 6D coordinates from binary file: reading failed!");
+
+    binary_file.ignore(skip*6*sizeof(double));
+    assert(n+skip<=n_row&&"Error in reading electron 6D coordinates from binary file: No enough data!");
+    if (n>0) n_row = n;
+
+    x.clear();
+    y.clear();
+    z.clear();
+    vx.clear();
+    vy.clear();
+    vz.clear();
+    x.reserve(n_row);
+    y.reserve(n_row);
+    z.reserve(n_row);
+    vx.reserve(n_row);
+    vy.reserve(n_row);
+    vz.reserve(n_row);
+
+    int n_loop = n_row/n_buffer;
+    int n_last_chunk = n_row%n_buffer;
+    int n_column = 6;
+
+    std::vector<double> buffer(n_buffer*n_column, 0);
+
+    for(int i=0; i<n_loop; ++i)
+        read_buffer(binary_file, buffer, x, y, z, vx, vy, vz);
+    if(n_last_chunk>0) {
+        buffer.resize(n_last_chunk*n_column);
+        read_buffer(binary_file, buffer, x, y, z, vx, vy, vz);
+    }
+
+    return n_row;
+
+}
+
+
 
 //Find the center and the box size of the root box
 int find_root_center(double *x, double * y, double * z, const unsigned long int N, double &cx, double &cy, double &cz,

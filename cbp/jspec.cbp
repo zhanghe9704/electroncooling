@@ -11,7 +11,6 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gnu_gcc_51_x64_compiler" />
-				<Option parameters="test_turn_by_turn_1.txt" />
 				<Compiler>
 					<Add option="-std=c++0x" />
 					<Add option="-std=c++11" />
@@ -34,21 +33,23 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gnu_gcc_51_x64_compiler" />
-				<Option parameters="test_turn_by_turn_1.txt" />
-				<Option projectCompilerOptionsRelation="2" />
-				<Option projectIncludeDirsRelation="2" />
-				<Option projectResourceIncludeDirsRelation="-1" />
-				<Option projectLibDirsRelation="2" />
+				<Option parameters="test_particle_bunch.txt" />
 				<Compiler>
+					<Add option="-O3" />
+					<Add option="-std=c++0x" />
 					<Add option="-std=c++11" />
-					<Add directory="../include" />
 					<Add directory="../src" />
-				</Compiler>
-				<Linker>
-					<Add option="-O2" />
-					<Add option="-lmuparser" />
-					<Add directory="../lib" />
 					<Add directory="../include" />
+				</Compiler>
+				<ResourceCompiler>
+					<Add directory="../src" />
+					<Add directory="../include" />
+				</ResourceCompiler>
+				<Linker>
+					<Add option="-O3" />
+					<Add option="-lmuparser" />
+					<Add directory="../include" />
+					<Add directory="../lib" />
 				</Linker>
 				<MakeCommands>
 					<Build command="" />
@@ -78,7 +79,6 @@
 		<Unit filename="../include/muParserDLL.h" />
 		<Unit filename="../include/particle_model.h" />
 		<Unit filename="../include/ring.h" />
-		<Unit filename="../include/turn_by_turn.h" />
 		<Unit filename="../include/ui.h" />
 		<Unit filename="../src/arbitrary_electron_beam.cc" />
 		<Unit filename="../src/beam.cc" />
@@ -91,7 +91,6 @@
 		<Unit filename="../src/math_parser.cc" />
 		<Unit filename="../src/particle_model.cc" />
 		<Unit filename="../src/ring.cc" />
-		<Unit filename="../src/turn_by_turn.cc" />
 		<Unit filename="../src/ui.cc" />
 		<Extensions>
 			<code_completion />

@@ -27,9 +27,12 @@ typedef struct Colleague{
 	unsigned long int clg[28] = {0}; //At most 27 colleagues, the last 0 means the end.
 } Colleague;
 
+//unsigned long int load_electrons(std::vector<double>& x, std::vector<double>& y, std::vector<double>& z, std::vector<double>& vx,
+//                                 std::vector<double>& vy, std::vector<double>& vz, unsigned long int n, std::string filename,
+//                                int line_skip = 0);
 unsigned long int load_electrons(std::vector<double>& x, std::vector<double>& y, std::vector<double>& z, std::vector<double>& vx,
-                                 std::vector<double>& vy, std::vector<double>& vz, unsigned long int n, std::string filename,
-                                int line_skip = 0);
+                                 std::vector<double>& vy, std::vector<double>& vz, std::string filename, long int n,
+                                int skip = 0, bool binary = false, int n_buffer = 1000);
 
 //int create_e_tree(double * x, double * y, double * z, const unsigned long int n, const unsigned int s, vector<Box> &tree,
 //                unsigned long int * list);

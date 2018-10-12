@@ -72,8 +72,8 @@ struct Set_cooler{
 
 struct Set_e_beam{
      double gamma = 0;
-     double tmp_tr = -1;
-     double tmp_l = -1;
+     double tmp_tr = 0;
+     double tmp_l = 0;
      double n = 0;
      double sigma_x = 0;
      double sigma_y = 0;
@@ -87,10 +87,12 @@ struct Set_e_beam{
      double r_outter = 0;
      int line_skip = 0;
      int n_particle = 0;
-     int particle_perbox = 100;
+     int particle_perbox = 200;
      std::string shape = "";
      std::string particle_file = "";
      bool corr = false;
+     bool binary = false;
+     int buffer = 1000;
 };
 
 struct Set_dynamic{
@@ -156,4 +158,3 @@ void set_ecool(std::string &str, Set_ecool *ecool_args);
 void set_section_run(Set_ptrs &ptrs);
 void set_simulation(std::string &str, Set_dynamic *dynamic_args);
 #endif // UI_H_INCLUDED
-
