@@ -301,101 +301,107 @@ int GaussianBunch::density(double *x, double *y, double *z, Beam &ebeam, double 
     return 0;
 }
 
-ParticleBunch::ParticleBunch(double n_electron, std::string filename, unsigned long int n, double length, int line_skip,
-                             int s, double neutralisation):n_electron_(n_electron), filename_(filename), n_(n),
-                             length_(length), line_skip_(line_skip), s_(s), neutralisation_(neutralisation){
-    x.reserve(n);
-    y.reserve(n);
-    z.reserve(n);
-    vx.reserve(n);
-    vy.reserve(n);
-    vz.reserve(n);
-    list_e_.reserve(n);
-    n_ = load_electrons(x, y, z, vx, vy, vz, n, filename, line_skip);
-    create_e_tree(x, y, z, n_, s_, tree_, list_e_);
-}
+//ParticleBunch::ParticleBunch(double n_electron, std::string filename, unsigned long int n, double length, int line_skip,
+//                             bool binary, int buffer, int s, double neutralisation):n_electron_(n_electron),
+//                             filename_(filename), n_(n), length_(length), line_skip_(line_skip), binary_(binary),
+//                             buffer_(buffer), s_(s), neutralisation_(neutralisation){
+////    x.reserve(n);
+////    y.reserve(n);
+////    z.reserve(n);
+////    vx.reserve(n);
+////    vy.reserve(n);
+////    vz.reserve(n);
+//
+//    n_ = load_electrons(x, y, z, vx, vy, vz, filename, n, line_skip, binary, buffer);
+////    list_e_.reserve(n_);
+//    create_e_tree(x, y, z, n_, s_, tree_, list_e_);
+//}
 
-ParticleBunch::ParticleBunch(double n_electron, std::string filename, unsigned long int n, int line_skip, int s,
-                             double neutralisation): n_electron_(n_electron), filename_(filename), n_(n),
-                             line_skip_(line_skip), s_(s), neutralisation_(neutralisation){
-    x.reserve(n);
-    y.reserve(n);
-    z.reserve(n);
-    vx.reserve(n);
-    vy.reserve(n);
-    vz.reserve(n);
-    list_e_.reserve(n);
-    n_ = load_electrons(x, y, z, vx, vy, vz, n, filename, line_skip);
+//ParticleBunch::ParticleBunch(double n_electron, std::string filename, unsigned long int n, int line_skip, bool binary,
+//                             int buffer, int s, double neutralisation): n_electron_(n_electron), filename_(filename), n_(n),
+//                             line_skip_(line_skip), binary_(binary), buffer_(buffer), s_(s), neutralisation_(neutralisation){
+////    x.reserve(n);
+////    y.reserve(n);
+////    z.reserve(n);
+////    vx.reserve(n);
+////    vy.reserve(n);
+////    vz.reserve(n);
+//
+//    n_ = load_electrons(x, y, z, vx, vy, vz, filename, n, line_skip, binary, buffer);
+////    list_e_.reserve(n_);
+//
+//    create_e_tree(x, y, z, n_, s_, tree_, list_e_);
+//    auto itr = z.begin();
+//    double z_max = *itr;
+//    double z_min = *itr;
+//    ++itr;
+//    for(; itr!=z.end(); ++itr) {
+//        if(*itr>z_max) z_max = *itr;
+//        if(*itr<z_min) z_min = *itr;
+//    }
+//    length_ = z_max - z_min;
+//}
+//
+//
+//ParticleBunch::ParticleBunch(double n_electron, std::string filename, double length, int line_skip,
+//                             bool binary, int buffer, int s, double neutralisation):n_electron_(n_electron),
+//                             filename_(filename), n_(0), length_(length), line_skip_(line_skip), binary_(binary),
+//                             buffer_(buffer), s_(s), neutralisation_(neutralisation){
+////    x.reserve(n);
+////    y.reserve(n);
+////    z.reserve(n);
+////    vx.reserve(n);
+////    vy.reserve(n);
+////    vz.reserve(n);
+//
+//    n_ = load_electrons(x, y, z, vx, vy, vz, filename, 0, line_skip, binary, buffer);
+////    list_e_.reserve(n_);
+//    create_e_tree(x, y, z, n_, s_, tree_, list_e_);
+//}
+//
+//ParticleBunch::ParticleBunch(double n_electron, std::string filename, int line_skip, bool binary,
+//                             int buffer, int s, double neutralisation): n_electron_(n_electron), filename_(filename), n_(0),
+//                             line_skip_(line_skip), binary_(binary), buffer_(buffer), s_(s), neutralisation_(neutralisation){
+////    x.reserve(n);
+////    y.reserve(n);
+////    z.reserve(n);
+////    vx.reserve(n);
+////    vy.reserve(n);
+////    vz.reserve(n);
+//
+//    n_ = load_electrons(x, y, z, vx, vy, vz, filename, 0, line_skip, binary, buffer);
+////    list_e_.reserve(n_);
+//
+//    create_e_tree(x, y, z, n_, s_, tree_, list_e_);
+//    auto itr = z.begin();
+//    double z_max = *itr;
+//    double z_min = *itr;
+//    ++itr;
+//    for(; itr!=z.end(); ++itr) {
+//        if(*itr>z_max) z_max = *itr;
+//        if(*itr<z_min) z_min = *itr;
+//    }
+//    length_ = z_max - z_min;
+//}
 
+ParticleBunch::load_particle(long int n) {
+    n_ = load_electrons(x, y, z, vx, vy, vz, filename_, n, line_skip_, binary_, buffer_);
     create_e_tree(x, y, z, n_, s_, tree_, list_e_);
-    auto itr = z.begin();
-    double z_max = *itr;
-    double z_min = *itr;
-    ++itr;
-    for(; itr!=z.end(); ++itr) {
-        if(*itr>z_max) z_max = *itr;
-        if(*itr<z_min) z_min = *itr;
+    if(length_==0) {
+        auto itr = z.begin();
+        double z_max = *itr;
+        double z_min = *itr;
+        ++itr;
+        for(; itr!=z.end(); ++itr) {
+            if(*itr>z_max) z_max = *itr;
+            if(*itr<z_min) z_min = *itr;
+        }
+        length_ = z_max - z_min;
     }
-    length_ = z_max - z_min;
 }
 
-ParticleBunch::reload(double n_electron, std::string filename, unsigned long int n, double length, double neutralisation, int line_skip,
-     int s){
-    n_electron_ = n_electron;
-    tree_.clear();
-    x.clear();
-    y.clear();
-    z.clear();
-    vx.clear();
-    vy.clear();
-    vz.clear();
-    x.reserve(n);
-    y.reserve(n);
-    z.reserve(n);
-    vx.reserve(n);
-    vy.reserve(n);
-    vz.reserve(n);
-    n_ = load_electrons(x, y, z, vx, vy, vz, n, filename, line_skip);
-    filename_ = filename;
-    length_ = length;
-    neutralisation_ = neutralisation;
-    line_skip_ = line_skip;
-    s_ = s;
-    create_e_tree(x, y, z, n_, s_, tree_, list_e_);
-}
-
-ParticleBunch::reload(double n_electron, std::string filename, unsigned long int n, double neutralisation, int line_skip,
-     int s){
-    n_electron_ = n_electron;
-    tree_.clear();
-    x.clear();
-    y.clear();
-    z.clear();
-    vx.clear();
-    vy.clear();
-    vz.clear();
-    x.reserve(n);
-    y.reserve(n);
-    z.reserve(n);
-    vx.reserve(n);
-    vy.reserve(n);
-    vz.reserve(n);
-
-    n_ = load_electrons(x, y, z, vx, vy, vz, n, filename, line_skip);
-    filename_ = filename;
-    neutralisation_ = neutralisation;
-    line_skip_ = line_skip;
-    s_ = s;
-    create_e_tree(x, y, z, n_, s_, tree_, list_e_);
-    auto itr = z.begin();
-    double z_max = *itr;
-    double z_min = *itr;
-    ++itr;
-    for(; itr!=z.end(); ++itr) {
-        if(*itr>z_max) z_max = *itr;
-        if(*itr<z_min) z_min = *itr;
-    }
-    length_ = z_max - z_min;
+ParticleBunch::load_particle() {
+    load_particle(0);
 }
 
 int ParticleBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n) {

@@ -87,10 +87,12 @@ struct Set_e_beam{
      double r_outter = 0;
      int line_skip = 0;
      int n_particle = 0;
-     int particle_perbox = 100;
+     int particle_perbox = 200;
      std::string shape = "";
      std::string particle_file = "";
      bool corr = false;
+     bool binary = false;
+     int buffer = 1000;
 };
 
 struct Set_dynamic{

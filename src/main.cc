@@ -223,12 +223,18 @@ int main(int argc, char** argv) {
 //                double tmp_long = 0.5;
 //                EBeam e_beam(gamma_e, tmp_tr, tmp_long, gaussian_bunch);
 
-                std::string electron_file = "electrons_2e7.txt";
+                std::string electron_file = "electrons.dat";
                 double ns = 1e6;
                 double n_electron = 2.62E9;
-                int s = 500;
+                int s = 200;
                 int line_skip = 0;
-                ParticleBunch particle_bunch(n_electron, electron_file, ns, line_skip, s);
+                ParticleBunch particle_bunch(n_electron, electron_file);
+                particle_bunch.set_s(s);
+                particle_bunch.set_skip(line_skip);
+                particle_bunch.set_binary(true);
+                particle_bunch.load_particle(ns);
+
+//                ParticleBunch particle_bunch(n_electron, electron_file, ns, line_skip, false, 1000, s);
                 double gamma_e = p_beam.gamma();
                 EBeam e_beam(gamma_e, particle_bunch);
 

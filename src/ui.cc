@@ -32,7 +32,7 @@ std::vector<string> E_BEAM_SHAPE_TYPES = {"DC_UNIFORM", "BUNCHED_GAUSSIAN", "BUN
 //std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L"};
 std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L", "SHAPE", "RADIUS", "CURRENT", "SIGMA_X", "SIGMA_Y",
     "SIGMA_Z", "LENGTH", "E_NUMBER", "RH", "RV", "R_INNER", "R_OUTTER", "PARTICLE_FILE", "TOTAL_PARTICLE_NUMBER",
-    "BOX_PARTICLE_NUMBER", "LINE_SKIP", "VEL_POS_CORR"};
+    "BOX_PARTICLE_NUMBER", "LINE_SKIP", "VEL_POS_CORR", "BINARY_FILE", "BUFFER_SIZE"};
 std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
 std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
 std::vector<string> SIMULATION_ARGS = {"TIME", "STEP_NUMBER", "SAMPLE_NUMBER", "IBS", "E_COOL", "OUTPUT_INTERVAL",
@@ -154,6 +154,9 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             else if (var == "BOX_PARTICLE_NUMBER") {
                 e_beam_args->particle_perbox = std::stoi(val);
             }
+            else if (var == "BUFFER_SIZE") {
+                e_beam_args->buffer = std::stoi(val);
+            }
             else if (var == "VEL_POS_CORR") {
                 int v = std::stoi(val);
                 switch (v) {
@@ -165,6 +168,20 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
                 }
                 default : {
                     assert(false&& "WRONG VALUE FOR VEL_POS_CORR FOR E_BEAM!");
+                }
+                }
+            }
+            else if (var == "BINARY_FILE") {
+                int v = std::stoi(val);
+                switch (v) {
+                case 0 : {
+                    e_beam_args->binary = false;
+                }
+                case 1 : {
+                    e_beam_args->binary = true;
+                }
+                default : {
+                    assert(false&& "WRONG VALUE FOR BINARY_FILE FOR E_BEAM!");
                 }
                 }
             }
@@ -225,6 +242,9 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             else if (var == "BOX_PARTICLE_NUMBER") {
                 e_beam_args->particle_perbox = mupEval(math_parser);
             }
+            else if (var == "BUFFER_SIZE") {
+                e_beam_args->buffer = mupEval(math_parser);
+            }
             else if (var == "VEL_POS_CORR") {
                 int v = mupEval(math_parser);
                 switch (v) {
@@ -238,6 +258,23 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
                 }
                 default : {
                     assert(false&& "WRONG VALUE FOR VEL_POS_CORR FOR E_BEAM!");
+                    break;
+                }
+                }
+            }
+            else if (var == "BINARY_FILE") {
+                int v = mupEval(math_parser);
+                switch (v) {
+                case 0 : {
+                    e_beam_args->binary = false;
+                    break;
+                }
+                case 1 : {
+                    e_beam_args->binary = true;
+                    break;
+                }
+                default : {
+                    assert(false&& "WRONG VALUE FOR BINARY_FILE FOR E_BEAM!");
                     break;
                 }
                 }
@@ -315,15 +352,24 @@ void create_e_beam(Set_ptrs &ptrs) {
         int line_skip = ptrs.e_beam_ptr->line_skip;
         int n_particle = ptrs.e_beam_ptr->n_particle;
         int s = ptrs.e_beam_ptr->particle_perbox;
+        int buffer = ptrs.e_beam_ptr->buffer;
         double length = ptrs.e_beam_ptr->length;
-        assert(n_electron>0 && line_skip>=0 && n_particle>0 && s>0 && length>=0 && "WRONG PARAMETER VALUE FOR BUNCHED_USER_DEFINED SHAPE");
+        assert(n_electron>0 && line_skip>=0 && n_particle>=0 && s>0 && length>=0 && buffer>0 && "WRONG PARAMETER VALUE FOR BUNCHED_USER_DEFINED SHAPE");
         if(length>0)
-            ptrs.e_beam_shape.reset(new ParticleBunch(n_electron, filename, n_particle, length, line_skip, s));
+            ptrs.e_beam_shape.reset(new ParticleBunch(n_electron, filename, length));
         else
-            ptrs.e_beam_shape.reset(new ParticleBunch(n_electron, filename, n_particle, line_skip, s));
+            ptrs.e_beam_shape.reset(new ParticleBunch(n_electron, filename));
+        ParticleBunch* prtl_bunch = nullptr;
+        prtl_bunch = dynamic_cast<ParticleBunch*>(ptrs.e_beam_shape.get());
+        if(ptrs.e_beam_ptr->binary)
+            prtl_bunch->set_binary(ptrs.e_beam_ptr->binary);
+        prtl_bunch->set_s(s);
+        prtl_bunch->set_skip(line_skip);
+        if(n_particle>0)
+            prtl_bunch->load_particle(n_particle);
+        else
+            prtl_bunch->load_particle();
         if(ptrs.e_beam_ptr->corr) {
-            ParticleBunch* prtl_bunch = nullptr;
-            prtl_bunch = dynamic_cast<ParticleBunch*>(ptrs.e_beam_shape.get());
             prtl_bunch->set_corr(true);
         }
         ptrs.e_beam.reset(new EBeam(gamma,*ptrs.e_beam_shape.get()));
