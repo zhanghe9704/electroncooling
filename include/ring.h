@@ -56,7 +56,7 @@ struct Tunes {
 struct RF {
     double v = 0; //Voltage in [V].
     int h = 1; //Harmonic number
-    double phi = 0; //phase
+    double phi = 0; //phase in [2*PI]
     double gamma_tr = 0; //Transition gamma
 };
 

@@ -356,9 +356,9 @@ void create_e_beam(Set_ptrs &ptrs) {
         double length = ptrs.e_beam_ptr->length;
         assert(n_electron>0 && line_skip>=0 && n_particle>=0 && s>0 && length>=0 && buffer>0 && "WRONG PARAMETER VALUE FOR BUNCHED_USER_DEFINED SHAPE");
         if(length>0)
-            ptrs.e_beam_shape.reset(new ParticleBunch(n_electron, filename, n_particle, length, line_skip, s));
+            ptrs.e_beam_shape.reset(new ParticleBunch(n_electron, filename, length));
         else
-            ptrs.e_beam_shape.reset(new ParticleBunch(n_electron, filename, n_particle, line_skip, s));
+            ptrs.e_beam_shape.reset(new ParticleBunch(n_electron, filename));
         ParticleBunch* prtl_bunch = nullptr;
         prtl_bunch = dynamic_cast<ParticleBunch*>(ptrs.e_beam_shape.get());
         if(ptrs.e_beam_ptr->binary)
@@ -496,7 +496,7 @@ void create_ring(Set_ptrs &ptrs) {
 //        ptrs.ring->tunes = ptrs.tunes.get();
     }
     if(ptrs.ring_ptr->rf_v>0) {
-        assert(ptrs.ring_ptr->rf_v>0 && ptrs.ring_ptr->gamma_tr>0 && "RF Voltage and transition gamma should be greater than zero");
+        assert(ptrs.ring_ptr->gamma_tr>0 && "When RF cavity is defined, the transition gamma should be greater than zero");
 //        ptrs.ring.v = ptrs.ring_ptr->rf_v;
 //        ptrs.ring.h = ptrs.ring_ptr->rf_h;
 //        ptrs.ring.phi = ptrs.ring_ptr->rf_phi;
@@ -762,7 +762,7 @@ void define_ring(string &str, Set_ring *ring_args) {
                 ring_args->rf_h = std::stoi(val);
             }
             else if (var=="RF_PHI") {
-                ring_args->rf_phi = std::stod(val);
+                ring_args->rf_phi = std::stod(val)*2*k_pi;
             }
             else {
                 assert(false&&"Wrong arguments in section_ring!");
@@ -789,7 +789,7 @@ void define_ring(string &str, Set_ring *ring_args) {
                 ring_args->rf_h = mupEval(math_parser);
             }
             else if (var=="RF_PHI") {
-                ring_args->rf_phi = mupEval(math_parser);
+                ring_args->rf_phi = mupEval(math_parser)*2*k_pi;
             }
             else {
                 assert(false&&"Wrong arguments in section_ring!");
