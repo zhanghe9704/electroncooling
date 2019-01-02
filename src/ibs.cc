@@ -1,12 +1,9 @@
+#include <fstream>
 #include <memory>
+#include "functions.h"
 #include "ibs.h"
 
-//Scratch variables for IBS calculation
-//double *sigma_xbet, *sigma_xbetp, *sigma_y, *sigma_yp;
-//double *a_f, *b2_f, *c2_f, *d2_f, *dtld_f, *k1_f, *k2_f, *k3_f;
-//double *sin_u, *sin_u2, *cos_u2, *sin_v, *cos_v, *sin_u2_cos_v2;
-//double *g1, *g2_1, *g2_2, *g3;
-//double *f1, *f2, *f3;
+//Scratch variables for IBS calculation (Martini model)
 
 std::unique_ptr<double []> sigma_xbet, sigma_xbetp, sigma_y, sigma_yp;
 std::unique_ptr<double []> a_f, b2_f, c2_f, d2_f, dtld_f, k1_f, k2_f, k3_f;
@@ -14,74 +11,6 @@ std::unique_ptr<double []> a_f, b2_f, c2_f, d2_f, dtld_f, k1_f, k2_f, k3_f;
 std::unique_ptr<double []> sin_u, sin_u2, cos_u2, sin_v, cos_v, sin_u2_cos_v2;
 std::unique_ptr<double []> g1, g2_1, g2_2, g3;
 std::unique_ptr<double []> f1, f2, f3;
-
-extern bool TURN_BY_TURN, COAST;
-
-int config_ibs(Lattice &lattice) {
-    int n = lattice.n_element();
-
-//    sigma_xbet = new double[n];
-//    memset(sigma_xbet, 0, n*sizeof(double));
-//    sigma_xbetp = new double[n];
-//    memset(sigma_xbetp, 0, n*sizeof(double));
-//    sigma_y = new double[n];
-//    memset(sigma_y, 0, n*sizeof(double));
-//    sigma_yp = new double[n];
-//    memset(sigma_yp, 0, n*sizeof(double));
-
-//    a_f = new double[n];
-//    memset(a_f, 0, n*sizeof(double));
-//    b2_f = new double[n];
-//    memset(b2_f, 0, n*sizeof(double));
-//    c2_f = new double[n];
-//    memset(c2_f, 0, n*sizeof(double));
-//    d2_f = new double[n];
-//    memset(d2_f, 0, n*sizeof(double));
-//    dtld_f = new double[n];
-//    memset(dtld_f, 0, n*sizeof(double));
-//    k1_f = new double[n];
-//    memset(k1_f, 0, n*sizeof(double));
-//    k2_f = new double[n];
-//    memset(k2_f, 0, n*sizeof(double));
-//    k3_f = new double[n];
-//    memset(k3_f, 0, n*sizeof(double));
-
-//    f1 = new double[n];
-//    f2 = new double[n];
-//    f3 = new double[n];
-    return 0;
-}
-
-int end_ibs() {
-//    delete[] sigma_xbet;
-//    delete[] sigma_xbetp;
-//    delete[] sigma_y;
-//    delete[] sigma_yp;
-//    delete[] a_f;
-//    delete[] b2_f;
-//    delete[] c2_f;
-//    delete[] d2_f;
-//    delete[] dtld_f;
-//    delete[] k1_f;
-//    delete[] k2_f;
-//    delete[] k3_f;
-
-//    delete[] sin_u;
-//    delete[] sin_u2;
-//    delete[] cos_u2;
-//    delete[] sin_v;
-//    delete[] cos_v;
-//    delete[] sin_u2_cos_v2;
-//    delete[] g1;
-//    delete[] g2_1;
-//    delete[] g2_2;
-//    delete[] g3;
-
-//    delete[] f1;
-//    delete[] f2;
-//    delete[] f3;
-    return 0;
-}
 
 //Set ptrs for bunch_size
 void set_bunch_size(int n) {
@@ -200,18 +129,6 @@ int abcdk(Lattice &lattice, Beam &beam){
 }
 
 int coef_f(int nu, int nv){
-//    sin_u = new double[nu];
-//    sin_u2 = new double[nu];
-//    cos_u2 = new double[nu];
-//    sin_v = new double[nv];
-//    cos_v = new double[nv];
-//    sin_u2_cos_v2 = new double[nu*nv];
-//
-//    g1 = new double[nu*nv];
-//    g2_1 = new double[nu*nv];
-//    g2_2 = new double[nu*nv];
-//    g3 = new double[nu];
-
     if(sin_u.get()==nullptr) sin_u.reset(new double[nu]);
     if(sin_u2.get()==nullptr) sin_u2.reset(new double[nu]);
     if(cos_u2.get()==nullptr) cos_u2.reset(new double[nu]);
@@ -327,31 +244,6 @@ int f(int n_element, int nu, int nv, double log_c){
     return 0;
 }
 
-//int coef_a(Lattice &lattice, Beam &beam, double *a){
-//
-//    int n_element = lattice.n_element();
-//
-//    double lambda = beam.particle_number()/lattice.circ();
-//    if(beam.bunched()) lambda = beam.particle_number()/(2*sqrt(k_pi)*beam.sigma_s());
-//
-//    double beta3 = beam.beta();
-//    beta3 = beta3*beta3*beta3;
-//    double gamma4 = beam.gamma();
-//    gamma4 *= gamma4;
-//    gamma4 *= gamma4;
-//    double coef_a = k_c*beam.r()*beam.r()*lambda/(16*k_pi*sqrt(k_pi)*beam.dp_p()*beta3*gamma4);
-//
-//    for(int i=0; i<n_element; ++i){
-//        double alfx2 = lattice.alfx(i);
-//        alfx2 *= alfx2;
-//        double alfy2 = lattice.alfy(i);
-//        alfy2 *= alfy2;
-//        a[i] = coef_a*sqrt((1+alfx2)*(1+alfy2))/(sigma_xbet[i]*sigma_xbetp[i]*sigma_y[i]*sigma_yp[i]);
-//    }
-//    return 0;
-//}
-
-
 double coef_a(Lattice &lattice, Beam &beam){
     double lambda = beam.particle_number()/lattice.circ();
     if(beam.bunched()) lambda = beam.particle_number()/(2*sqrt(k_pi)*beam.sigma_s());
@@ -372,7 +264,7 @@ int ibs_coupling(double &rx, double &ry, double k, double emit_x, double emit_y)
     return 0;
 }
 
-int ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs) {
+int ibs_martini(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs) {
     int nu = ibs_paras.nu();
     int nv = ibs_paras.nv();
     int nz = ibs_paras.nz();
@@ -389,8 +281,7 @@ int ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, doubl
         f(n_element,nu,nv,log_c);
     else
         f(n_element,nu,nv,nz);
-//    double *a = new double[n_element];
-//    coef_a(lattice, beam, a);
+
     double a = coef_a(lattice, beam);
 
     rx = 0;
@@ -398,28 +289,237 @@ int ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, doubl
     rs = 0;
     int n=2;
     if (beam.bunched()) n=1;
-//    if (TURN_BY_TURN&&COAST) n = 2;
+
     for(int i=0; i<n_element-1; ++i){
         double l_element = lattice.l_element(i);
         rs += n*a*(1-d2_f[i])*f1[i]*l_element;
         rx += a*(f2[i]+f1[i]*(d2_f[i]+dtld_f[i]*dtld_f[i]))*l_element;
         ry += a*f3[i]*l_element;
     }
-//    for(int i=0; i<n_element-1; ++i){
-//        double l_element = lattice.l_element(i);
-//        rs += n*a[i]*(1-d2_f[i])*f1[i]*l_element;
-//        rx += a[i]*(f2[i]+f1[i]*(d2_f[i]+dtld_f[i]*dtld_f[i]))*l_element;
-//        ry += a[i]*f3[i]*l_element;
-//    }
+
     double circ = lattice.circ();
     rx /= circ;
     ry /= circ;
     rs /= circ;
     if(k>0) ibs_coupling(rx, ry, k, beam.emit_nx(), beam.emit_ny());
-//    delete[] a;
     return 0;
 }
 
+
+// IBS calculation by Bjorken-Mtingwa model using Sergei Nagaitsev's method
+std::unique_ptr<double []> phi;
+std::unique_ptr<double []> dx2; //D_x * D_x
+std::unique_ptr<double []> dx_betax_phi_2; // D_x * D_x / (beta_x * beta_x) + phi * phi
+std::unique_ptr<double []> sqrt_betay;  // sqrt(beta_y)
+std::unique_ptr<double []> gamma_phi_2; // gamma * gamma * phi * phi
+std::unique_ptr<double []> psi;
+std::unique_ptr<double []> sx, sp, sxp;
+std::unique_ptr<double []> inv_sigma;
+
+void alloc_var(std::unique_ptr<double []>& ptr, int n) {
+    if(ptr.get()==nullptr) {
+        ptr = std::make_unique<double []>(n);
+    }
+}
+
+//Calculate the variables that only depend on the TWISS parameters and energy of the beam.
+void init_fixed_var(Lattice& lattice, Beam& beam) {
+    int n = lattice.n_element();
+    alloc_var(phi, n);
+    alloc_var(dx2, n);
+    alloc_var(dx_betax_phi_2, n);
+    alloc_var(sqrt_betay, n);
+    alloc_var(gamma_phi_2, n);
+
+    for(int i=0; i<n; ++i) {
+        double dx_betax = lattice.dx(i)/lattice.betx(i);
+        dx2[i] = lattice.dx(i) * lattice.dx(i);
+        phi[i] = lattice.dpx(i) + lattice.alfx(i)*dx_betax;
+        dx_betax_phi_2[i] = dx_betax*dx_betax + phi[i]*phi[i];
+        sqrt_betay[i] = sqrt(lattice.bety(i));
+        gamma_phi_2[i] = beam.gamma() * beam.gamma() * phi[i] * phi[i];
+    }
+
+//    std::ofstream output_particles;
+//    output_particles.open("ibs_bm_init_fixed_var.txt");
+//    output_particles<<"dx                 "
+//                    <<"bet_x              "
+//                    <<"dpx                "
+//                    <<"alfa_x             "
+//                    <<"dx^2               "
+//                    <<"phi                "
+//                    <<"dx^2/bet_x^2+phi^2 "
+//                    <<"sqrt(bet_y)        "
+//                    <<"gamma^2*phi^2      "
+//        <<std::endl;
+//    output_particles.precision(10);
+//    output_particles<<std::showpos;
+//    output_particles<<std::scientific;
+//    for(int i=0; i<n; ++i) {
+//        output_particles<<lattice.dx(i)<<' '<<lattice.betx(i)<<' '<<lattice.dpx(i)<<' '<<lattice.alfx(i)<<' '<<dx2[i]<<' '
+//        <<phi[i]<<' '<<dx_betax_phi_2[i]<<' '<<sqrt_betay[i]<<' '<<gamma_phi_2[i]<<std::endl;
+//    }
+//    output_particles.close();
+
+
+}
+
+void calc_kernels(Lattice& lattice, Beam& beam) {
+    auto emit_x = beam.emit_x();
+    auto emit_y = beam.emit_y();
+    auto sigma_p2 = beam.dp_p() * beam.dp_p();
+    auto inv_sigma_p2 = 1/sigma_p2;
+    auto n = lattice.n_element();
+    auto gamma2 = beam.gamma()*beam.gamma();
+
+//    std::cout<<"emit_x: "<<emit_x<<std::endl
+//             <<"emit_y: "<<emit_y<<std::endl
+//             <<"gamma:  "<<beam.gamma()<<std::endl;
+
+    alloc_var(psi, n);
+    alloc_var(sx, n);
+    alloc_var(sp, n);
+    alloc_var(sxp, n);
+    alloc_var(inv_sigma, n);
+
+//    std::ofstream output_particles;
+//    output_particles.open("ibs_bm_calc_kernels.txt");
+//    output_particles<<"bet_x              "
+//                    <<"bet_y              "
+//                    <<"sigma_x            "
+//                    <<"sigma_y            "
+//                    <<"1/sigma_x/sigma_y  "
+//                    <<"a1                 "
+//                    <<"a2                 "
+//                    <<"lamda_1            "
+//                    <<"lamda_2            "
+//                    <<"lamda_3            "
+//                    <<"psi                "
+//                    <<"sxp                "
+//                    <<"sp                 "
+//                    <<"sx                 "
+//        <<std::endl;
+//    output_particles.precision(10);
+//    output_particles<<std::showpos;
+//    output_particles<<std::scientific;
+
+
+
+
+
+    for(int i=0; i<n; ++i) {
+        auto betx = lattice.betx(i);
+        auto bety = lattice.bety(i);
+        auto sigma_x = sqrt(dx2[i]*sigma_p2+emit_x*betx);
+        auto sigma_y = sqrt(emit_y*bety);
+//        auto l = lattice.circ();
+        inv_sigma[i] = 1/(sigma_x*sigma_y);
+
+        auto ax = betx/emit_x;
+        auto lamda_1 = bety/emit_y; //lamda_1 = ay.
+        auto as = ax*dx_betax_phi_2[i] + inv_sigma_p2;
+        auto a1 = gamma2*as;
+        auto a2 = (ax-a1)/2;
+        a1 = (ax+a1)/2;
+
+        auto lamda_2 = sqrt(a2*a2+ax*ax*gamma_phi_2[i]);
+        auto lamda_3 = a1 - lamda_2;
+        auto tmp1 = 3/lamda_2;
+        lamda_2 = a1 + lamda_2;
+
+        auto inv_lamda_1 = 1/lamda_1;
+        auto inv_lamda_2 = 1/lamda_2;
+        auto inv_lamda_3 = 1/lamda_3;
+
+        auto r1 = rd(inv_lamda_2, inv_lamda_3, inv_lamda_1);
+        auto r2 = rd(inv_lamda_3, inv_lamda_1, inv_lamda_2);
+        auto r3 = 3*sqrt(lamda_1*lamda_2*lamda_3)-r1-r2;
+
+        r1 *= inv_lamda_1*2;
+        r2 *= inv_lamda_2;
+        r3 *= inv_lamda_3;
+
+        psi[i] = -r1 + r2 + r3;
+
+        sxp[i] = tmp1*ax*gamma_phi_2[i]*(r3-r2);
+        tmp1 = tmp1*a2;
+        auto tmp2 = 1 + tmp1;
+        tmp1 = 1 - tmp1;
+        sp[i] = gamma2*(r1-r2*tmp1-r3*tmp2)/2;
+        sx[i] = (r1-r2*tmp2-r3*tmp1)/2;
+
+
+//        output_particles<<lattice.betx(i)<<' '<<lattice.bety(i)<<' '<<sigma_x<<' '<<sigma_y<<' '<<inv_sigma[i]<<' '
+//        <<a1<<' '<<a2<<' '<<lamda_1<<' '<<lamda_2<<' '<<lamda_3<<' '<<psi[i]<<' '<<sxp[i]<<' '<<sp[i]<<' '<<sx[i]<<std::endl;
+    }
+
+//    output_particles.close();
+}
+
+double coef_bm(Lattice &lattice, Beam &beam) {
+    double lambda = 1;
+    if(beam.bunched()) lambda /= 2*sqrt(k_pi)*beam.sigma_s();
+
+    double beta3 = beam.beta()*beam.beta()*beam.beta();
+    double gamma5 = beam.gamma()*beam.gamma()*beam.gamma()*beam.gamma()*beam.gamma();
+    return lambda*beam.particle_number()*beam.r()*beam.r()*k_c/(lattice.circ()*6*sqrt(k_pi)*beta3*gamma5);
+}
+
+int ibs_bm(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs) {
+        double k = ibs_paras.k();
+    int n_element = lattice.n_element();
+
+    if(ibs_paras.reset()) {
+        init_fixed_var(lattice, beam);
+        ibs_paras.reset_off();
+    }
+
+    calc_kernels(lattice, beam);
+    double c_bm = coef_bm(lattice, beam);
+
+    rx = 0;
+    ry = 0;
+    rs = 0;
+    int n=2;
+    if (beam.bunched()) n=1;
+
+    for(int i=0; i<n_element-1; ++i){
+        double l_element = lattice.l_element(i);
+        rs += inv_sigma[i]*sp[i]*l_element;
+        ry += lattice.bety(i)*inv_sigma[i]*psi[i]*l_element;
+        rx += lattice.betx(i)*inv_sigma[i]*(sx[i]+dx_betax_phi_2[i]*sp[i]+sxp[i])*l_element;
+    }
+
+//    double circ = lattice.circ();
+    double lc = ibs_paras.log_c();
+    c_bm *= lc;
+    rs *= n*c_bm;
+    rx *= c_bm;
+    ry *= c_bm;
+
+    rs /= beam.dp_p()*beam.dp_p();
+    rx /= beam.emit_x();
+    ry /= beam.emit_y();
+
+    if(k>0) ibs_coupling(rx, ry, k, beam.emit_nx(), beam.emit_ny());
+    return 0;
+}
+
+int ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs) {
+    switch (ibs_paras.model()) {
+        case IBSModel::MARTINI : {
+            ibs_martini(lattice, beam, ibs_paras, rx, ry, rs);
+            break;
+        }
+        case IBSModel::BM : {
+            ibs_bm(lattice, beam, ibs_paras, rx, ry, rs);
+            break;
+        }
+        default : {
+            assert(false&&"IBS model NOT exists!");
+        }
+    }
+}
 
 
 

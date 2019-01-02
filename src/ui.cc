@@ -22,7 +22,7 @@ std::vector<string> ION_ARGS = {"CHARGE_NUMBER", "MASS", "KINETIC_ENERGY", "NORM
 std::vector<string> RUN_COMMANDS = {"CREATE_ION_BEAM", "CREATE_RING", "CREATE_E_BEAM", "CREATE_COOLER",
     "CALCULATE_IBS", "CALCULATE_ECOOL", "TOTAL_EXPANSION_RATE", "RUN_SIMULATION"};
 std::vector<string> RING_ARGS = {"LATTICE", "QX", "QY", "QS", "GAMMA_TR", "RF_V", "RF_H", "RF_PHI"};
-std::vector<string> IBS_ARGS = {"NU","NV","NZ","LOG_C","COUPLING"};
+std::vector<string> IBS_ARGS = {"NU","NV","NZ","LOG_C","COUPLING","MODEL"};
 std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD", "BET_X", "BET_Y", "DISP_X", "DISP_Y",
     "ALPHA_X", "ALPHA_Y", "DISP_DX", "DISP_DY"};
 //std::vector<string> SCRATCH_COMMANDS = {"PRINT", "LIST_VAR", "LIST_CONST"};
@@ -539,19 +539,29 @@ void calculate_ibs(Set_ptrs &ptrs) {
     double log_c = ptrs.ibs_ptr->log_c;
     double k = ptrs.ibs_ptr->coupling;
     double rx, ry, rz;
+    IBSModel model = ptrs.ibs_ptr->model;
 
-    if (log_c>0) {
-        assert(nu>0 && nv>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
-        IBSParas ibs_paras(nu, nv, log_c);
+    if(model==IBSModel::MARTINI) {
+        if (log_c>0) {
+            assert(nu>0 && nv>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
+            IBSParas ibs_paras(nu, nv, log_c);
+            if (k>0) ibs_paras.set_k(k);
+            ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
+        }
+        else {
+            assert(nu>0 && nv>0 && nz>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
+            IBSParas ibs_paras(nu, nv, nz);
+            if (k>0) ibs_paras.set_k(k);
+            ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
+        }
+    }
+    else if(model==IBSModel::BM) {
+        IBSParas ibs_paras(model);
+        ibs_paras.set_log_c(log_c);
         if (k>0) ibs_paras.set_k(k);
         ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
     }
-    else {
-        assert(nu>0 && nv>0 && nz>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
-        IBSParas ibs_paras(nu, nv, nz);
-        if (k>0) ibs_paras.set_k(k);
-        ibs_rate(*ptrs.lattice, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
-    }
+
     ptrs.ibs_rate.at(0) = rx;
     ptrs.ibs_rate.at(1) = ry;
     ptrs.ibs_rate.at(2) = rz;
@@ -567,15 +577,16 @@ void calculate_ecool(Set_ptrs &ptrs) {
     int n_sample = ptrs.ecool_ptr->n_sample;
     assert(n_sample > 0 && "WRONG PARAMETER VALUE FOR ELECTRON COOLING RATE CALCULATION!");
     EcoolRateParas ecool_paras(n_sample);
-    std::string force_formula = ptrs.ecool_ptr->force;
-    assert(std::find(FRICTION_FORCE_FORMULA.begin(),FRICTION_FORCE_FORMULA.end(),force_formula)!=FRICTION_FORCE_FORMULA.end()
-               && "UNKNOWN FRICTION FORCE FORMULA SECTION_ECOOL!");
-    ForceFormula force;
-    if (force_formula == "PARKHOMCHUK") {
-        force = ForceFormula::PARKHOMCHUK;
-    }
-    ForceParas force_paras(force);
+//    std::string force_formula = ptrs.ecool_ptr->force;
+//    assert(std::find(FRICTION_FORCE_FORMULA.begin(),FRICTION_FORCE_FORMULA.end(),force_formula)!=FRICTION_FORCE_FORMULA.end()
+//               && "UNKNOWN FRICTION FORCE FORMULA SECTION_ECOOL!");
+//    ForceFormula force;
+//    if (force_formula == "PARKHOMCHUK") {
+//        force = ForceFormula::PARKHOMCHUK;
+//    }
+//    ForceParas force_paras(force);
 
+    ForceParas force_paras(ptrs.ecool_ptr->force);
     assert(ptrs.ion_beam.get()!=nullptr && "MUST CREATE THE ION BEAM BEFORE CALCULATE ELECTRON COOLING RATE!");
     assert(ptrs.ring.get()!=nullptr && "MUST CREATE THE RING BEFORE CALCULATE ELECTRON COOLING RATE!");
     double rx, ry, rz;
@@ -642,14 +653,15 @@ void run_simulation(Set_ptrs &ptrs) {
             dynamic_paras->set_n_sample(n_sample);
         }
         ecool_paras = new EcoolRateParas(n_sample);
-        std::string force_formula = ptrs.ecool_ptr->force;
-        assert(std::find(FRICTION_FORCE_FORMULA.begin(),FRICTION_FORCE_FORMULA.end(),force_formula)!=FRICTION_FORCE_FORMULA.end()
-                   && "UNKNOWN FRICTION FORCE FORMULA SECTION_ECOOL!");
-        ForceFormula force;
-        if (force_formula == "PARKHOMCHUK") {
-            force = ForceFormula::PARKHOMCHUK;
-        }
-        force_paras = new ForceParas(force);
+//        std::string force_formula = ptrs.ecool_ptr->force;
+//        assert(std::find(FRICTION_FORCE_FORMULA.begin(),FRICTION_FORCE_FORMULA.end(),force_formula)!=FRICTION_FORCE_FORMULA.end()
+//                   && "UNKNOWN FRICTION FORCE FORMULA SECTION_ECOOL!");
+//        ForceFormula force;
+//        if (force_formula == "PARKHOMCHUK") {
+//            force = ForceFormula::PARKHOMCHUK;
+//        }
+//        force_paras = new ForceParas(force);
+        force_paras = new ForceParas(ptrs.ecool_ptr->force);
     }
 
     if(ibs) {
@@ -660,14 +672,21 @@ void run_simulation(Set_ptrs &ptrs) {
         double log_c = ptrs.ibs_ptr->log_c;
         double k = ptrs.ibs_ptr->coupling;
         double rx, ry, rz;
+        IBSModel model = ptrs.ibs_ptr->model;
 
-        if (log_c>0) {
-            assert(nu>0 && nv>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
-            ibs_paras = new IBSParas(nu, nv, log_c);
+        if(model==IBSModel::MARTINI){
+            if (log_c>0) {
+                assert(nu>0 && nv>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
+                ibs_paras = new IBSParas(nu, nv, log_c);
+            }
+            else {
+                assert(nu>0 && nv>0 && nz>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
+                ibs_paras = new IBSParas(nu, nv, nz);
+                ibs_paras->set_log_c(log_c);
+            }
         }
-        else {
-            assert(nu>0 && nv>0 && nz>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
-            ibs_paras = new IBSParas(nu, nv, nz);
+        else if(model==IBSModel::BM) {
+            ibs_paras = new IBSParas(model);
         }
         if (k>0) ibs_paras->set_k(k);
     }
@@ -900,7 +919,18 @@ void set_ibs(string &str, Set_ibs *ibs_args) {
     val = trim_blank(val);
     val = trim_tab(val);
     assert(std::find(IBS_ARGS.begin(),IBS_ARGS.end(),var)!=IBS_ARGS.end() && "WRONG COMMANDS IN SECTION_IBS!");
-    if (math_parser == NULL) {
+    if (var== "MODEL") {
+        if (val == "MARTINI") {
+            ibs_args->model = IBSModel::MARTINI;
+        }
+        else if(val == "BM") {
+            ibs_args->model = IBSModel::BM;
+        }
+        else {
+            assert(false&&"WRONG IBS MODEL!");
+        }
+    }
+    else if (math_parser == NULL) {
         if (var == "NU") {
             ibs_args->nu = std::stoi(val);
         }
@@ -961,7 +991,7 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
         else if(val == "MODEL_BEAM") dynamic_args->model = DynamicModel::MODEL_BEAM;
         else if(val == "PARTICLE") dynamic_args->model = DynamicModel::PARTICLE;
         else if(val == "TURN_BY_TURN") dynamic_args->model = DynamicModel::TURN_BY_TURN;
-        else assert("DYNAMIC MODEL NOT SUPPORTED IN SIMULATION!");
+        else assert(false&&"DYNAMIC MODEL NOT SUPPORTED IN SIMULATION!");
     }
     else if (var == "OUTPUT_FILE") {
         dynamic_args->filename = val;
@@ -974,7 +1004,7 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
     else if (var == "E_COOL") {
         if (val == "ON") dynamic_args->ecool = true;
         else if (val == "OFF") dynamic_args->ecool = false;
-        else assert("WRONG VALUE IN SECTION_SIMULATION!");
+        else assert(false&&"WRONG VALUE IN SECTION_SIMULATION!");
     }
     else {
         if (math_parser == NULL) {
@@ -1082,7 +1112,9 @@ void set_ecool(string &str, Set_ecool *ecool_args){
     assert(std::find(ECOOL_ARGS.begin(),ECOOL_ARGS.end(),var)!=ECOOL_ARGS.end() && "WRONG COMMANDS IN SECTION_ECOOL!");
 
     if (var == "FORCE_FORMULA") {
-        ecool_args->force = val;
+//        ecool_args->force = val;
+        if (val=="PARKHOMCHUK") ecool_args->force = ForceFormula::PARKHOMCHUK;
+        else assert(false&&"Friction force formula NOT exists!");
     }
     else {
         if (math_parser == NULL) {

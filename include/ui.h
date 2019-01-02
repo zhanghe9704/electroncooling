@@ -48,11 +48,13 @@ struct Set_ibs{
      int nz = 0;
      double log_c = 0;
      double coupling = -1;
+     IBSModel model = IBSModel::MARTINI;
 };
 
 struct Set_ecool{
      int n_sample = 0;
-     std::string force = "PARKHOMCHUK";
+//     std::string force = "PARKHOMCHUK";
+     ForceFormula force = ForceFormula::PARKHOMCHUK;
 };
 
 struct Set_cooler{

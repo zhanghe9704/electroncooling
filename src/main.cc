@@ -145,16 +145,6 @@ int main(int argc, char** argv) {
 
                     }
                 }
-
-//                    std::cout<<line<<std::endl;
-//                        std::cout<<line<<"  "<<line.find('#')<<" * ";
-//                        std::string str_recom = remove_comments(line);
-//                        std::string str_trimed = trim_blank(str_recom);
-//                        str_trimed = trim_tab(str_trimed);
-//                        if (str_trimed.empty()) std::cout<<"empty";
-//                        else std::cout<<str_trimed;
-//                        std::cout<<std::endl<<std::endl;
-
             }
         }
 
@@ -195,10 +185,8 @@ int main(int argc, char** argv) {
 //                //Calculate IBS rate.
 //
 //                double rx_ibs, ry_ibs, rz_ibs;
-////                config_ibs(lattice);
 //                ibs_rate(lattice, p_beam, *ibs_paras, rx_ibs, ry_ibs, rz_ibs);
 //                std::cout<<"ibs rate: "<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
-////                end_ibs();
 
 
                 //define the cooler
@@ -375,7 +363,6 @@ int main(int argc, char** argv) {
 //                start = std::chrono::steady_clock::now();
 //
                 double rx_ibs, ry_ibs, rz_ibs;
-////                config_ibs(lattice);
 //                ibs_rate(lattice, p_beam, ibs_paras, rx_ibs, ry_ibs, rz_ibs);
 //
 //                end = std::chrono::steady_clock::now();
@@ -392,7 +379,6 @@ int main(int argc, char** argv) {
                 ibs_paras.set_k(0.2);
                 ibs_rate(lattice, p_beam, ibs_paras, rx_ibs, ry_ibs, rz_ibs);
                 std::cout<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
-//                end_ibs();
                 break;
             }
             case Test::DYNAMICIBSBUNCHED: {
@@ -640,10 +626,8 @@ int main(int argc, char** argv) {
                 ibs_paras->set_k(0.4);
 
                 double rx_ibs, ry_ibs, rz_ibs;
-//                config_ibs(lattice);
                 ibs_rate(lattice, p_beam, *ibs_paras, rx_ibs, ry_ibs, rz_ibs);
                 std::cout<<"IBS rate: [1/s] "<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
-    //            end_ibs();
                 std::cout<<"Total rate: [1/s] "<<rx_ibs+rate_x<<' '<<ry_ibs+rate_y<<' '<<rz_ibs+rate_s<<std::endl<<std::endl;
 
 //                return 0;

@@ -13,8 +13,7 @@
 				<Option compiler="gnu_gcc_51_x64_compiler" />
 				<Option parameters="test_turn_by_turn_1.txt" />
 				<Compiler>
-					<Add option="-std=c++0x" />
-					<Add option="-std=c++11" />
+					<Add option="-std=c++14" />
 					<Add option="-g" />
 					<Add directory="../src" />
 					<Add directory="../include" />
@@ -37,10 +36,9 @@
 				<Option parameters="test_turn_by_turn_1.txt" />
 				<Option projectCompilerOptionsRelation="2" />
 				<Option projectIncludeDirsRelation="2" />
-				<Option projectResourceIncludeDirsRelation="-1" />
 				<Option projectLibDirsRelation="2" />
 				<Compiler>
-					<Add option="-std=c++11" />
+					<Add option="-std=c++14" />
 					<Add directory="../include" />
 					<Add directory="../src" />
 				</Compiler>
@@ -61,10 +59,20 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-std=c++0x" />
+			<Add option="-std=c++14" />
 			<Add option="-g" />
-			<Add option="-std=c++11" />
+			<Add directory="../src" />
+			<Add directory="../include" />
 		</Compiler>
+		<ResourceCompiler>
+			<Add directory="../include" />
+			<Add directory="../src" />
+		</ResourceCompiler>
+		<Linker>
+			<Add option="-lmuparser" />
+			<Add directory="../include" />
+			<Add directory="../lib" />
+		</Linker>
 		<Unit filename="../include/arbitrary_electron_beam.h" />
 		<Unit filename="../include/beam.h" />
 		<Unit filename="../include/constants.h" />

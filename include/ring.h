@@ -40,7 +40,7 @@ class Lattice{
     double muy(int i){return muy_.at(i);}
     double dy(int i){return dy_.at(i);}
     double dpy(int i){return dpy_.at(i);}
-    double n_element(){return n_element_;}
+    int n_element(){return n_element_;}
     double l_element(int i){return l_element_.at(i);}
     double circ(){return circ_;}
     Lattice(std::string filename);
