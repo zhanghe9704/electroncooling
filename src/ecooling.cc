@@ -853,6 +853,63 @@ int new_emittance(EcoolRateParas ecool_paras, Beam ion, Ring &ring, Cooler &cool
     return 0;
 }
 
+
+int new_emittance(EcoolRateParas ecool_paras, Beam ion, Cooler &cooler, double &emit_x, double &emit_y,
+                  double &emit_z) {
+    double dx = cooler.disp_h();
+    double dy = cooler.disp_v();
+    double dpx = cooler.der_disp_h();
+    double dpy = cooler.der_disp_v();
+
+    unsigned int n_sample = ecool_paras.n_sample();
+    for(unsigned int i=0; i<n_sample; ++i) {
+        x_bet[i] = x[i] - dx*dp_p[i];
+        xp_bet[i] = xp[i] - dpx*dp_p[i];
+        y_bet[i] = y[i] - dy*dp_p[i];
+        yp_bet[i] = yp[i] - dpy*dp_p[i];
+    }
+
+    switch (ecool_paras.ion_sample()) {
+        case IonSample::SINGLE_PARTICLE: {
+            double alf_x = cooler.alpha_h();
+            double alf_y = cooler.alpha_v();
+            double beta_x = cooler.beta_h();
+            double beta_y = cooler.beta_v();
+            double gamma_x = (1+alf_x*alf_x)/beta_x;
+            double gamma_y = (1+alf_y*alf_y)/beta_y;
+            emit_x = 0;
+            emit_y = 0;
+            emit_z = 0;
+            for(unsigned int i=0; i<n_sample; ++i) {
+                emit_x += beta_x*xp_bet[i]*xp_bet[i]+2*alf_x*x_bet[i]*xp_bet[i]+gamma_x*x_bet[i]*x_bet[i];
+                emit_y += beta_y*yp_bet[i]*yp_bet[i]+2*alf_y*y_bet[i]*yp_bet[i]+gamma_y*y_bet[i]*y_bet[i];
+                emit_z += dp_p[i]*dp_p[i];
+            }
+//            if(ion.bunched()) {
+//                double bs2 = ring.beta_s();
+//                bs2 *= bs2;
+//                double bs2_inv = 1/bs2;
+//                for(unsigned int i=0; i<n_sample; ++i) emit_z+= ds[i]*ds[i]*bs2_inv;
+//            }
+            emit_x /= 2*n_sample;
+            emit_y /= 2*n_sample;
+            emit_z /= n_sample;
+            break;
+        }
+        case IonSample::MONTE_CARLO: {
+            emit_x = emit(x_bet.get(), xp_bet.get(), n_sample);
+            emit_y = emit(y_bet.get(), yp_bet.get(), n_sample);
+            emit_z = emit_p(dp_p.get(), n_sample);
+            break;
+        }
+        default: {
+            perror("Error in defining ion beam model!");
+            break;
+        }
+    }
+    return 0;
+}
+
 //For bunched electron beam to cool coasting ion beam, adjust the cooling rate wit the duty factor.
 int adjust_rate(EcoolRateParas &ecool_paras, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam, double &rate_x,
          double &rate_y, double &rate_s) {
@@ -962,13 +1019,14 @@ int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &io
     force_distribute(n_sample,ion);
     //Original emittance
     double emit_x0, emit_y0, emit_z0;
-//    original_emittance(ecool_paras, ion, emit_x0, emit_y0, emit_z0);
-    original_emittance(ecool_paras, ring, ion, emit_x0, emit_y0, emit_z0);
+    original_emittance(ecool_paras, ion, emit_x0, emit_y0, emit_z0);
+//    original_emittance(ecool_paras, ring, ion, emit_x0, emit_y0, emit_z0);
     //Apply kick
     apply_kick(n_sample, ion);
     //New emittance
     double emit_x, emit_y, emit_z;
-    new_emittance(ecool_paras, ion, ring, cooler, emit_x, emit_y, emit_z);
+    new_emittance(ecool_paras, ion, cooler, emit_x, emit_y, emit_z);
+//    new_emittance(ecool_paras, ion, ring, cooler, emit_x, emit_y, emit_z);
     //rate
     rate_x = emit_x/emit_x0-1;
     rate_y = emit_y/emit_y0-1;

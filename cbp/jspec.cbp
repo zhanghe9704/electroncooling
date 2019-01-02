@@ -33,7 +33,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gnu_gcc_51_x64_compiler" />
-				<Option parameters="test_turn_by_turn_1.txt" />
+				<Option parameters="test_ibs_bm.txt" />
 				<Option projectCompilerOptionsRelation="2" />
 				<Option projectIncludeDirsRelation="2" />
 				<Option projectLibDirsRelation="2" />
