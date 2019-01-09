@@ -69,7 +69,15 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam, std:
         ion.set_emit_nx(emit_nx);
         ion.set_emit_ny(emit_ny);
         ion.set_dp_p(dp);
-        if(ion.bunched()) ion.set_sigma_s(sigma_s);
+        if(ion.bunched()) {
+            if(dynamic_paras->fixed_bunch_length()) {
+                ring.rf->v = ring.calc_rf_voltage();
+            }
+            else {
+                ion.set_sigma_s(sigma_s);
+            }
+        }
+//        if(ion.bunched()&& !dynamic_paras->fixed_bunch_length()) ion.set_sigma_s(sigma_s);
         //resample the ions
         if(dynamic_paras->ecool()) ion_sample(*ecool_paras, ion, ring, cooler);
         break;
@@ -173,14 +181,26 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam, std:
     return 0;
 }
 
+//void output(double t, std::vector<double> &emit, std::vector<double> &r, std::vector<double> &r_ibs,
+//            std::vector<double> &r_ecool, bool bunched, std::ofstream &outfile) {
+//    outfile<<t<<' '<<emit.at(0)<<' '<<emit.at(1)<<' '<<emit.at(2)<<' ';
+//    if(bunched) outfile<<emit.at(3)<<' ';
+//    else outfile<<0<<' ';
+//    outfile<<r.at(0)<<' '<<r.at(1)<<' '<<r.at(2)<<' ';
+//    outfile<<r_ibs.at(0)<<' '<<r_ibs.at(1)<<' '<<r_ibs.at(2)<<' ';
+//    outfile<<r_ecool.at(0)<<' '<<r_ecool.at(1)<<' '<<r_ecool.at(2)<<' ';
+//    outfile<<std::endl;
+//}
+
 void output(double t, std::vector<double> &emit, std::vector<double> &r, std::vector<double> &r_ibs,
-            std::vector<double> &r_ecool, bool bunched, std::ofstream &outfile) {
+            std::vector<double> &r_ecool, double v_rf, bool bunched, std::ofstream &outfile) {
     outfile<<t<<' '<<emit.at(0)<<' '<<emit.at(1)<<' '<<emit.at(2)<<' ';
     if(bunched) outfile<<emit.at(3)<<' ';
     else outfile<<0<<' ';
     outfile<<r.at(0)<<' '<<r.at(1)<<' '<<r.at(2)<<' ';
     outfile<<r_ibs.at(0)<<' '<<r_ibs.at(1)<<' '<<r_ibs.at(2)<<' ';
     outfile<<r_ecool.at(0)<<' '<<r_ecool.at(1)<<' '<<r_ecool.at(2)<<' ';
+    outfile<<v_rf<<' ';
     outfile<<std::endl;
 }
 
@@ -224,6 +244,29 @@ void save_ions(int n_sample, string filename) {
 }
 
 
+//void output_sddshead(int n, std::ofstream &outfile){
+//    using std::endl;
+//    outfile<<"SDDS1"<<endl;
+//    outfile<<"! Define colums:"<<endl
+//        <<"&column name=t, type=double, units=s, description=time, &end"<<endl
+//        <<"&column name=emit_x, type=double, units=m*rad, description=\"normalized horizontal emittance\", &end"<<endl
+//        <<"&column name=emit_y, type=double, units=m*rad, description=\"normalized vertical emittance\", &end"<<endl
+//        <<"&column name=dp/p, type=double, units=NULL, description=\"momentum spread\", &end"<<endl
+//        <<"&column name=sigma_s, type=double, units=m, description=\"RMS bunch length\", &end"<<endl
+//        <<"&column name=rx, type=double, units=1/s, description=\"horizontal expansion rate\", &end"<<endl
+//        <<"&column name=ry, type=double, units=1/s, description=\"vertical expansion rate\", &end"<<endl
+//        <<"&column name=rs, type=double, units=1/s, description=\"longitudinal expansion rate\", &end"<<endl
+//        <<"&column name=rx_ibs, type=double, units=1/s, description=\"horizontal IBS expansion rate\", &end"<<endl
+//        <<"&column name=ry_ibs, type=double, units=1/s, description=\"vertical IBS expansion rate\", &end"<<endl
+//        <<"&column name=rs_ibs, type=double, units=1/s, description=\"longitudinal IBS expansion rate\", &end"<<endl
+//        <<"&column name=rx_ecool, type=double, units=1/s, description=\"horizontal electron cooling rate\", &end"<<endl
+//        <<"&column name=ry_ecool, type=double, units=1/s, description=\"vertical electron cooling rate\", &end"<<endl
+//        <<"&column name=rs_ecool, type=double, units=1/s, description=\"longitudinal electron cooling rate\", &end"<<endl
+//        <<"!Declare ASCII data and end the header"<<endl
+//        <<"&data mode=ascii, &end"<<endl
+//        <<n<<endl;
+//}
+
 void output_sddshead(int n, std::ofstream &outfile){
     using std::endl;
     outfile<<"SDDS1"<<endl;
@@ -242,6 +285,7 @@ void output_sddshead(int n, std::ofstream &outfile){
         <<"&column name=rx_ecool, type=double, units=1/s, description=\"horizontal electron cooling rate\", &end"<<endl
         <<"&column name=ry_ecool, type=double, units=1/s, description=\"vertical electron cooling rate\", &end"<<endl
         <<"&column name=rs_ecool, type=double, units=1/s, description=\"longitudinal electron cooling rate\", &end"<<endl
+        <<"&column name=rf_voltage, type=double, units=V, description=\"Voltage of the RF cavity\", &end"<<endl
         <<"!Declare ASCII data and end the header"<<endl
         <<"&data mode=ascii, &end"<<endl
         <<n<<endl;
@@ -303,8 +347,8 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
         for(int i=0; i<3; ++i) r.at(i) = r_ibs.at(i) + r_ecool.at(i);
 
         //Output
-        if (output_itvl==1) output(t, emit, r, r_ibs, r_ecool, ion.bunched(), outfile);
-        else if(i%output_itvl==0) output(t, emit, r, r_ibs, r_ecool, ion.bunched(), outfile);
+        if (output_itvl==1) output(t, emit, r, r_ibs, r_ecool, ring.rf->v, ion.bunched(), outfile);
+        else if(i%output_itvl==0) output(t, emit, r, r_ibs, r_ecool, ring.rf->v, ion.bunched(), outfile);
 
         //Update beam parameters and particles
         update_beam(i, ion, ring, cooler, ebeam, r_ibs, r_ecool);

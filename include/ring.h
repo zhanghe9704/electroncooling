@@ -63,6 +63,9 @@ struct RF {
 class Ring{
     double beta_s_ = 0;         //Synchrotron function, use to calculate rms bunch length from momentum spread
     double circ_ = 0;        //Circumference of the ring;
+    double f0_ = 0;               // revolution frequency.
+    double w0_ = 0;       // angular revolution frequency.
+    double slip_factor_ = 0;     //slip factor.
  public:
     Beam *beam_;
     Lattice *lattice_;
@@ -74,8 +77,15 @@ class Ring{
 //    std::shared_ptr<Lattice> lattice_;
     double beta_s(){assert(beam_->bunched()); return beta_s_;}
     double circ(){return circ_;}
+    double f0(){return f0_;}
+    double w0(){return w0_;}
+    double slip_factor(){return slip_factor_;}
+    double calc_rf_voltage();
+    double calc_sync_tune_by_rf();
+    double calc_sync_tune_by_bunch_length();
     Ring(double circ, Beam &beam_defined);
     Ring(Lattice &lattice_defined, Beam &beam_defined);
+    void set_rf();
 };
 
 struct Twiss{

@@ -37,7 +37,7 @@ std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
 std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
 std::vector<string> SIMULATION_ARGS = {"TIME", "STEP_NUMBER", "SAMPLE_NUMBER", "IBS", "E_COOL", "OUTPUT_INTERVAL",
     "SAVE_PARTICLE_INTERVAL", "OUTPUT_FILE", "MODEL", "REF_BET_X", "REF_BET_Y", "REF_ALF_X", "REF_ALF_Y",
-    "REF_DISP_X", "REF_DISP_Y", "REF_DISP_DX", "REF_DISP_DY"};
+    "REF_DISP_X", "REF_DISP_Y", "REF_DISP_DX", "REF_DISP_DY", "FIXED_BUNCH_LENGTH"};
 std::vector<string> DYNAMIC_VALUE = {"RMS", "PARTICLE", "MODEL_BEAM", "TURN_BY_TURN"};
 
 std::map<std::string, Section> sections{
@@ -480,12 +480,14 @@ void create_ring(Set_ptrs &ptrs) {
     assert(ptrs.ion_beam.get()!=nullptr && "MUST DEFINE THE ION BEFORE CREATE THE RING!");
     ptrs.ring.reset(new Ring(*ptrs.lattice, *ptrs.ion_beam));
 
-    ptrs.tunes.reset(new Tunes());
-    ptrs.ring->tunes = ptrs.tunes.get();
-    ptrs.rf.reset(new RF());
-    ptrs.ring->rf = ptrs.rf.get();
+//    ptrs.tunes.reset(new Tunes());
+//    ptrs.ring->tunes = ptrs.tunes.get();
+//    ptrs.rf.reset(new RF());
+//    ptrs.ring->rf = ptrs.rf.get();
     if(ptrs.ring_ptr->qx>0 || ptrs.ring_ptr->qy>0 || ptrs.ring_ptr->qs>0) {
         assert(ptrs.ring_ptr->qx>0 && ptrs.ring_ptr->qy>0 && "Transverse tunes must be greater than zero!");
+        ptrs.tunes.reset(new Tunes());
+        ptrs.ring->tunes = ptrs.tunes.get();
 //        ptrs.ring.qx = ptrs.ring_ptr->qx;
 //        ptrs.ring.qy = ptrs.ring_ptr->qy;
 //        ptrs.ring.qs = ptrs.ring_ptr->qs;
@@ -497,6 +499,8 @@ void create_ring(Set_ptrs &ptrs) {
     }
     if(ptrs.ring_ptr->rf_v>0) {
         assert(ptrs.ring_ptr->gamma_tr>0 && "When RF cavity is defined, the transition gamma should be greater than zero");
+        ptrs.rf.reset(new RF());
+        ptrs.ring->rf = ptrs.rf.get();
 //        ptrs.ring.v = ptrs.ring_ptr->rf_v;
 //        ptrs.ring.h = ptrs.ring_ptr->rf_h;
 //        ptrs.ring.phi = ptrs.ring_ptr->rf_phi;
@@ -613,6 +617,10 @@ void run_simulation(Set_ptrs &ptrs) {
     assert(ptrs.dynamic_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR SIMULATION!");
     bool ibs = ptrs.dynamic_ptr->ibs;
     bool ecool = ptrs.dynamic_ptr->ecool;
+    bool fixed_bunch_length = ptrs.dynamic_ptr->fixed_bunch_length;
+    if(fixed_bunch_length) {
+        assert(ptrs.dynamic_ptr->model==DynamicModel::RMS&&"ERROR: THE PARAMETER FIXED_BUNCH_LENGTH WORKS ONLY FOR RMS MODEL");
+    }
     double t = ptrs.dynamic_ptr->time;
     int n_step = ptrs.dynamic_ptr->n_step;
     int n_sample = ptrs.dynamic_ptr->n_sample;
@@ -634,6 +642,7 @@ void run_simulation(Set_ptrs &ptrs) {
     dynamic_paras = new DynamicParas(t, n_step, ibs, ecool);
     dynamic_paras->set_model(ptrs.dynamic_ptr->model);
     dynamic_paras->set_n_sample(n_sample);
+    dynamic_paras->set_fixed_bunch_length(fixed_bunch_length);
     if (output_intvl>1) dynamic_paras->set_output_intvl(output_intvl);
     if (save_ptcl_intvl>0) dynamic_paras->set_ion_save(save_ptcl_intvl);
     dynamic_paras->set_model(ptrs.dynamic_ptr->model);
@@ -999,12 +1008,17 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
     else if (var == "IBS" ) {
         if (val == "ON") dynamic_args->ibs = true;
         else if (val == "OFF") dynamic_args->ibs = false;
-        else assert("WRONG VALUE IN SECTION_SIMULATION!");
+        else assert(false&&"WRONG VALUE FOR THE PARAMETER IBS IN SECTION_SIMULATION!");
     }
     else if (var == "E_COOL") {
         if (val == "ON") dynamic_args->ecool = true;
         else if (val == "OFF") dynamic_args->ecool = false;
-        else assert(false&&"WRONG VALUE IN SECTION_SIMULATION!");
+        else assert(false&&"WRONG VALUE FOR THE PARAMETER E_COOL IN SECTION_SIMULATION!");
+    }
+    else if (var == "FIXED_BUNCH_LENGTH") {
+        if (val == "ON") dynamic_args->fixed_bunch_length = true;
+        else if (val == "OFF") dynamic_args->fixed_bunch_length = false;
+        else assert(false&&"WRONG VALUE FOR THE PARAMETER FIXED_BUNCH_LENGTH IN SECTION_SIMULATION!");
     }
     else {
         if (math_parser == NULL) {

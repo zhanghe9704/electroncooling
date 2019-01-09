@@ -17,6 +17,7 @@ Beam::Beam(int charge_number, double mass_number, double kinetic_energy, double 
     bunched_ = (sigma_s_>0)?true:false;
     emit_x_ = emit_nx_/(beta_*gamma_);
     emit_y_ = emit_ny_/(beta_*gamma_);
+    energy_spread_ = beta_*beta_*dp_p_;
 }
 
 Beam::Beam(int charge_number, double mass_number, double kinetic_energy, double emit_nx, double emit_ny, double dp_p,
@@ -30,6 +31,7 @@ Beam::Beam(int charge_number, double mass_number, double kinetic_energy, double 
     sigma_s_ = -1;
     emit_x_ = emit_nx_/(beta_*gamma_);
     emit_y_ = emit_ny_/(beta_*gamma_);
+    energy_spread_ = beta_*beta_*dp_p_;
 }
 
 int Beam::set_center(int i, double x) {

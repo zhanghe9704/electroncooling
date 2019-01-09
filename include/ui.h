@@ -103,6 +103,7 @@ struct Set_dynamic{
     int n_sample = 0;
     bool ibs = true;
     bool ecool = true;
+    bool fixed_bunch_length = false;
     int output_intvl = 1;
     int save_ptcl_intvl = -1;
     std::string filename = "output_dynamic.txt";

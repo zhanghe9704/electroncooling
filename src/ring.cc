@@ -117,6 +117,14 @@ Ring::Ring(double circ, Beam &beam_defined):circ_(circ) {
     lattice_ = nullptr;
     if(beam_->bunched())
         beta_s_ = beam_->sigma_s()/beam_->dp_p();
+    f0_ = beam_->beta()*k_c/circ_;
+    w0_ = 2*k_pi*f0_;
+//    if(!rf) {
+//        if(rf->gamma_tr>0) {
+//            double gamma = beam_->gamma();
+//            slip_factor_ = 1/(rf->gamma_tr*rf->gamma_tr) - 1/(gamma*gamma);
+//        }
+//    }
 }
 
 Ring::Ring(Lattice &lattice_defined, Beam &beam_defined) {
@@ -125,6 +133,54 @@ Ring::Ring(Lattice &lattice_defined, Beam &beam_defined) {
     circ_ = lattice_->circ();
     if(beam_->bunched())
         beta_s_ = beam_->sigma_s()/beam_->dp_p();
+    f0_ = beam_->beta()*k_c/circ_;
+    w0_ = 2*k_pi*f0_;
+//    if(!rf) {
+//        if(rf->gamma_tr>0) {
+//            double gamma = beam_->gamma();
+//            slip_factor_ = 1/(rf->gamma_tr*rf->gamma_tr) - 1/(gamma*gamma);
+//        }
+//    }
+}
+
+void Ring::set_rf() {
+    if(!rf) {
+        if(rf->gamma_tr>0) {
+            double gamma = beam_->gamma();
+            slip_factor_ = 1/(rf->gamma_tr*rf->gamma_tr) - 1/(gamma*gamma);
+        }
+    }
+}
+
+double Ring::calc_sync_tune_by_rf() {
+    assert(rf); //RF has to be defined.
+    double energy = beam_->gamma()*beam_->mass()*1e6; //Total energy in [eV].
+    double tune = slip_factor_*rf->h*rf->v*cos(rf->phi)/(2*k_pi*energy*beam_->beta()*beam_->beta());
+    if (tune<0) tune *= -1;
+    tune = sqrt(tune);
+    return tune;
+}
+
+double Ring::calc_sync_tune_by_bunch_length() {
+    assert(beam_->bunched());
+    double eta = slip_factor_;
+    if (eta<0) eta *= -1;
+    double tune = k_c*tune*beam_->energy_spread()/(beam_->sigma_s()*w0_);
+    return tune;
+}
+
+double Ring::calc_rf_voltage() {
+    double v_rf = 0;
+
+    if(beam_->bunched()) {
+       double tune = calc_sync_tune_by_bunch_length();
+       double energy = beam_->gamma()*beam_->mass()*1e6; //Total energy in [eV].
+       double coef = -1*rf->h*slip_factor_*cos(rf->phi)/(2*k_pi*beam_->beta()*beam_->beta()*energy);
+       if (coef<0) coef *= -1;
+       v_rf = tune*tune/coef;
+    }
+
+    return v_rf;
 }
 
 

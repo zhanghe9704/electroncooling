@@ -21,6 +21,7 @@ class Beam{
     double emit_x_;  //geometrical horizontal emittance, in m
     double emit_y_;  //geometrical vertical emittance, in m
     double dp_p_;     //momentum spread dp/p
+    double energy_spread_;       // dE/E
     double sigma_s_; //RMS bunch length. set it to -1 for coasting beam, in m
     double particle_number_; //number of particles
     bool bunched_;   //Return true if beam is bunched.
@@ -31,7 +32,7 @@ public:
     int set_emit_ny(double x){emit_ny_ = x; emit_y_ = emit_ny_/(beta_*gamma_); return 0;}
     int set_emit_x(double x){emit_x_ = x; emit_nx_ = beta_*gamma_*emit_x_; return 0;}
     int set_emit_y(double x){emit_y_ = x; emit_ny_ = beta_*gamma_*emit_y_; return 0;}
-    int set_dp_p(double x){dp_p_ = x; return 0;}
+    int set_dp_p(double x){dp_p_ = x; energy_spread_ = beta_*beta_*dp_p_; return 0;}
     int set_sigma_s(double x){sigma_s_ = x; return 0;}
     int set_center(double cx, double cy, double cz){center_[0] = cx; center_[1] = cy; center_[2] = cz; return 0;}
     int set_center(int i, double x);
@@ -45,6 +46,7 @@ public:
     double emit_x(){return emit_x_;}
     double emit_y(){return emit_y_;}
     double dp_p(){return dp_p_;}
+    double energy_spread(){return energy_spread_;}
     double sigma_s(){return sigma_s_;}
     double r(){return r_;}
     double particle_number(){return particle_number_;}
