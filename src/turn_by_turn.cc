@@ -66,9 +66,9 @@ void turn_by_turn_move_particles(Beam &ion, Ring &ring, Cooler &cooler) {
     double gamma_y = (1+alf_y*alf_y)/beta_y;
 
     //Transverse motion by tunes
-    assert(ring.tunes->qx>0&&ring.tunes->qy>0&&"Transverse tunes are needed for Turn_by_turn model");
-    double Qx = ring.tunes->qx;
-    double Qy = ring.tunes->qy;
+    assert(ring.tunes.qx>0&&ring.tunes.qy>0&&"Transverse tunes are needed for Turn_by_turn model");
+    double Qx = ring.tunes.qx;
+    double Qy = ring.tunes.qy;
     for (auto i=0; i<n_sample; ++i) {
         double phi = 2*k_pi*Qx;
         double x_bet_0 = x_bet[i];
@@ -83,10 +83,10 @@ void turn_by_turn_move_particles(Beam &ion, Ring &ring, Cooler &cooler) {
     }
 
     //Longitudinal motion.
-    if (ring.tunes->qs>0||ring.rf->v>0) {    //RF, synchrotron oscillation.
+    if (ring.tunes.qs>0||ring.rf.v>0) {    //RF, synchrotron oscillation.
 //        assert(ring.tunes->qs>0||ring.rf->v>0&&"Longitudinal tune or RF cavity needed for Turn_by_turn model");
 
-        if(ring.rf->v>0) { //Longitudinal motion by RF.
+        if(ring.rf.v>0) { //Longitudinal motion by RF.
             double circ = ring.circ();
             double beta2 = ion.beta()*ion.beta();
             double beta2_inv = 1/beta2;
@@ -94,10 +94,10 @@ void turn_by_turn_move_particles(Beam &ion, Ring &ring, Cooler &cooler) {
             double total_energy_inv = 1/total_energy;
             double adj_dp2dE = beta2*total_energy;
 
-            double volt = ring.rf->v;
-            double phi_s = ring.rf->phi;
+            double volt = ring.rf.v;
+            double phi_s = ring.rf.phi;
 //            double phi_0 = ring.rf->phi_0();
-            double h = ring.rf->h;
+            double h = ring.rf.h;
 //            double s_s = phi_s*circ/(h*2*k_pi);
             double half_phase = h*k_pi;
             double total_phase = h*2*k_pi;
@@ -107,7 +107,7 @@ void turn_by_turn_move_particles(Beam &ion, Ring &ring, Cooler &cooler) {
     //                double adj_dE = ion.charge_number()*ring.rf_->volt()*1e-6; // [MeV/c^2]
             double sin_phi_s = sin(phi_s);
 //            double sin_phi_s = sin(phi_s+phi_0);
-            double eta = 1/(ring.rf->gamma_tr*ring.rf->gamma_tr) - 1/(ion.gamma()*ion.gamma()); //phase slip factor
+            double eta = 1/(ring.rf.gamma_tr*ring.rf.gamma_tr) - 1/(ion.gamma()*ion.gamma()); //phase slip factor
             double adj_dE2dphi = total_phase*eta*beta2_inv*total_energy_inv;
             for(unsigned int i = 0; i < n_sample; ++i) {
                 dp_p[i] *= adj_dp2dE; //dp/p -> dE/E -> dE in [MeV/c^2]
@@ -125,8 +125,8 @@ void turn_by_turn_move_particles(Beam &ion, Ring &ring, Cooler &cooler) {
                 dp_p[i]  = dp_p[i]*total_energy_inv*beta2_inv; //dE -> dE/E -> dp/p = beta*beta*dE/E;
             }
         }
-        else if(ring.tunes->qs>0) {//Longitudinal motion by tune
-            double phi = 2*k_pi*ring.tunes->qs;
+        else if(ring.tunes.qs>0) {//Longitudinal motion by tune
+            double phi = 2*k_pi*ring.tunes.qs;
             double inv_beta_s = 1/ring.beta_s();
             double beta_s = ring.beta_s();
             for (auto i=0; i<n_sample; ++i) {
