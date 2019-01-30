@@ -144,43 +144,37 @@ Ring::Ring(Lattice &lattice_defined, Beam &beam_defined) {
 }
 
 void Ring::set_rf() {
-    if(!rf) {
-        if(rf->gamma_tr>0) {
-            double gamma = beam_->gamma();
-            slip_factor_ = 1/(rf->gamma_tr*rf->gamma_tr) - 1/(gamma*gamma);
-        }
+    if(rf.gamma_tr>0) {
+        double gamma = beam_->gamma();
+        slip_factor_ = 1/(rf.gamma_tr*rf.gamma_tr) - 1/(gamma*gamma);
     }
 }
 
 double Ring::calc_sync_tune_by_rf() {
-    assert(rf); //RF has to be defined.
-    double energy = beam_->gamma()*beam_->mass()*1e6; //Total energy in [eV].
-    double tune = slip_factor_*rf->h*rf->v*cos(rf->phi)/(2*k_pi*energy*beam_->beta()*beam_->beta());
-    if (tune<0) tune *= -1;
-    tune = sqrt(tune);
-    return tune;
-}
+    assert(rf.v>0&&rf.gamma_tr>0&&"DEFINE THE RF CAVITY FOR SYNCHROTRON TUNE CALCULATION!"); //RF has to be defined.
 
-double Ring::calc_sync_tune_by_bunch_length() {
-    assert(beam_->bunched());
-    double eta = slip_factor_;
-    if (eta<0) eta *= -1;
-    double tune = k_c*tune*beam_->energy_spread()/(beam_->sigma_s()*w0_);
+    double cp = beam_->gamma()*beam_->beta()*beam_->mass()*1e6; //cp in [eV].
+    double tune = rf.h*slip_factor_*rf.v*cos(rf.phi)/(2*k_pi*beam_->beta()*cp);
+    if(tune<0) {
+        tune = sqrt(-tune);
+    }
+    else {
+        tune = sqrt(tune);
+    }
+
     return tune;
 }
 
 double Ring::calc_rf_voltage() {
-    double v_rf = 0;
-
     if(beam_->bunched()) {
-       double tune = calc_sync_tune_by_bunch_length();
-       double energy = beam_->gamma()*beam_->mass()*1e6; //Total energy in [eV].
-       double coef = -1*rf->h*slip_factor_*cos(rf->phi)/(2*k_pi*beam_->beta()*beam_->beta()*energy);
-       if (coef<0) coef *= -1;
-       v_rf = tune*tune/coef;
+        double energy = beam_->gamma()*beam_->mass()*1e6; //Total energy in [eV].
+        double v_rf = 2*k_pi*k_c*k_c*beam_->beta()*beam_->beta()*beam_->beta()*beam_->beta()*slip_factor_*energy*
+            beam_->dp_p()*beam_->dp_p()/(w0_*w0_*rf.h*cos(rf.phi)*beam_->sigma_s()*beam_->sigma_s());
+        return (v_rf>0)?v_rf:-v_rf;
     }
-
-    return v_rf;
+    else {
+        return 0;
+    }
 }
 
 

@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
                                 break;
                             }
                             case Section::SECTION_E_BEAM: {
-                                define_e_beam(line, ptrs.e_beam_ptr.get());
+                                define_e_beam(line_orgn, ptrs.e_beam_ptr.get());
                                 break;
                             }
                             case Section::SECTION_ECOOL: {

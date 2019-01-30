@@ -69,10 +69,10 @@ class Ring{
  public:
     Beam *beam_;
     Lattice *lattice_;
-//    Tunes tunes;
-//    RF rf;
-    Tunes *tunes = nullptr;
-    RF *rf = nullptr;
+    Tunes tunes;
+    RF rf;
+//    Tunes *tunes = nullptr;
+//    RF *rf = nullptr;
 //    std::shared_ptr<Beam> beam_;
 //    std::shared_ptr<Lattice> lattice_;
     double beta_s(){assert(beam_->bunched()); return beta_s_;}
@@ -82,7 +82,6 @@ class Ring{
     double slip_factor(){return slip_factor_;}
     double calc_rf_voltage();
     double calc_sync_tune_by_rf();
-    double calc_sync_tune_by_bunch_length();
     Ring(double circ, Beam &beam_defined);
     Ring(Lattice &lattice_defined, Beam &beam_defined);
     void set_rf();

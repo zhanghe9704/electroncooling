@@ -121,6 +121,28 @@ section_run
 	run_simulation	# Start simulation 
 ```
 
+### Keep a constant bunch length of the ion beam in simulation 
+
+The momentum spread of the ion beam changes due to the intrabeam scattering effect and the electron cooling effect during the simulation, hence the bunch length changes if the RF voltage is constant. However, if the RF voltage changes accordingly with the momentum spread, it is possible to maintain a constant bunch length. JSPEC allows the user to choose whether to keep the bunch length constant in the simulation. When the bunch length is maintained constant, the RF voltage is calculated and saved in the output file. 
+
+To use this feature, one needs to set the parameter "fixed_bunch_length" in section_simulation to be **true**. One also needs to set the parameters, rf_h (harmonic number), rf_phi (RF phase), and gammar_tr (transition gamma) in section_ring. 
+
+```
+section_ring #define the ring
+	...
+	rf_h = 3584
+	rf_phi = 0
+	gamma_tr = 12.46
+	
+...
+
+section_simulation
+	...
+	fixed_bunch_length = true
+```
+
+
+
 
 
 ## List of sections, keywords, and commands
@@ -143,7 +165,7 @@ section_run
 | kinetic_energy   | Kinetic energy in [MeV] of the ion       |
 | norm_emit_x      | Normalized horizontal emittance in [m*rad] of the ion beam |
 | norm_emit_y      | Normalized vertical emittance in [m*rad] of the ion beam |
-| momentum_spread  | momentum spread of the ion beam          |
+| momentum_spread  | Momentum spread of the ion beam          |
 | particle_number  | Total particle number for coasting ion beam or the particle number of one bunch for bunched ion beam. |
 | rms_bunch_length | RMS bunch length for bunched ion beam in [m] |
 
@@ -151,7 +173,14 @@ section_run
 
 | Keywords | Meaning                                  |
 | -------- | ---------------------------------------- |
-| lattice  | name of the file that saves the lattice. This file should be in the MAD X output format (.tfs). |
+| lattice  | The name of the file that saves the lattice. This file should be in the MAD X output format (.tfs). |
+| qx       | Transverse betatron tune                 |
+| qy       | Vertical betatron tune                   |
+| qs       | Synchrotron tune                         |
+| gamma_tr | Transition gamma                         |
+| rf_v     | Voltage of the RF cavity in [V]          |
+| rf_h     | Harmonic number                          |
+| rf_phi   | RF phase in [2$\pi$]                     |
 
 **section_cooler**
 
@@ -171,20 +200,29 @@ section_run
 
 **section_e_beam**
 
-| Keywords | Meaning                                  |
-| -------- | ---------------------------------------- |
-| gamma    | Lorentz factor gamma for the cooling electron beam |
-| tmp_tr   | Transverse temperature in [eV]           |
-| tmp_l    | Longitudinal temperature in [eV] for the cooling electron beam |
-| shape    | Electron beam shape. Choose from dc_uniform, bunched_gaussian, bunched_uniform, bunched_uniform_elliptic. |
-| radius   | Radius of dc_uniform or bunched_uniform electron beam in [m]. |
-| current  | Current of dc_uniform or bunched_uniform electron beam. For bunched_uniform beam, set the current as if it is a dc_uniform beam in [A]. |
-| length   | Length of the bunched_uniform electron beam in [m]. |
-| sigma_x  | RMS size in horizontal direction of bunched_gaussian electron beam in [m]. |
-| sigma_y  | RMS size in vertical direction of bunched_gaussian electron beam in [m]. |
-| sigma_z  | RMS bunch length of bunched_gaussian electron beam in [m]. |
-| rh       | Length of the semi-axis in horizontal direction in [m]. |
-| rv       | Length of the semi-axis in vertical direction in [m]. |
+| Keywords              | Meaning                                  |
+| --------------------- | ---------------------------------------- |
+| gamma                 | Lorentz factor gamma for the cooling electron beam |
+| tmp_tr                | Transverse temperature in [eV]           |
+| tmp_l                 | Longitudinal temperature in [eV] for the cooling electron beam |
+| shape                 | Electron beam shape. Choose from dc_uniform, bunched_gaussian, bunched_uniform, bunched_uniform_elliptic, dc_uniform_hollow, bunched_uniform_hollow, bunched_user_defined. |
+| radius                | Radius of dc_uniform or bunched_uniform electron beam in [m]. |
+| current               | Current of dc_uniform or bunched_uniform electron beam. For bunched_uniform beam, set the current as if it is a dc_uniform beam in [A]. |
+| length                | Length of the bunched_uniform electron beam in [m]. |
+| sigma_x               | RMS size in horizontal direction of bunched_gaussian electron beam in [m]. |
+| sigma_y               | RMS size in vertical direction of bunched_gaussian electron beam in [m]. |
+| sigma_z               | RMS bunch length of bunched_gaussian electron beam in [m]. |
+| rh                    | Length of the semi-axis in horizontal direction in [m]. |
+| rv                    | Length of the semi-axis in vertical direction in [m]. |
+| r_inner               | Inner radius of a hollow beam in [m]     |
+| r_outter              | Outter radius of a hollow beam in [m]    |
+| particle_file         | Name of the file that saves the particles if the beam shape is defined as "bunched_user_defined" |
+| total_particle_number | Total number of particles to load from the user-provided file |
+| box_particle_number   | Maximum number of particles in each childless box when constructing the tree structure. Default is 200. |
+| line_skip             | Number of lines to skip when loading particles from the user-provided text file. |
+| vel_pos_corr          | Whether to consider the correlation between the velocity and the position. Default is false. |
+| binary_file           | Whether the user-provided file is in binary format. Default is false, which means a text file. |
+| buffer_size           | Buffer size when loading particles from the user-provided binary file. |
 
 **section_ibs**
 
@@ -195,6 +233,7 @@ section_run
 | nz       | Set the grid number in longitudinal direction for the 3D integration. |
 | log_c    | Coulomb logarithm. If log_c is set, then the integration in the longitudinal direction is replaced by the Coulomb logarithm. Thus the parameter nz is ignored. |
 | coupling | Transverse coupling rate, ranging from 0 to 1. |
+| model    | Model for IBS expansion rate calculation: Martini or BM. |
 
 **section_ecool**
 
@@ -210,8 +249,8 @@ section_run
 | time                   | Total time to simulate, in [s].          |
 | step_number            | Total number of steps. The time interval of each step is time/step_number. |
 | sample_number          | Number of the sample ions. The parameter must be set when using the Particle model to simulate the IBS expansion process without cooling. When setting this parameter with cooling effect, the "sample_number" parameter in the "section_ecool" will be overwritten by this value. |
-| ibs                    | Choose to simulate the IBS effect or not by setting the value as "on" or "off". |
-| e_cool                 | Choose to simulate the electron cooling effect or not by setting the value as "on" or "off". |
+| ibs                    | Choose to simulate the IBS effect or not by setting the value as "true" or "false". |
+| e_cool                 | Choose to simulate the electron cooling effect or not by setting the value as "true" or "false". |
 | model                  | "RMS" or "Particle" model to choose for the simulation. |
 | output_file            | Output file name                         |
 | output_interval        | The interval of steps to write into the output file. Default is one. |
@@ -224,6 +263,7 @@ section_run
 | ref_disp_y             | Same as above.                           |
 | ref_disp_dx            | Same as above.                           |
 | ref_disp_dy            | Same as above.                           |
+| fixed_bunch_length     | Maintain a constant ion bunch length. Default is false. |
 
 
 

@@ -71,7 +71,7 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam, std:
         ion.set_dp_p(dp);
         if(ion.bunched()) {
             if(dynamic_paras->fixed_bunch_length()) {
-                ring.rf->v = ring.calc_rf_voltage();
+                ring.rf.v = ring.calc_rf_voltage();
             }
             else {
                 ion.set_sigma_s(sigma_s);
@@ -325,6 +325,12 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
     //sample the ion
     sample_the_ions(ion, ring, cooler);
 
+//    if(dynamic_paras->fixed_bunch_length()) {
+//        ring.rf.v = ring.calc_rf_voltage();
+//    }
+
+    if(ring.rf.gamma_tr>0) ring.rf.v = ring.calc_rf_voltage();
+
     //Start tracking
     std::cout<<"Start dynamic simulation ... "<<std::endl;
     dynamic_flag = true;
@@ -347,8 +353,8 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
         for(int i=0; i<3; ++i) r.at(i) = r_ibs.at(i) + r_ecool.at(i);
 
         //Output
-        if (output_itvl==1) output(t, emit, r, r_ibs, r_ecool, ring.rf->v, ion.bunched(), outfile);
-        else if(i%output_itvl==0) output(t, emit, r, r_ibs, r_ecool, ring.rf->v, ion.bunched(), outfile);
+        if (output_itvl==1) output(t, emit, r, r_ibs, r_ecool, ring.rf.v, ion.bunched(), outfile);
+        else if(i%output_itvl==0) output(t, emit, r, r_ibs, r_ecool, ring.rf.v, ion.bunched(), outfile);
 
         //Update beam parameters and particles
         update_beam(i, ion, ring, cooler, ebeam, r_ibs, r_ecool);

@@ -138,8 +138,8 @@ class Set_ptrs{
      std::unique_ptr<EcoolRateParas> ecool_paras = nullptr;
      std::unique_ptr<ForceParas> force_paras = nullptr;
      std::unique_ptr<Set_dynamic> dynamic_ptr = nullptr;
-     std::unique_ptr<Tunes> tunes = nullptr;
-     std::unique_ptr<RF> rf = nullptr;
+//     std::unique_ptr<Tunes> tunes = nullptr;
+//     std::unique_ptr<RF> rf = nullptr;
 };
 
 enum class Section{NONE, SECTION_ION, SECTION_RING, SECTION_COOLER, SECTION_RUN, SECTION_IBS, SECTION_SCRATCH,

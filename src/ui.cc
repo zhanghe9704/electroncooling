@@ -32,7 +32,7 @@ std::vector<string> E_BEAM_SHAPE_TYPES = {"DC_UNIFORM", "BUNCHED_GAUSSIAN", "BUN
 //std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L"};
 std::vector<string> E_BEAM_ARGS = {"GAMMA", "TMP_TR", "TMP_L", "SHAPE", "RADIUS", "CURRENT", "SIGMA_X", "SIGMA_Y",
     "SIGMA_Z", "LENGTH", "E_NUMBER", "RH", "RV", "R_INNER", "R_OUTTER", "PARTICLE_FILE", "TOTAL_PARTICLE_NUMBER",
-    "BOX_PARTICLE_NUMBER", "LINE_SKIP", "VEL_POS_CORR"};
+    "BOX_PARTICLE_NUMBER", "LINE_SKIP", "VEL_POS_CORR","BINARY_FILE","BUFFER_SIZE"};
 std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
 std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
 std::vector<string> SIMULATION_ARGS = {"TIME", "STEP_NUMBER", "SAMPLE_NUMBER", "IBS", "E_COOL", "OUTPUT_INTERVAL",
@@ -91,8 +91,14 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
     var = trim_tab(var);
     val = trim_blank(val);
     val = trim_tab(val);
+    str_toupper(var);
     assert(std::find(E_BEAM_ARGS.begin(),E_BEAM_ARGS.end(),var)!=E_BEAM_ARGS.end()
            && "WRONG COMMANDS IN SECTION_E_BEAM!");
+
+    if (var != "PARTICLE_FILE") {
+        str_toupper(val);
+    }
+
     if (var == "SHAPE") {
         assert(std::find(E_BEAM_SHAPE_TYPES.begin(),E_BEAM_SHAPE_TYPES.end(),val)!=E_BEAM_SHAPE_TYPES.end()
            && "UNDEFINED ELECTRON BEAM SHAPE!");
@@ -100,6 +106,28 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
     }
     else if (var == "PARTICLE_FILE") {
         e_beam_args->particle_file = val;
+    }
+    else if (var == "VEL_POS_CORR") {
+        if (val == "TRUE") {
+            e_beam_args->corr = true;
+        }
+        else if (val == "FALSE") {
+            e_beam_args->corr = false;
+        }
+        else {
+            assert(false&& "WRONG VALUE FOR VEL_POS_CORR FOR E_BEAM!");
+        }
+    }
+    else if (var == "BINARY_FILE") {
+        if (val == "TRUE") {
+            e_beam_args->binary = true;
+        }
+        else if (val == "FALSE") {
+            e_beam_args->binary = false;
+        }
+        else {
+            assert(false&& "WRONG VALUE FOR VEL_POS_CORR FOR E_BEAM!");
+        }
     }
     else {
         if (math_parser == NULL) {
@@ -156,34 +184,6 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             }
             else if (var == "BUFFER_SIZE") {
                 e_beam_args->buffer = std::stoi(val);
-            }
-            else if (var == "VEL_POS_CORR") {
-                int v = std::stoi(val);
-                switch (v) {
-                case 0 : {
-                    e_beam_args->corr = false;
-                }
-                case 1 : {
-                    e_beam_args->corr = true;
-                }
-                default : {
-                    assert(false&& "WRONG VALUE FOR VEL_POS_CORR FOR E_BEAM!");
-                }
-                }
-            }
-            else if (var == "BINARY_FILE") {
-                int v = std::stoi(val);
-                switch (v) {
-                case 0 : {
-                    e_beam_args->binary = false;
-                }
-                case 1 : {
-                    e_beam_args->binary = true;
-                }
-                default : {
-                    assert(false&& "WRONG VALUE FOR BINARY_FILE FOR E_BEAM!");
-                }
-                }
             }
             else {
                 assert(false&&"Wrong arguments in section_e_beam!");
@@ -244,40 +244,6 @@ void define_e_beam(string &str, Set_e_beam *e_beam_args) {
             }
             else if (var == "BUFFER_SIZE") {
                 e_beam_args->buffer = mupEval(math_parser);
-            }
-            else if (var == "VEL_POS_CORR") {
-                int v = mupEval(math_parser);
-                switch (v) {
-                case 0 : {
-                    e_beam_args->corr = false;
-                    break;
-                }
-                case 1 : {
-                    e_beam_args->corr = true;
-                    break;
-                }
-                default : {
-                    assert(false&& "WRONG VALUE FOR VEL_POS_CORR FOR E_BEAM!");
-                    break;
-                }
-                }
-            }
-            else if (var == "BINARY_FILE") {
-                int v = mupEval(math_parser);
-                switch (v) {
-                case 0 : {
-                    e_beam_args->binary = false;
-                    break;
-                }
-                case 1 : {
-                    e_beam_args->binary = true;
-                    break;
-                }
-                default : {
-                    assert(false&& "WRONG VALUE FOR BINARY_FILE FOR E_BEAM!");
-                    break;
-                }
-                }
             }
             else {
                 assert(false&&"Wrong arguments in section_e_beam!");
@@ -486,33 +452,27 @@ void create_ring(Set_ptrs &ptrs) {
 //    ptrs.ring->rf = ptrs.rf.get();
     if(ptrs.ring_ptr->qx>0 || ptrs.ring_ptr->qy>0 || ptrs.ring_ptr->qs>0) {
         assert(ptrs.ring_ptr->qx>0 && ptrs.ring_ptr->qy>0 && "Transverse tunes must be greater than zero!");
-        ptrs.tunes.reset(new Tunes());
-        ptrs.ring->tunes = ptrs.tunes.get();
-//        ptrs.ring.qx = ptrs.ring_ptr->qx;
-//        ptrs.ring.qy = ptrs.ring_ptr->qy;
-//        ptrs.ring.qs = ptrs.ring_ptr->qs;
 //        ptrs.tunes.reset(new Tunes());
-        ptrs.tunes->qx = ptrs.ring_ptr->qx;
-        ptrs.tunes->qy = ptrs.ring_ptr->qy;
-        ptrs.tunes->qs = ptrs.ring_ptr->qs;
+//        ptrs.ring->tunes = ptrs.tunes.get();
+        ptrs.ring->tunes.qx = ptrs.ring_ptr->qx;
+        ptrs.ring->tunes.qy = ptrs.ring_ptr->qy;
+        ptrs.ring->tunes.qs = ptrs.ring_ptr->qs;
+//        ptrs.tunes.reset(new Tunes());
+//        ptrs.tunes.qx = ptrs.ring_ptr->qx;
+//        ptrs.tunes.qy = ptrs.ring_ptr->qy;
+//        ptrs.tunes.qs = ptrs.ring_ptr->qs;
 //        ptrs.ring->tunes = ptrs.tunes.get();
     }
+
+    ptrs.ring->rf.v = ptrs.ring_ptr->rf_v;
+    ptrs.ring->rf.h = ptrs.ring_ptr->rf_h;
+    ptrs.ring->rf.phi = ptrs.ring_ptr->rf_phi;
+    ptrs.ring->rf.gamma_tr = ptrs.ring_ptr->gamma_tr;
+
     if(ptrs.ring_ptr->rf_v>0) {
         assert(ptrs.ring_ptr->gamma_tr>0 && "When RF cavity is defined, the transition gamma should be greater than zero");
-        ptrs.rf.reset(new RF());
-        ptrs.ring->rf = ptrs.rf.get();
-//        ptrs.ring.v = ptrs.ring_ptr->rf_v;
-//        ptrs.ring.h = ptrs.ring_ptr->rf_h;
-//        ptrs.ring.phi = ptrs.ring_ptr->rf_phi;
-//        ptrs.ring.gamma_tr = ptrs.ring_ptr->gamma_tr;
-
-//        ptrs.rf.reset(new RF());
-        ptrs.rf->v = ptrs.ring_ptr->rf_v;
-        ptrs.rf->h = ptrs.ring_ptr->rf_h;
-        ptrs.rf->phi = ptrs.ring_ptr->rf_phi;
-        ptrs.rf->gamma_tr = ptrs.ring_ptr->gamma_tr;
-//        ptrs.ring->rf = ptrs.rf.get();
     }
+    ptrs.ring->set_rf();
     std::cout<<"Ring created!"<<std::endl;
 }
 
@@ -547,13 +507,13 @@ void calculate_ibs(Set_ptrs &ptrs) {
 
     if(model==IBSModel::MARTINI) {
         if (log_c>0) {
-            assert(nu>0 && nv>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
+            assert(nu>0 && nv>0 && k<=1 && k>=0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
             IBSParas ibs_paras(nu, nv, log_c);
             if (k>0) ibs_paras.set_k(k);
             ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
         }
         else {
-            assert(nu>0 && nv>0 && nz>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
+            assert(nu>0 && nv>0 && nz>0 &&  k<=1 && k>=0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
             IBSParas ibs_paras(nu, nv, nz);
             if (k>0) ibs_paras.set_k(k);
             ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
@@ -561,6 +521,7 @@ void calculate_ibs(Set_ptrs &ptrs) {
     }
     else if(model==IBSModel::BM) {
         IBSParas ibs_paras(model);
+        assert(log_c>0 && "WRONG VALUE FOR COULOMB LOGRITHEM IN IBS CALCULATION WITH BM MODEL!");
         ibs_paras.set_log_c(log_c);
         if (k>0) ibs_paras.set_k(k);
         ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
@@ -620,6 +581,7 @@ void run_simulation(Set_ptrs &ptrs) {
     bool fixed_bunch_length = ptrs.dynamic_ptr->fixed_bunch_length;
     if(fixed_bunch_length) {
         assert(ptrs.dynamic_ptr->model==DynamicModel::RMS&&"ERROR: THE PARAMETER FIXED_BUNCH_LENGTH WORKS ONLY FOR RMS MODEL");
+        assert(ptrs.ring->rf.gamma_tr>0&&"ERROR: DEFINE THE TRANSITION GAMMA OF THE RING WHEN THE PARAMETER FIXED_BUNCH_LENGTH IS CHOSEN");
     }
     double t = ptrs.dynamic_ptr->time;
     int n_step = ptrs.dynamic_ptr->n_step;
@@ -770,6 +732,7 @@ void define_ring(string &str, Set_ring *ring_args) {
         ring_args->lattice_file = val;
     }
     else {
+       str_toupper(val);
        if(math_parser==NULL) {
             if (var=="QX") {
                 ring_args->qx = std::stod(val);
@@ -814,7 +777,7 @@ void define_ring(string &str, Set_ring *ring_args) {
                 ring_args->rf_v = mupEval(math_parser);
             }
             else if (var=="RF_H") {
-                ring_args->rf_h = mupEval(math_parser);
+                ring_args->rf_h = static_cast<int>(mupEval(math_parser));
             }
             else if (var=="RF_PHI") {
                 ring_args->rf_phi = mupEval(math_parser)*2*k_pi;
@@ -1006,18 +969,18 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
         dynamic_args->filename = val;
     }
     else if (var == "IBS" ) {
-        if (val == "ON") dynamic_args->ibs = true;
-        else if (val == "OFF") dynamic_args->ibs = false;
+        if (val == "ON" || val == "TRUE") dynamic_args->ibs = true;
+        else if (val == "OFF" || val == "FALSE") dynamic_args->ibs = false;
         else assert(false&&"WRONG VALUE FOR THE PARAMETER IBS IN SECTION_SIMULATION!");
     }
     else if (var == "E_COOL") {
-        if (val == "ON") dynamic_args->ecool = true;
-        else if (val == "OFF") dynamic_args->ecool = false;
+        if (val == "ON" || val == "TRUE") dynamic_args->ecool = true;
+        else if (val == "OFF" || val == "FALSE") dynamic_args->ecool = false;
         else assert(false&&"WRONG VALUE FOR THE PARAMETER E_COOL IN SECTION_SIMULATION!");
     }
     else if (var == "FIXED_BUNCH_LENGTH") {
-        if (val == "ON") dynamic_args->fixed_bunch_length = true;
-        else if (val == "OFF") dynamic_args->fixed_bunch_length = false;
+        if (val == "ON" || val == "TRUE") dynamic_args->fixed_bunch_length = true;
+        else if (val == "OFF" || val == "FALSE") dynamic_args->fixed_bunch_length = false;
         else assert(false&&"WRONG VALUE FOR THE PARAMETER FIXED_BUNCH_LENGTH IN SECTION_SIMULATION!");
     }
     else {
