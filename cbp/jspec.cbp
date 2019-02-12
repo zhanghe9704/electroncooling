@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gnu_gcc_51_x64_compiler" />
-				<Option parameters="test_vary_rf.txt" />
+				<Option parameters="test_ibs_bm.txt" />
 				<Compiler>
 					<Add option="-std=c++14" />
 					<Add option="-g" />
@@ -33,7 +33,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gnu_gcc_51_x64_compiler" />
-				<Option parameters="test_vary_rf.txt" />
+				<Option parameters="test_ibs_bm.txt" />
 				<Option projectCompilerOptionsRelation="2" />
 				<Option projectIncludeDirsRelation="2" />
 				<Option projectLibDirsRelation="2" />

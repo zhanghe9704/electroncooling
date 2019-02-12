@@ -15,6 +15,20 @@ extern IBSParas *ibs_paras;
 extern EcoolRateParas *ecool_paras;
 extern ForceParas *force_paras;
 
+double vl_emit_nx = 0;
+double vl_emit_ny = 0;
+double vl_dp_p = 0;
+double vl_sigma_s = 0;
+double vl_rx_ibs = 0;
+double vl_ry_ibs = 0;
+double vl_rs_ibs = 0;
+double vl_rx_ecool = 0;
+double vl_ry_ecool = 0;
+double vl_rs_ecool = 0;
+double vl_rx_total = 0;
+double vl_ry_total = 0;
+double vl_rs_total = 0;
+
 muParserHandle_t math_parser = NULL;
 //std::vector<std::string> sections = {"SECTION_ION", "SECTION_RING", "SECTION_COOLER"};
 std::vector<string> ION_ARGS = {"CHARGE_NUMBER", "MASS", "KINETIC_ENERGY", "NORM_EMIT_X", "NORM_EMIT_Y",
@@ -39,6 +53,9 @@ std::vector<string> SIMULATION_ARGS = {"TIME", "STEP_NUMBER", "SAMPLE_NUMBER", "
     "SAVE_PARTICLE_INTERVAL", "OUTPUT_FILE", "MODEL", "REF_BET_X", "REF_BET_Y", "REF_ALF_X", "REF_ALF_Y",
     "REF_DISP_X", "REF_DISP_Y", "REF_DISP_DX", "REF_DISP_DY", "FIXED_BUNCH_LENGTH"};
 std::vector<string> DYNAMIC_VALUE = {"RMS", "PARTICLE", "MODEL_BEAM", "TURN_BY_TURN"};
+std::vector<string> SCRATCH_ARSGS = {"VL_EMIT_NX", "VL_EMIT_NY", "VL_MOMENTUM_SPREAD", "VL_BUNCH_LENGTH", "VL_RATE_IBS_X",
+    "VL_RATE_IBS_Y", "VL_RATE_IBS_S", "VL_RATE_ECOOL_X", "VL_RATE_ECOOL_Y", "VL_RATE_ECOOL_Z", "VL_RATE_TOTAL_X",
+    "VL_RATE_TOTAL_Y", "VL_RATE_TOTAL_S"};
 
 std::map<std::string, Section> sections{
     {"SECTION_ION",Section::SECTION_ION},
@@ -435,6 +452,11 @@ void create_ion_beam(Set_ptrs &ptrs) {
         ptrs.ion_beam.reset(new Beam(n_charge, mass/k_u, k_energy, emit_nx, emit_ny, dp_p, n_ptcl));
         std::cout<<"Coasting ion beam created!"<<std::endl;
     }
+    vl_emit_nx = emit_nx;
+    vl_emit_ny = emit_ny;
+    vl_dp_p = dp_p;
+    if(ds>0) vl_sigma_s = ds;
+    else vl_sigma_s = 0;
 }
 
 void create_ring(Set_ptrs &ptrs) {
@@ -530,6 +552,9 @@ void calculate_ibs(Set_ptrs &ptrs) {
     ptrs.ibs_rate.at(0) = rx;
     ptrs.ibs_rate.at(1) = ry;
     ptrs.ibs_rate.at(2) = rz;
+    vl_rx_ibs = rx;
+    vl_ry_ibs = ry;
+    vl_rs_ibs = rz;
     std::cout<<std::scientific;
     std::cout << std::setprecision(3);
     std::cout<<"IBS rate (1/s): "<<rx<<"  "<<ry<<"  "<<rz<<std::endl;
@@ -559,6 +584,9 @@ void calculate_ecool(Set_ptrs &ptrs) {
     ptrs.ecool_rate.at(0) = rx;
     ptrs.ecool_rate.at(1) = ry;
     ptrs.ecool_rate.at(2) = rz;
+    vl_rx_ecool = rx;
+    vl_ry_ecool = ry;
+    vl_rs_ecool = rz;
     std::cout<<std::scientific;
     std::cout << std::setprecision(3);
     std::cout<<"Electron cooling rate (1/s): "<<rx<<"  "<<ry<<"  "<<rz<<std::endl;
@@ -572,6 +600,9 @@ void total_expansion_rate(Set_ptrs &ptrs) {
     std::cout << std::setprecision(3);
     std::cout<<"Total expansion rate (1/s): "<<ptrs.total_rate.at(0)<<"  "<<ptrs.total_rate.at(1)<<"  "
         <<ptrs.total_rate.at(2)<<std::endl;
+    vl_rx_total = ptrs.total_rate.at(0);
+    vl_ry_total = ptrs.total_rate.at(1);
+    vl_rs_total = ptrs.total_rate.at(2);
 }
 
 void run_simulation(Set_ptrs &ptrs) {

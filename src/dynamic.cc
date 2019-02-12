@@ -18,6 +18,9 @@ extern double t_cooler;
 extern std::unique_ptr<double []> x_bet, xp_bet, y_bet, yp_bet, ds, dp_p, x, y, xp, yp;
 extern std::unique_ptr<double []> force_x, force_y, force_z;
 
+extern double vl_emit_nx, vl_emit_ny, vl_dp_p, vl_sigma_s, vl_rx_ibs, vl_ry_ibs, vl_rs_ibs,
+    vl_rx_ecool, vl_ry_ecool, vl_rs_ecool, vl_rx_total, vl_ry_total, vl_rs_total;
+
 int sample_the_ions(Beam &ion, Ring &ring, Cooler &cooler){
     switch (dynamic_paras->model()) {
     case DynamicModel::RMS : {
@@ -361,6 +364,21 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
         t += dt;
         std::cout<<i<<std::endl;
     }
+
+    vl_emit_nx = emit.at(0);
+    vl_emit_ny = emit.at(1);
+    vl_dp_p = emit.at(2);
+    if(ion.bunched()) vl_sigma_s = ion.sigma_s();
+    else vl_sigma_s = 0;
+    vl_rx_ecool = r_ecool.at(0);
+    vl_ry_ecool = r_ecool.at(1);
+    vl_rs_ecool = r_ecool.at(2);
+    vl_rx_ibs = r_ibs.at(0);
+    vl_ry_ibs = r_ibs.at(1);
+    vl_rs_ibs = r_ibs.at(2);
+    vl_rx_total = r.at(0);
+    vl_ry_total = r.at(1);
+    vl_rs_total = r.at(2);
 
     if (ion_save_itvl>0 && n_step%ion_save_itvl!=0 && dynamic_paras->model()!=DynamicModel::RMS)
         save_ions_sdds(dynamic_paras->n_sample(), "ions"+std::to_string(n_step)+".txt");
