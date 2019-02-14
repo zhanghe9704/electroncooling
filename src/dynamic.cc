@@ -19,7 +19,7 @@ extern std::unique_ptr<double []> x_bet, xp_bet, y_bet, yp_bet, ds, dp_p, x, y, 
 extern std::unique_ptr<double []> force_x, force_y, force_z;
 
 extern double vl_emit_nx, vl_emit_ny, vl_dp_p, vl_sigma_s, vl_rx_ibs, vl_ry_ibs, vl_rs_ibs,
-    vl_rx_ecool, vl_ry_ecool, vl_rs_ecool, vl_rx_total, vl_ry_total, vl_rs_total;
+    vl_rx_ecool, vl_ry_ecool, vl_rs_ecool, vl_rx_total, vl_ry_total, vl_rs_total, vl_t;
 
 int sample_the_ions(Beam &ion, Ring &ring, Cooler &cooler){
     switch (dynamic_paras->model()) {
@@ -294,6 +294,12 @@ void output_sddshead(int n, std::ofstream &outfile){
         <<n<<endl;
 }
 
+bool file_exists(string fileName)
+{
+    std::ifstream infile(fileName);
+    return infile.good();
+}
+
 int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
     //Create temporary variables for expansion rate and beam macro-parameters
     std::vector<double> r_ibs = {0,0,0};
@@ -305,7 +311,9 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
     bool ecool = dynamic_paras->ecool();
     int n_step = dynamic_paras->n_step();
     double dt = dynamic_paras->dt();
-    double t = 0;
+    double t;
+    if(dynamic_paras->reset_time()) t = 0;
+    else t = vl_t;
     int ion_save_itvl = dynamic_paras->ion_save_intvl();
     int output_itvl = dynamic_paras->output_intval();
     if (dynamic_paras->model()==DynamicModel::TURN_BY_TURN)
@@ -313,7 +321,20 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
 
     //Prepare outputting
     std::ofstream outfile;
-    outfile.open(dynamic_paras->output_file());
+
+    if(!dynamic_paras->overwrite() && file_exists(dynamic_paras->output_file())) {
+        string filename = dynamic_paras->output_file();
+        int i = 1;
+
+        do {
+            filename = std::to_string(i)+'_'+filename;
+            ++i;
+        } while(file_exists(filename));
+        outfile.open(filename);
+    }
+    else {
+        outfile.open(dynamic_paras->output_file());
+    }
     output_sddshead(n_step+1, outfile);
     outfile.precision(10);
     outfile<<std::showpos;
@@ -379,6 +400,7 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
     vl_rx_total = r.at(0);
     vl_ry_total = r.at(1);
     vl_rs_total = r.at(2);
+    vl_t = t;
 
     if (ion_save_itvl>0 && n_step%ion_save_itvl!=0 && dynamic_paras->model()!=DynamicModel::RMS)
         save_ions_sdds(dynamic_paras->n_sample(), "ions"+std::to_string(n_step)+".txt");

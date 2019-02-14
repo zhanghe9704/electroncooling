@@ -28,6 +28,7 @@ double vl_rs_ecool = 0;
 double vl_rx_total = 0;
 double vl_ry_total = 0;
 double vl_rs_total = 0;
+double vl_t = 0;
 
 muParserHandle_t math_parser = NULL;
 //std::vector<std::string> sections = {"SECTION_ION", "SECTION_RING", "SECTION_COOLER"};
@@ -51,11 +52,11 @@ std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
 std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
 std::vector<string> SIMULATION_ARGS = {"TIME", "STEP_NUMBER", "SAMPLE_NUMBER", "IBS", "E_COOL", "OUTPUT_INTERVAL",
     "SAVE_PARTICLE_INTERVAL", "OUTPUT_FILE", "MODEL", "REF_BET_X", "REF_BET_Y", "REF_ALF_X", "REF_ALF_Y",
-    "REF_DISP_X", "REF_DISP_Y", "REF_DISP_DX", "REF_DISP_DY", "FIXED_BUNCH_LENGTH"};
+    "REF_DISP_X", "REF_DISP_Y", "REF_DISP_DX", "REF_DISP_DY", "FIXED_BUNCH_LENGTH", "RESET_TIME", "OVERWRITE"};
 std::vector<string> DYNAMIC_VALUE = {"RMS", "PARTICLE", "MODEL_BEAM", "TURN_BY_TURN"};
 std::vector<string> SCRATCH_ARSGS = {"VL_EMIT_NX", "VL_EMIT_NY", "VL_MOMENTUM_SPREAD", "VL_BUNCH_LENGTH", "VL_RATE_IBS_X",
     "VL_RATE_IBS_Y", "VL_RATE_IBS_S", "VL_RATE_ECOOL_X", "VL_RATE_ECOOL_Y", "VL_RATE_ECOOL_Z", "VL_RATE_TOTAL_X",
-    "VL_RATE_TOTAL_Y", "VL_RATE_TOTAL_S"};
+    "VL_RATE_TOTAL_Y", "VL_RATE_TOTAL_S", "VL_T"};
 
 std::map<std::string, Section> sections{
     {"SECTION_ION",Section::SECTION_ION},
@@ -640,6 +641,10 @@ void run_simulation(Set_ptrs &ptrs) {
     if (save_ptcl_intvl>0) dynamic_paras->set_ion_save(save_ptcl_intvl);
     dynamic_paras->set_model(ptrs.dynamic_ptr->model);
     dynamic_paras->set_output_file(ptrs.dynamic_ptr->filename);
+    if (ptrs.dynamic_ptr->reset_time) dynamic_paras->set_reset_time(true);
+    else dynamic_paras->set_reset_time(false);
+    if (ptrs.dynamic_ptr->overwrite) dynamic_paras->set_overwrite(true);
+    else dynamic_paras->set_overwrite(false);
 
     if(dynamic_paras->model()==DynamicModel::PARTICLE && !ecool)
         assert(n_sample>0 && "SET N_SAMPLE FOR SIMULATION!");
@@ -1013,6 +1018,16 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
         if (val == "ON" || val == "TRUE") dynamic_args->fixed_bunch_length = true;
         else if (val == "OFF" || val == "FALSE") dynamic_args->fixed_bunch_length = false;
         else assert(false&&"WRONG VALUE FOR THE PARAMETER FIXED_BUNCH_LENGTH IN SECTION_SIMULATION!");
+    }
+    else if (var == "RESET_TIME") {
+        if (val == "ON" || val == "TRUE") dynamic_args->reset_time = true;
+        else if (val == "OFF" || val == "FALSE") dynamic_args->reset_time = false;
+        else assert(false&&"WRONG VALUE FOR THE PARAMETER RESET_TIME IN SECTION_SIMULATION!");
+    }
+    else if (var == "OVERWRITE") {
+        if (val == "ON" || val == "TRUE") dynamic_args->overwrite = true;
+        else if (val == "OFF" || val == "FALSE") dynamic_args->overwrite = false;
+        else assert(false&&"WRONG VALUE FOR THE PARAMETER OVERWRITE IN SECTION_SIMULATION!");
     }
     else {
         if (math_parser == NULL) {

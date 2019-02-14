@@ -104,6 +104,8 @@ struct Set_dynamic{
     bool ibs = true;
     bool ecool = true;
     bool fixed_bunch_length = false;
+    bool reset_time = true;
+    bool overwrite = true;
     int output_intvl = 1;
     int save_ptcl_intvl = -1;
     std::string filename = "output_dynamic.txt";

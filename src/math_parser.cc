@@ -24,7 +24,7 @@
 #endif
 
 extern double vl_emit_nx, vl_emit_ny, vl_dp_p, vl_sigma_s, vl_rx_ibs, vl_ry_ibs, vl_rs_ibs,
-    vl_rx_ecool, vl_ry_ecool, vl_rs_ecool, vl_rx_total, vl_ry_total, vl_rs_total;
+    vl_rx_ecool, vl_ry_ecool, vl_rs_ecool, vl_rx_total, vl_ry_total, vl_rs_total, vl_t;
 
 //---------------------------------------------------------------------------
 // Factory function for creating new parser variables
@@ -171,6 +171,7 @@ void initialize_parser(muParserHandle_t &math_parser) {
     mupDefineVar(math_parser, "VL_RATE_TOTAL_X", &vl_rx_total);
     mupDefineVar(math_parser, "VL_RATE_TOTAL_Y", &vl_ry_total);
     mupDefineVar(math_parser, "VL_RATE_TOTAL_S", &vl_rs_total);
+    mupDefineVar(math_parser, "VL_T", &vl_t);
 }
 
 int use_parser(int argc, char* argv[])

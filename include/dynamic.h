@@ -21,6 +21,8 @@ class DynamicParas{
     bool ibs_ = true;
     bool ecool_ = true;
     bool fixed_bunch_length_ = false;
+    bool reset_time_ = true;
+    bool overwrite_ = true;
     int output_intvl_ = 1;
     int ion_save_intvl_ = -1;
     string filename_ = "output_dynamic.txt";
@@ -34,6 +36,8 @@ class DynamicParas{
     bool ibs(){return ibs_;}
     bool ecool(){return ecool_;}
     bool fixed_bunch_length(){return fixed_bunch_length_;}
+    bool reset_time(){return reset_time_;}
+    bool overwrite(){return overwrite_;}
     int output_intval(){return output_intvl_;}
     int ion_save_intvl(){return ion_save_intvl_;}
     int n_sample(){return n_sample_;}
@@ -45,6 +49,8 @@ class DynamicParas{
     int set_output_intvl(int x){output_intvl_ = x; return 0;}
     int set_n_sample(int x){n_sample_ = x; return 0;}
     int set_fixed_bunch_length(bool b){fixed_bunch_length_ = b; return 0;}
+    int set_reset_time(bool b){reset_time_ = b; return 0;}
+    int set_overwrite(bool b) {overwrite_ = b; return 0;}
     string output_file(){return filename_;}
     DynamicParas(double time, int n_step):time_(time),n_step_(n_step){dt_ = time_/n_step_;}
     DynamicParas(double time, int n_step, bool ibs, bool ecool):
