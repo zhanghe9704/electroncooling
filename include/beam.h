@@ -279,8 +279,8 @@ public:
         filename_(filename),length_(length){};
     ParticleBunch(double n_electron, std::string filename):n_electron_(n_electron),
         filename_(filename){};
-    load_particle(long int n);
-    load_particle();
+    void load_particle(long int n);
+    void load_particle();
 
 };
 

@@ -318,7 +318,7 @@ std::unique_ptr<double []> inv_sigma;
 
 void alloc_var(std::unique_ptr<double []>& ptr, int n) {
     if(ptr.get()==nullptr) {
-        ptr = std::make_unique<double []>(n);
+        ptr = std::unique_ptr<double []>(new double [n]);
     }
 }
 
@@ -520,7 +520,3 @@ int ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, doubl
         }
     }
 }
-
-
-
-
