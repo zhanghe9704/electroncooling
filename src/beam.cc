@@ -386,7 +386,7 @@ int GaussianBunch::density(double *x, double *y, double *z, Beam &ebeam, double 
 //    length_ = z_max - z_min;
 //}
 
-ParticleBunch::load_particle(long int n) {
+void ParticleBunch::load_particle(long int n) {
     n_ = load_electrons(x, y, z, vx, vy, vz, filename_, n, line_skip_, binary_, buffer_);
     create_e_tree(x, y, z, n_, s_, tree_, list_e_);
     if(length_==0) {
@@ -402,7 +402,7 @@ ParticleBunch::load_particle(long int n) {
     }
 }
 
-ParticleBunch::load_particle() {
+void ParticleBunch::load_particle() {
     load_particle(0);
 }
 
