@@ -1,1 +1,13 @@
 build/
+cbp/*.dat
+cbp/*.txt
+cbp/*.py
+cbp/*.tmp
+cbp/*.SDDS
+cbp/*.depend
+cbp/*.layout
+cbp/*.in
+cbp/*.tfs
+cbp/[[]*
+cbp/bin
+cbp/obj
