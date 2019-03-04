@@ -121,40 +121,32 @@ section_run
 	run_simulation	# Start simulation 
 ```
 
-### Keep a constant bunch length of the ion beam in simulation 
-
-The momentum spread of the ion beam changes due to the intrabeam scattering effect and the electron cooling effect during the simulation, hence the bunch length changes if the RF voltage is constant. However, if the RF voltage changes accordingly with the momentum spread, it is possible to maintain a constant bunch length. JSPEC allows the user to choose whether to keep the bunch length constant in the simulation. When the bunch length is maintained constant, the RF voltage is calculated and saved in the output file. 
-
-To use this feature, one needs to set the parameter "fixed_bunch_length" in section_simulation to be **true**. One also needs to set the parameters, rf_h (harmonic number), rf_phi (RF phase), and gammar_tr (transition gamma) in section_ring. 
-
-```
-section_ring #define the ring
-	...
-	rf_h = 3584
-	rf_phi = 0
-	gamma_tr = 12.46
-	
-...
-
-section_simulation
-	...
-	fixed_bunch_length = true
-```
-
-
-
 
 
 ## List of sections, keywords, and commands
 
 **section_scratch**
 
-| Keywords   | Meaning                                  |
-| :--------- | ---------------------------------------- |
-| list_var   | list all the variables that has been defined. |
-| list_const | list all the constants                   |
-| list_exp   | list all the expression                  |
-| print      | Use this command in format "print x" and it will print the value of the variable x in the screen |
+| Keywords           | Meaning                                  |
+| :----------------- | ---------------------------------------- |
+| list_var           | list all the variables that has been defined. |
+| list_const         | list all the constants                   |
+| list_exp           | list all the expression                  |
+| print              | Use this command in format "print x" and it will print the value of the variable x in the screen |
+| vl_emit_nx         | horizontal normalized emittance          |
+| vl_emit_ny         | vertical normalized emittance            |
+| vl_momentum_spread | The momentum spread                      |
+| vl_bunch_length    | The rms bunch length for a bunched ion beam. The value is zero for a coasting ion beam. |
+| vl_rate_ibs_x      | horizontal ibs expansion rate            |
+| vl_rate_ibs_y      | vertical ibs expansion rate              |
+| vl_rate_ibs_s      | longitudinal ibs expansion rate          |
+| vl_rate_ecool_x    | horizontal electron cooling rate         |
+| vl_rate_ecool_y    | vertical electron cooling rate           |
+| vl_rate_ecool_s    | longitudinal electron cooling rate       |
+| vl_rate_total_x    | total expansion rate in the horizontal direction |
+| vl_rate_total_y    | total expansion rate in the vertical direction |
+| vl_rate_total_s    | total expansion rate in the longitudinal direction |
+| vl_t               | time                                     |
 
 **section_ion**
 
@@ -264,6 +256,8 @@ section_simulation
 | ref_disp_dx            | Same as above.                           |
 | ref_disp_dy            | Same as above.                           |
 | fixed_bunch_length     | Maintain a constant ion bunch length. Default is false. |
+| reset_time             | Whether to reset the starting time to zero (value: true) or use the final time from the previous simulation (value: false). |
+| overwrite              | Whether overwrite the output file is it exists. Default value is true. If the value is false, a new output file will be generated. The name of the new file is created by adding a number before the specific file name. |
 
 
 
@@ -349,5 +343,97 @@ section_simulation							# Set parameters for simulation
 	model = particle						# Select the model used in the simulation
 section_run						# Operation section
 	run_simulation				# Start simulation
+```
+
+## Extended Topics
+
+### Keep a constant bunch length of the ion beam in simulation
+
+The momentum spread of the ion beam changes due to the intrabeam scattering effect and the electron cooling effect during the simulation, hence the bunch length changes if the RF voltage is constant. However, if the RF voltage changes accordingly with the momentum spread, it is possible to maintain a constant bunch length. JSPEC allows the user to choose whether to keep the bunch length constant in the simulation. When the bunch length is maintained constant, the RF voltage is calculated and saved in the output file. 
+
+To use this feature, one needs to set the parameter "fixed_bunch_length" in section_simulation to be **true**. One also needs to set the parameters, rf_h (harmonic number), rf_phi (RF phase), and gammar_tr (transition gamma) in section_ring. 
+
+```
+section_ring #define the ring
+	...
+	rf_h = 3584
+	rf_phi = 0
+	gamma_tr = 12.46
+	
+...
+
+section_simulation
+	...
+	fixed_bunch_length = true
+```
+
+
+
+### Use of the scratch section
+
+In the scratch section, one can define variables and perform some simple calculations using the variables. These variables are accessible in the following sections. In the following example, one puts many parameters in the scratch section and use them to define the ion beam, electron beam and the cooler in the following sections. This is convenient to adjust the parameters in simulations since all the parameters are defined on top of the input file. 
+
+```
+section_scratch
+	#Ion beam parameters:
+	ex = 0.75e-6	# normalized horizontal emittance
+	ey = 0.15e-6	# normalized vertical emittance
+	dp = 0.0006	# momentum spread	
+	np = 0.98e10	# proton number
+	ds = 0.02	# proton bunch length
+	ke = 100000	# proton kinetic energy
+	me = 938.272	# proton mass
+	gamma = ke/me+1
+	beta = (1-gamma^(-2))^(1/2)
+	dx = 0.9	# horizontal dispersion at the cooler
+	dy = 0.4	# vertical dispersion at the cooler
+	cpl = 0.5	# transverse coupling
+	twiss_beta = 100 # beta function at the cooler
+	sigma_x = (twiss_beta*ex/beta/gamma)^(1/2) # rms horizontal bunch size
+	sigma_y = (twiss_beta*ey/beta/gamma)^(1/2) # rms vertical bunch size
+
+	#Electron beam parameters:
+	q_e = 3.2E-9	# electron number
+	l_e = 0.03	# electron bunch length	
+	k_c = 299792458.0	# speed of light
+	I_e = q_e*beta*k_c/l_e	# peak current of the electron beam
+	
+section_ion #define the ion beam
+	charge_number = 1
+	mass = 938.272
+   	kinetic_energy = ke
+	norm_emit_x = ex
+	norm_emit_y = ey
+	momentum_spread = dp
+	particle_number = np
+	rms_bunch_length = ds
+	
+section_ring #define the ring
+	lattice = MEICColliderRedesign1IP.tfs
+	
+section_ibs #define the arguments for IBS calculation
+	model = bm
+	log_c = 20
+	coupling = cpl
+
+section_cooler
+	length = 60
+	section_number = 1
+	magnetic_field = 1
+	bet_x = twiss_beta
+	bet_y = twiss_beta
+	disp_x = dx
+	disp_y = dy
+
+section_e_beam
+	gamma = gamma
+	shape = bunched_uniform_elliptic
+	rh = sigma_x
+	rv = sigma_y
+	current = I_e
+	length = l_e
+	tmp_tr = 0.246
+	tmp_l = 0.184
+...
 ```
 

@@ -167,7 +167,7 @@ void initialize_parser(muParserHandle_t &math_parser) {
     mupDefineVar(math_parser, "VL_RATE_IBS_S", &vl_rs_ibs);
     mupDefineVar(math_parser, "VL_RATE_ECOOL_X", &vl_rx_ecool);
     mupDefineVar(math_parser, "VL_RATE_ECOOL_Y", &vl_ry_ecool);
-    mupDefineVar(math_parser, "VL_RATE_ECOOL_Z", &vl_rs_ecool);
+    mupDefineVar(math_parser, "VL_RATE_ECOOL_S", &vl_rs_ecool);
     mupDefineVar(math_parser, "VL_RATE_TOTAL_X", &vl_rx_total);
     mupDefineVar(math_parser, "VL_RATE_TOTAL_Y", &vl_ry_total);
     mupDefineVar(math_parser, "VL_RATE_TOTAL_S", &vl_rs_total);
