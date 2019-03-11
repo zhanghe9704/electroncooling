@@ -13,6 +13,44 @@
 using std::string;
 enum class DynamicModel {RMS, PARTICLE, MODEL_BEAM = PARTICLE, TURN_BY_TURN};
 
+class Luminosity {
+    double dx_ = 0;
+    double dy_ = 0;
+    double np_1_ = 0;
+    double np_2_ = 0;
+    double freq_ = 1;
+    double sigma_x1_ = 0;
+    double sigma_y1_ = 0;
+    double sigma_x2_ = 0;
+    double sigma_y2_ = 0;
+    double bet_x1_ = 0;
+    double bet_y1_ = 0;
+    double bet_x2_ = 0;
+    double bet_y2_ = 0;
+    double geo_emit_x1_ = 0;
+    double geo_emit_y1_ = 0;
+    double geo_emit_x2_ = 0;
+    double geo_emit_y2_ = 0;
+    bool use_ion_emittance_ = true;
+public:
+    void set_distance(double dx, double dy){dx_=dx; dy_=dy;}
+    void set_particle_number(double n1, double n2){np_1_=n1; np_2_=n2;}
+    void set_freq(double f){freq_=f;}
+    void set_beam_size_1(double sigma_x, double sigma_y){sigma_x1_=sigma_x; sigma_y1_=sigma_y;
+                        geo_emit_x1_ = sigma_x1_*sigma_x1_/bet_x1_; geo_emit_y1_ = sigma_y1_*sigma_y1_/bet_y1_; }
+    void set_beam_size_2(double sigma_x, double sigma_y){sigma_x2_=sigma_x; sigma_y2_=sigma_y;
+                        geo_emit_x2_ = sigma_x2_*sigma_x2_/bet_x2_; geo_emit_y2_ = sigma_y2_*sigma_y2_/bet_y2_; }
+    bool set_use_ion_emit(bool b){use_ion_emittance_ = b;}
+    void set_geo_emit_1(double emit_x, double emit_y){geo_emit_x1_ = emit_x; geo_emit_y1_ = emit_y;
+                        sigma_x1_=sqrt(bet_x1_*geo_emit_x1_); sigma_y1_=sqrt(bet_y1_*geo_emit_y1_);}
+    void set_geo_emit_2(double emit_x, double emit_y){geo_emit_x2_ = emit_x; geo_emit_y2_ = emit_y;
+                        sigma_x2_=sqrt(bet_x2_*geo_emit_x2_); sigma_y2_=sqrt(bet_y2_*geo_emit_y2_);}
+    bool use_ion_emittance(){return use_ion_emittance_;}
+    Luminosity(double bet_x1, double bet_y1, double bet_x2, double bet_y2):bet_x1_(bet_x1), bet_y1_(bet_y1),
+        bet_x2_(bet_x2),bet_y2_(bet_y2){};
+    double luminosity();
+};
+
 class DynamicParas{
     double time_;
     int n_step_;
@@ -23,6 +61,7 @@ class DynamicParas{
     bool fixed_bunch_length_ = false;
     bool reset_time_ = true;
     bool overwrite_ = true;
+    bool calc_luminosity_ = false;
     int output_intvl_ = 1;
     int ion_save_intvl_ = -1;
     string filename_ = "output_dynamic.txt";
@@ -38,6 +77,7 @@ class DynamicParas{
     bool fixed_bunch_length(){return fixed_bunch_length_;}
     bool reset_time(){return reset_time_;}
     bool overwrite(){return overwrite_;}
+    bool calc_lum(){return calc_luminosity_;}
     int output_intval(){return output_intvl_;}
     int ion_save_intvl(){return ion_save_intvl_;}
     int n_sample(){return n_sample_;}
@@ -51,6 +91,7 @@ class DynamicParas{
     int set_fixed_bunch_length(bool b){fixed_bunch_length_ = b; return 0;}
     int set_reset_time(bool b){reset_time_ = b; return 0;}
     int set_overwrite(bool b) {overwrite_ = b; return 0;}
+    int set_calc_lum(bool b) {calc_luminosity_ = b;}
     string output_file(){return filename_;}
     DynamicParas(double time, int n_step):time_(time),n_step_(n_step){dt_ = time_/n_step_;}
     DynamicParas(double time, int n_step, bool ibs, bool ecool):

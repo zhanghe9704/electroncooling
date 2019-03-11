@@ -16,6 +16,7 @@ extern DynamicParas * dynamic_paras;
 extern IBSParas * ibs_paras;
 extern EcoolRateParas * ecool_paras;
 extern ForceParas * force_paras;
+extern Luminosity *luminosity_paras;
 //extern std::unique_ptr<Twiss> twiss_ref;
 //extern int n_ion_model;
 
@@ -77,6 +78,10 @@ int main(int argc, char** argv) {
                                 if (ptrs.ecool_ptr.get() == nullptr) ptrs.ecool_ptr.reset(new Set_ecool());
                                 break;
                             }
+                            case Section::SECTION_LUMINOSITY: {
+                                if (ptrs.luminosity_ptr.get() == nullptr) ptrs.luminosity_ptr.reset(new Set_luminosity());
+                                break;
+                            }
                             case Section::SECTION_SIMULATION: {
                                 if (ptrs.dynamic_ptr.get() == nullptr) ptrs.dynamic_ptr.reset(new Set_dynamic());
                                 break;
@@ -127,6 +132,10 @@ int main(int argc, char** argv) {
                             }
                             case Section::SECTION_ECOOL: {
                                 set_ecool(line, ptrs.ecool_ptr.get());
+                                break;
+                            }
+                            case Section::SECTION_LUMINOSITY: {
+                                set_luminosity(line, ptrs.luminosity_ptr.get());
                                 break;
                             }
                             case Section::SECTION_SIMULATION: {

@@ -9,6 +9,7 @@ DynamicParas *dynamic_paras = nullptr;
 IBSParas *ibs_paras = nullptr;
 EcoolRateParas *ecool_paras = nullptr;
 ForceParas *force_paras = nullptr;
+Luminosity *luminosity_paras = nullptr;
 
 //std::unique_ptr<double []> rdn; //random number for model beam simulations
 
@@ -20,6 +21,13 @@ extern std::unique_ptr<double []> force_x, force_y, force_z;
 
 extern double vl_emit_nx, vl_emit_ny, vl_dp_p, vl_sigma_s, vl_rx_ibs, vl_ry_ibs, vl_rs_ibs,
     vl_rx_ecool, vl_ry_ecool, vl_rs_ecool, vl_rx_total, vl_ry_total, vl_rs_total, vl_t;
+
+double Luminosity::luminosity() {
+    double sig_x2 = sigma_x1_*sigma_x1_+sigma_x2_*sigma_x2_;
+    double sig_y2 = sigma_y1_*sigma_y1_+sigma_y2_*sigma_y2_;
+    double lum = np_1_*np_2_*freq_/(2*k_pi*sqrt(sig_x2*sig_y2))*exp(-dx_*dx_/(2*sig_x2)-dy_*dy_/(2*sig_y2));
+    return lum;
+}
 
 int sample_the_ions(Beam &ion, Ring &ring, Cooler &cooler){
     switch (dynamic_paras->model()) {
@@ -196,14 +204,14 @@ int update_beam(int i, Beam &ion, Ring &ring, Cooler &cooler, EBeam &ebeam, std:
 //}
 
 void output(double t, std::vector<double> &emit, std::vector<double> &r, std::vector<double> &r_ibs,
-            std::vector<double> &r_ecool, double v_rf, bool bunched, std::ofstream &outfile) {
+            std::vector<double> &r_ecool, double v_rf, double lum, bool bunched, std::ofstream &outfile) {
     outfile<<t<<' '<<emit.at(0)<<' '<<emit.at(1)<<' '<<emit.at(2)<<' ';
     if(bunched) outfile<<emit.at(3)<<' ';
     else outfile<<0<<' ';
     outfile<<r.at(0)<<' '<<r.at(1)<<' '<<r.at(2)<<' ';
     outfile<<r_ibs.at(0)<<' '<<r_ibs.at(1)<<' '<<r_ibs.at(2)<<' ';
     outfile<<r_ecool.at(0)<<' '<<r_ecool.at(1)<<' '<<r_ecool.at(2)<<' ';
-    outfile<<v_rf<<' ';
+    outfile<<v_rf<<' '<<lum<<' ';
     outfile<<std::endl;
 }
 
@@ -289,6 +297,7 @@ void output_sddshead(int n, std::ofstream &outfile){
         <<"&column name=ry_ecool, type=double, units=1/s, description=\"vertical electron cooling rate\", &end"<<endl
         <<"&column name=rs_ecool, type=double, units=1/s, description=\"longitudinal electron cooling rate\", &end"<<endl
         <<"&column name=rf_voltage, type=double, units=V, description=\"Voltage of the RF cavity\", &end"<<endl
+        <<"&column name=luminosity, type=double, units=1/s*1/m^2, description=\"Instant luminosity\", &end"<<endl
         <<"!Declare ASCII data and end the header"<<endl
         <<"&data mode=ascii, &end"<<endl
         <<n<<endl;
@@ -377,8 +386,20 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
         for(int i=0; i<3; ++i) r.at(i) = r_ibs.at(i) + r_ecool.at(i);
 
         //Output
-        if (output_itvl==1) output(t, emit, r, r_ibs, r_ecool, ring.rf.v, ion.bunched(), outfile);
-        else if(i%output_itvl==0) output(t, emit, r, r_ibs, r_ecool, ring.rf.v, ion.bunched(), outfile);
+        if (output_itvl==1 || i%output_itvl==0) {
+                double lum = 0;
+                if(dynamic_paras->calc_lum()) {
+                    if(luminosity_paras->use_ion_emittance()) {
+                        luminosity_paras->set_geo_emit_1(ion.emit_x(), ion.emit_y());
+                    }
+                    lum = luminosity_paras->luminosity();
+
+                }
+                output(t, emit, r, r_ibs, r_ecool, ring.rf.v, lum, ion.bunched(), outfile);
+        }
+//        else if(i%output_itvl==0) {
+//                output(t, emit, r, r_ibs, r_ecool, ring.rf.v, ion.bunched(), outfile);
+//        }
 
         //Update beam parameters and particles
         update_beam(i, ion, ring, cooler, ebeam, r_ibs, r_ecool);

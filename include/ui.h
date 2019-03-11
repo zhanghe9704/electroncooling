@@ -106,6 +106,7 @@ struct Set_dynamic{
     bool fixed_bunch_length = false;
     bool reset_time = true;
     bool overwrite = true;
+    bool calc_luminosity = false;
     int output_intvl = 1;
     int save_ptcl_intvl = -1;
     std::string filename = "output_dynamic.txt";
@@ -118,6 +119,27 @@ struct Set_dynamic{
     double ref_disp_y = 0;
     double ref_disp_dx = 0;
     double ref_disp_dy = 0;
+};
+
+struct Set_luminosity{
+    double dx = 0;
+    double dy = 0;
+    double np_1 = 0;
+    double np_2 = 0;
+    double freq = 1;
+    double sigma_x1 = 0;
+    double sigma_y1 = 0;
+    double sigma_x2 = 0;
+    double sigma_y2 = 0;
+    double bet_x1 = 0;
+    double bet_y1 = 0;
+    double bet_x2 = 0;
+    double bet_y2 = 0;
+    double geo_emit_x1 = 0;
+    double geo_emit_x2 = 0;
+    double geo_emit_y1 = 0;
+    double geo_emit_y2 = 0;
+    bool use_ion_emittance = true;
 };
 
 class Set_ptrs{
@@ -140,12 +162,13 @@ class Set_ptrs{
      std::unique_ptr<EcoolRateParas> ecool_paras = nullptr;
      std::unique_ptr<ForceParas> force_paras = nullptr;
      std::unique_ptr<Set_dynamic> dynamic_ptr = nullptr;
+     std::unique_ptr<Set_luminosity> luminosity_ptr = nullptr;
 //     std::unique_ptr<Tunes> tunes = nullptr;
 //     std::unique_ptr<RF> rf = nullptr;
 };
 
 enum class Section{NONE, SECTION_ION, SECTION_RING, SECTION_COOLER, SECTION_RUN, SECTION_IBS, SECTION_SCRATCH,
-    SECTION_E_BEAM_SHAPE, SECTION_E_BEAM, SECTION_ECOOL, SECTION_SIMULATION};
+    SECTION_E_BEAM_SHAPE, SECTION_E_BEAM, SECTION_ECOOL, SECTION_SIMULATION, SECTION_LUMINOSITY};
 
 std::string remove_comments(std::string input_line);
 std::string trim_blank(std::string input_line);
@@ -159,6 +182,7 @@ void parse(std::string &str, muParserHandle_t &math_parser);
 void define_cooler(std::string &str, Set_cooler *cooler_args);
 void create_cooler(Set_ptrs &ptrs);
 void define_e_beam(std::string &str, Set_e_beam *e_beam_args);
+void set_luminosity(string &str, Set_luminosity *lum_args);
 void set_ecool(std::string &str, Set_ecool *ecool_args);
 void set_section_run(Set_ptrs &ptrs);
 void set_simulation(std::string &str, Set_dynamic *dynamic_args);

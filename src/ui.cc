@@ -14,6 +14,7 @@ extern DynamicParas *dynamic_paras;
 extern IBSParas *ibs_paras;
 extern EcoolRateParas *ecool_paras;
 extern ForceParas *force_paras;
+extern Luminosity *luminosity_paras;
 
 double vl_emit_nx = 0;
 double vl_emit_ny = 0;
@@ -35,7 +36,7 @@ muParserHandle_t math_parser = NULL;
 std::vector<string> ION_ARGS = {"CHARGE_NUMBER", "MASS", "KINETIC_ENERGY", "NORM_EMIT_X", "NORM_EMIT_Y",
     "MOMENTUM_SPREAD", "PARTICLE_NUMBER", "RMS_BUNCH_LENGTH"};
 std::vector<string> RUN_COMMANDS = {"CREATE_ION_BEAM", "CREATE_RING", "CREATE_E_BEAM", "CREATE_COOLER",
-    "CALCULATE_IBS", "CALCULATE_ECOOL", "TOTAL_EXPANSION_RATE", "RUN_SIMULATION"};
+    "CALCULATE_IBS", "CALCULATE_ECOOL", "TOTAL_EXPANSION_RATE", "RUN_SIMULATION", "CALCULATE_LUMINOSITY"};
 std::vector<string> RING_ARGS = {"LATTICE", "QX", "QY", "QS", "GAMMA_TR", "RF_V", "RF_H", "RF_PHI"};
 std::vector<string> IBS_ARGS = {"NU","NV","NZ","LOG_C","COUPLING","MODEL"};
 std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD", "BET_X", "BET_Y", "DISP_X", "DISP_Y",
@@ -52,11 +53,15 @@ std::vector<string> ECOOL_ARGS = {"SAMPLE_NUMBER", "FORCE_FORMULA"};
 std::vector<string> FRICTION_FORCE_FORMULA = {"PARKHOMCHUK"};
 std::vector<string> SIMULATION_ARGS = {"TIME", "STEP_NUMBER", "SAMPLE_NUMBER", "IBS", "E_COOL", "OUTPUT_INTERVAL",
     "SAVE_PARTICLE_INTERVAL", "OUTPUT_FILE", "MODEL", "REF_BET_X", "REF_BET_Y", "REF_ALF_X", "REF_ALF_Y",
-    "REF_DISP_X", "REF_DISP_Y", "REF_DISP_DX", "REF_DISP_DY", "FIXED_BUNCH_LENGTH", "RESET_TIME", "OVERWRITE"};
+    "REF_DISP_X", "REF_DISP_Y", "REF_DISP_DX", "REF_DISP_DY", "FIXED_BUNCH_LENGTH", "RESET_TIME", "OVERWRITE",
+    "CALC_LUMINOSITY"};
 std::vector<string> DYNAMIC_VALUE = {"RMS", "PARTICLE", "MODEL_BEAM", "TURN_BY_TURN"};
-std::vector<string> SCRATCH_ARSGS = {"VL_EMIT_NX", "VL_EMIT_NY", "VL_MOMENTUM_SPREAD", "VL_BUNCH_LENGTH", "VL_RATE_IBS_X",
+std::vector<string> SCRATCH_ARGS = {"VL_EMIT_NX", "VL_EMIT_NY", "VL_MOMENTUM_SPREAD", "VL_BUNCH_LENGTH", "VL_RATE_IBS_X",
     "VL_RATE_IBS_Y", "VL_RATE_IBS_S", "VL_RATE_ECOOL_X", "VL_RATE_ECOOL_Y", "VL_RATE_ECOOL_S", "VL_RATE_TOTAL_X",
     "VL_RATE_TOTAL_Y", "VL_RATE_TOTAL_S", "VL_T"};
+std::vector<string> LUMINOSITY_ARGS = {"DISTANCE_X", "DISTANCE_Y", "PARTICLE_NUMBER_1", "PARTICLE_NUMBER_2", "FREQUENCY",
+    "BEAM_SIZE_X_1", "BEAM_SIZE_X_2", "BEAM_SIZE_Y_1", "BEAM_SIZE_Y_2", "BET_X_1", "BET_X_2", "BET_Y_1",
+    "BET_Y_2", "GEO_EMIT_X_1", "GEO_EMIT_X_2", "GEO_EMIT_Y_1", "GEO_EMIT_Y_2", "USE_ION_EMITTANCE"};
 
 std::map<std::string, Section> sections{
     {"SECTION_ION",Section::SECTION_ION},
@@ -67,7 +72,8 @@ std::map<std::string, Section> sections{
     {"SECTION_SCRATCH", Section::SECTION_SCRATCH},
     {"SECTION_E_BEAM", Section::SECTION_E_BEAM},
     {"SECTION_ECOOL", Section::SECTION_ECOOL},
-    {"SECTION_SIMULATION",Section::SECTION_SIMULATION}
+    {"SECTION_SIMULATION",Section::SECTION_SIMULATION},
+    {"SECTION_LUMINOSITY",Section::SECTION_LUMINOSITY}
 };
 
 // Remove everything from the first "#" in the string
@@ -606,6 +612,64 @@ void total_expansion_rate(Set_ptrs &ptrs) {
     vl_rs_total = ptrs.total_rate.at(2);
 }
 
+void calculate_luminosity(Set_ptrs &ptrs) {
+    assert(ptrs.luminosity_ptr.get()!=nullptr && "MUST SET UP THE PARAMETERS FOR LUMINOSITY CALCULATION.");
+    double bet_x1 = ptrs.luminosity_ptr->bet_x1;
+    double bet_y1 = ptrs.luminosity_ptr->bet_y1;
+    double bet_x2 = ptrs.luminosity_ptr->bet_x2;
+    double bet_y2 = ptrs.luminosity_ptr->bet_y2;
+    assert(bet_x1>0 && bet_y1>0 && bet_x2>0 && bet_y2 && "WRONG VALUE FOR LUMINOSITY: BETA FUNCTIONS SHOULD BE POSITIVE.");
+    Luminosity lum(bet_x1, bet_y1, bet_x2, bet_y2);
+
+    lum.set_use_ion_emit(ptrs.luminosity_ptr->use_ion_emittance);
+    if(ptrs.luminosity_ptr->use_ion_emittance) {
+        assert(ptrs.ion_beam.get()!=nullptr && "CREATE THE ION BEAM IF IT IS USED IN THE LUMINOSITY CALCULATION.");
+        double geo_emit_x = ptrs.ion_beam->emit_x();
+        double geo_emit_y = ptrs.ion_beam->emit_y();
+        lum.set_geo_emit_1(geo_emit_x, geo_emit_y);
+    }
+    else {
+        double sigma_x = ptrs.luminosity_ptr->sigma_x1;
+        double sigma_y = ptrs.luminosity_ptr->sigma_y1;
+        double geo_emit_x = ptrs.luminosity_ptr->geo_emit_x1;
+        double geo_emit_y = ptrs.luminosity_ptr->geo_emit_y1;
+        assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0)  &&
+               "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE OF BEAM 1 SHOULD BE POSITIVE.");
+        if(sigma_x>0 && sigma_y>0) {
+            lum.set_beam_size_1(sigma_x, sigma_y);
+        }
+        else {
+            lum.set_geo_emit_1(geo_emit_x, geo_emit_y);
+        }
+
+    }
+
+    double sigma_x = ptrs.luminosity_ptr->sigma_x2;
+    double sigma_y = ptrs.luminosity_ptr->sigma_y2;
+    double geo_emit_x = ptrs.luminosity_ptr->geo_emit_x2;
+    double geo_emit_y = ptrs.luminosity_ptr->geo_emit_y2;
+    assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0) &&
+           "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE OF BEAM 2 SHOULD BE POSITIVE.");
+    if(sigma_x>0 && sigma_y>0) {
+        lum.set_beam_size_2(sigma_x, sigma_y);
+    }
+    else {
+        lum.set_geo_emit_2(geo_emit_x, geo_emit_y);
+    }
+    lum.set_distance(ptrs.luminosity_ptr->dx, ptrs.luminosity_ptr->dy);
+    double np_1 = ptrs.luminosity_ptr->np_1;
+    double np_2 = ptrs.luminosity_ptr->np_2;
+    assert(np_1>0 && np_2>0 && "WRONG VALUE FOR LUMINOSITY: PARTICLE NUMBERS SHOULD BE POSTIVE.");
+    lum.set_particle_number(np_1, np_2);
+    double f = ptrs.luminosity_ptr->freq;
+    assert(f>0 && "WRONG VALUE FOR LUMINOSITY: COLLISION FREQUENCY SHOULD BE POSITIVE.");
+    lum.set_freq(f);
+
+    std::cout<<std::scientific;
+    std::cout << std::setprecision(3);
+    std::cout<<"Luminosity(1/s*1/m^2) :"<<lum.luminosity()<<std::endl;
+}
+
 void run_simulation(Set_ptrs &ptrs) {
     assert(ptrs.dynamic_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR SIMULATION!");
     bool ibs = ptrs.dynamic_ptr->ibs;
@@ -645,6 +709,54 @@ void run_simulation(Set_ptrs &ptrs) {
     else dynamic_paras->set_reset_time(false);
     if (ptrs.dynamic_ptr->overwrite) dynamic_paras->set_overwrite(true);
     else dynamic_paras->set_overwrite(false);
+    if (ptrs.dynamic_ptr->calc_luminosity) dynamic_paras->set_calc_lum(true);
+    else dynamic_paras->set_calc_lum(false);
+
+    double bet_x1 = ptrs.luminosity_ptr->bet_x1;
+    double bet_y1 = ptrs.luminosity_ptr->bet_y1;
+    double bet_x2 = ptrs.luminosity_ptr->bet_x2;
+    double bet_y2 = ptrs.luminosity_ptr->bet_y2;
+    assert(bet_x1>0 && bet_y1>0 && bet_x2>0 && bet_y2 && "WRONG VALUE FOR LUMINOSITY: BETA FUNCTIONS SHOULD BE POSITIVE.");
+    luminosity_paras = new Luminosity(bet_x1, bet_y1, bet_x2, bet_y2);
+    luminosity_paras->set_use_ion_emit(ptrs.luminosity_ptr->use_ion_emittance);
+    if(!ptrs.luminosity_ptr->use_ion_emittance) {
+        double sigma_x = ptrs.luminosity_ptr->sigma_x1;
+        double sigma_y = ptrs.luminosity_ptr->sigma_y1;
+        double geo_emit_x = ptrs.luminosity_ptr->geo_emit_x1;
+        double geo_emit_y = ptrs.luminosity_ptr->geo_emit_y1;
+        assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0)  &&
+               "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE OF BEAM 1 SHOULD BE POSITIVE.");
+        if(sigma_x>0 && sigma_y>0) {
+            luminosity_paras->set_beam_size_1(sigma_x, sigma_y);
+        }
+        else {
+            luminosity_paras->set_geo_emit_1(geo_emit_x, geo_emit_y);
+        }
+
+    }
+    double sigma_x = ptrs.luminosity_ptr->sigma_x2;
+    double sigma_y = ptrs.luminosity_ptr->sigma_y2;
+    double geo_emit_x = ptrs.luminosity_ptr->geo_emit_x2;
+    double geo_emit_y = ptrs.luminosity_ptr->geo_emit_y2;
+    assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0) &&
+           "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE OF BEAM 2 SHOULD BE POSITIVE.");
+    if(sigma_x>0 && sigma_y>0) {
+        luminosity_paras->set_beam_size_2(sigma_x, sigma_y);
+    }
+    else {
+        luminosity_paras->set_geo_emit_2(geo_emit_x, geo_emit_y);
+    }
+    luminosity_paras->set_distance(ptrs.luminosity_ptr->dx, ptrs.luminosity_ptr->dy);
+    double np_1 = ptrs.luminosity_ptr->np_1;
+    double np_2 = ptrs.luminosity_ptr->np_2;
+    assert(np_1>0 && np_2>0 && "WRONG VALUE FOR LUMINOSITY: PARTICLE NUMBERS SHOULD BE POSTIVE.");
+    luminosity_paras->set_particle_number(np_1, np_2);
+    double f = ptrs.luminosity_ptr->freq;
+    assert(f>0 && "WRONG VALUE FOR LUMINOSITY: COLLISION FREQUENCY SHOULD BE POSITIVE.");
+    luminosity_paras->set_freq(f);
+
+
+
 
     if(dynamic_paras->model()==DynamicModel::PARTICLE && !ecool)
         assert(n_sample>0 && "SET N_SAMPLE FOR SIMULATION!");
@@ -734,6 +846,9 @@ void run(std::string &str, Set_ptrs &ptrs) {
     }
     else if(str == "CALCULATE_ECOOL") {
         calculate_ecool(ptrs);
+    }
+    else if(str == "CALCULATE_LUMINOSITY") {
+        calculate_luminosity(ptrs);
     }
     else if(str == "TOTAL_EXPANSION_RATE") {
         total_expansion_rate(ptrs);
@@ -1029,6 +1144,11 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
         else if (val == "OFF" || val == "FALSE") dynamic_args->overwrite = false;
         else assert(false&&"WRONG VALUE FOR THE PARAMETER OVERWRITE IN SECTION_SIMULATION!");
     }
+    else if (var == "CALC_LUMINOSITY") {
+        if (val == "ON" || val == "TRUE") dynamic_args->calc_luminosity = true;
+        else if (val == "OFF" || val == "FALSE") dynamic_args->calc_luminosity = false;
+        else assert(false&&"WRONG VALUE FOR THE PARAMETER CALC_LUMINOSITY IN SECTION_SIMULATION!");
+    }
     else {
         if (math_parser == NULL) {
             if (var == "TIME") {
@@ -1117,6 +1237,140 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
             }
             else {
                 assert(false&&"Wrong arguments in section_simulation!");
+            }
+        }
+    }
+}
+
+void set_luminosity(string &str, Set_luminosity *lum_args) {
+    assert(lum_args!=nullptr && "SECTION_ECOOL MUST BE CLAIMED!");
+    string::size_type idx = str.find("=");
+    assert(idx!=string::npos && "WRONG COMMAND IN SECTION_LUMINOSITY!");
+    string var = str.substr(0, idx);
+    string val = str.substr(idx+1);
+    var = trim_blank(var);
+    var = trim_tab(var);
+    val = trim_blank(val);
+    val = trim_tab(val);
+    assert(std::find(LUMINOSITY_ARGS.begin(),LUMINOSITY_ARGS.end(),var)!=LUMINOSITY_ARGS.end() &&
+           "WRONG COMMANDS IN SECTION_LUMINOSITY!");
+    if (var == "USE_ION_EMITTANCE" ) {
+        if (val == "ON" || val == "TRUE") lum_args->use_ion_emittance = true;
+        else if (val == "OFF" || val == "FALSE") lum_args->use_ion_emittance = false;
+        else assert(false&&"WRONG VALUE FOR THE PARAMETER USE_ION_PARAMETER IN SECTION_SIMULATION!");
+    }
+    else {
+        if (math_parser == NULL) {
+            if (var == "DISTANCE_X") {
+                lum_args->dx = std::stod(val);
+            }
+            else if (var == "DISTANCE_Y") {
+                lum_args->dy = std::stod(val);
+            }
+            else if (var == "PARTICLE_NUMBER_1") {
+                lum_args->np_1 = std::stod(val);
+            }
+            else if (var == "PARTICLE_NUMBER_2") {
+                lum_args->np_2 = std::stod(val);
+            }
+            else if (var == "FREQUENCY") {
+                lum_args->freq = std::stod(val);
+            }
+            else if (var == "BEAM_SIZE_X_1") {
+                lum_args->sigma_x1 = std::stod(val);
+            }
+            else if (var == "BEAM_SIZE_X_2") {
+                lum_args->sigma_x2 = std::stod(val);
+            }
+            else if (var == "BEAM_SIZE_Y_1") {
+                lum_args->sigma_y1 = std::stod(val);
+            }
+            else if (var == "BEAM_SIZE_Y_2") {
+                lum_args->sigma_y2 = std::stod(val);
+            }
+            else if (var == "BET_X_1") {
+                lum_args->bet_x1 = std::stod(val);
+            }
+            else if (var == "BET_X_2") {
+                lum_args->bet_x2 = std::stod(val);
+            }
+            else if (var == "BET_Y_2") {
+                lum_args->bet_y2 = std::stod(val);
+            }
+            else if (var == "BET_Y_1") {
+                lum_args->bet_y1 = std::stod(val);
+            }
+            else if (var == "GEO_EMIT_X_1") {
+                lum_args->geo_emit_x1 = std::stod(val);
+            }
+            else if (var == "GEO_EMIT_X_2") {
+                lum_args->geo_emit_x2 = std::stod(val);
+            }
+            else if (var == "GEO_EMIT_Y_1") {
+                lum_args->geo_emit_y1 = std::stod(val);
+            }
+            else if (var == "GEO_EMIT_Y_2") {
+                lum_args->geo_emit_y2 = std::stod(val);
+            }
+            else {
+                assert(false&&"Wrong arguments in section_luminosity!");
+            }
+        }
+        else {
+            mupSetExpr(math_parser, val.c_str());
+            if (var == "DISTANCE_X") {
+                lum_args->dx = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "DISTANCE_Y") {
+                lum_args->dy = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "PARTICLE_NUMBER_1") {
+                lum_args->np_1 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "PARTICLE_NUMBER_2") {
+                lum_args->np_2 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "FREQUENCY") {
+                lum_args->freq = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "BEAM_SIZE_X_1") {
+                lum_args->sigma_x1 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "BEAM_SIZE_X_2") {
+                lum_args->sigma_x2 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "BEAM_SIZE_Y_1") {
+                lum_args->sigma_y1 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "BEAM_SIZE_Y_2") {
+                lum_args->sigma_y2 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "BET_X_1") {
+                lum_args->bet_x1 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "BET_X_2") {
+                lum_args->bet_x2 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "BET_Y_2") {
+                lum_args->bet_y2 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "BET_Y_1") {
+                lum_args->bet_y1 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "GEO_EMIT_X_1") {
+                lum_args->geo_emit_x1 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "GEO_EMIT_X_2") {
+                lum_args->geo_emit_x2 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "GEO_EMIT_Y_1") {
+                lum_args->geo_emit_y1 = static_cast<double>(mupEval(math_parser));
+            }
+            else if (var == "GEO_EMIT_Y_2") {
+                lum_args->geo_emit_y2 = static_cast<double>(mupEval(math_parser));
+            }
+            else {
+                assert(false&&"Wrong arguments in section_luminosity!");
             }
         }
     }
