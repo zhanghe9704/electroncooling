@@ -29,6 +29,68 @@ double Luminosity::luminosity() {
     return lum;
 }
 
+void Luminosity::set_particle_number(double n, int i) {
+    if(i==1) {
+        np_1_ = n;
+    }
+    else if (i==2) {
+        np_2_ = n;
+    }
+    else {
+        assert(false&&"Wrong value of i in Luminosity::set_particle_number! Should be 1 or 2.");
+    }
+}
+
+void Luminosity::set_beam_size(double sigma_x, double sigma_y, int i) {
+    if(i==1) {
+        sigma_x1_=sigma_x;
+        sigma_y1_=sigma_y;
+        geo_emit_x1_ = sigma_x1_*sigma_x1_/bet_x1_;
+        geo_emit_y1_ = sigma_y1_*sigma_y1_/bet_y1_;
+    }
+    else if (i==2) {
+        sigma_x2_=sigma_x;
+        sigma_y2_=sigma_y;
+        geo_emit_x2_ = sigma_x2_*sigma_x2_/bet_x2_;
+        geo_emit_y2_ = sigma_y2_*sigma_y2_/bet_y2_;
+    }
+    else {
+        assert(false&&"Wrong value of i in Luminosity::set_beam_size! Should be 1 or 2.");
+    }
+}
+
+void Luminosity::set_bet(double bet_x, double bet_y, int i) {
+    if(i==1) {
+        bet_x1_ = bet_x;
+        bet_y1_ = bet_y;
+    }
+    else if (i==2) {
+        bet_x2_ = bet_x;
+        bet_y2_ = bet_y;
+    }
+    else {
+        assert(false&&"Wrong value of i in Luminosity::set_bet! Should be 1 or 2.");
+    }
+}
+
+void Luminosity::set_geo_emit(double emit_x, double emit_y, int i) {
+    if(i==1) {
+        geo_emit_x1_ = emit_x;
+        geo_emit_y1_ = emit_y;
+        sigma_x1_=sqrt(bet_x1_*geo_emit_x1_);
+        sigma_y1_=sqrt(bet_y1_*geo_emit_y1_);
+    }
+    else if (i==2) {
+        geo_emit_x2_ = emit_x;
+        geo_emit_y2_ = emit_y;
+        sigma_x2_=sqrt(bet_x2_*geo_emit_x2_);
+        sigma_y2_=sqrt(bet_y2_*geo_emit_y2_);
+    }
+    else {
+        assert(false&&"Wrong value of i in Luminosity::set_geo_emit! Should be 1 or 2.");
+    }
+}
+
 int sample_the_ions(Beam &ion, Ring &ring, Cooler &cooler){
     switch (dynamic_paras->model()) {
     case DynamicModel::RMS : {
@@ -297,7 +359,7 @@ void output_sddshead(int n, std::ofstream &outfile){
         <<"&column name=ry_ecool, type=double, units=1/s, description=\"vertical electron cooling rate\", &end"<<endl
         <<"&column name=rs_ecool, type=double, units=1/s, description=\"longitudinal electron cooling rate\", &end"<<endl
         <<"&column name=rf_voltage, type=double, units=V, description=\"Voltage of the RF cavity\", &end"<<endl
-        <<"&column name=luminosity, type=double, units=1/s*1/m^2, description=\"Instant luminosity\", &end"<<endl
+        <<"&column name=luminosity, type=double, units=1/s*1/cm^2, description=\"Instant luminosity\", &end"<<endl
         <<"!Declare ASCII data and end the header"<<endl
         <<"&data mode=ascii, &end"<<endl
         <<n<<endl;
@@ -390,12 +452,12 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
                 double lum = 0;
                 if(dynamic_paras->calc_lum()) {
                     if(luminosity_paras->use_ion_emittance()) {
-                        luminosity_paras->set_geo_emit_1(ion.emit_x(), ion.emit_y());
+                        luminosity_paras->set_geo_emit(ion.emit_x(), ion.emit_y(), 1);
                     }
                     lum = luminosity_paras->luminosity();
 
                 }
-                output(t, emit, r, r_ibs, r_ecool, ring.rf.v, lum, ion.bunched(), outfile);
+                output(t, emit, r, r_ibs, r_ecool, ring.rf.v, lum*10000, ion.bunched(), outfile);
         }
 //        else if(i%output_itvl==0) {
 //                output(t, emit, r, r_ibs, r_ecool, ring.rf.v, ion.bunched(), outfile);

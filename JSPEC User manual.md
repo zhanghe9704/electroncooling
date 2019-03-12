@@ -16,16 +16,17 @@ The input file is a plain text file and it will be parsed by the program line by
 
 The input file is organized by various sections. All the sections fall into three different categories: (1) scratch section, (2) definition sections and (3) operation section.  All the sections with the respective categories and usages are listed in the following table. 
 
-| Section name    | Category   | Usage                                    |
-| --------------- | ---------- | ---------------------------------------- |
-| section_scratch | scratch    | Define variables and do calculations with the variables. The variables defined in this section can be used in definition sections. |
-| section_ion     | definition | Set parameters for the ion beam          |
-| section_ring    | definition | Set parameters for the ion ring          |
-| section_e_beam  | definition | Set parameters for the cooling electron beam |
-| section_cooler  | definition | Set parameters for the cooler            |
-| section_ibs     | definition | Set parameters for IBS rate calculation  |
-| section_ecool   | definition | Set parameters for electron cooling rate calculation |
-| section_run     | operation  | Create the objectives (ion beam, ion ring, electron beam, cooler) and perform the calculation and/or the simulation. |
+| Section name       | Category   | Usage                                    |
+| ------------------ | ---------- | ---------------------------------------- |
+| section_scratch    | scratch    | Define variables and do calculations with the variables. The variables defined in this section can be used in definition sections. |
+| section_ion        | definition | Set parameters for the ion beam          |
+| section_ring       | definition | Set parameters for the ion ring          |
+| section_e_beam     | definition | Set parameters for the cooling electron beam |
+| section_cooler     | definition | Set parameters for the cooler            |
+| section_ibs        | definition | Set parameters for IBS rate calculation  |
+| section_ecool      | definition | Set parameters for electron cooling rate calculation |
+| section_luminosity | definition | Set parameters for luminosity calculation |
+| section_run        | operation  | Create the objectives (ion beam, ion ring, electron beam, cooler) and perform the calculation and/or the simulation. |
 
 The input file starts with a section by calling the section name. Once a section name is called, the respective section is created, and this section ends when another section name is called or when the input file ends. Sections can be repeated called and the latter one overwrite the previous ones. But if a parameters is not set again in the latter one, its value remains. 
 
@@ -120,6 +121,58 @@ section_simulation  # Set the parameters for the simulation
 section_run
 	run_simulation	# Start simulation 
 ```
+
+### Luminosity calculation
+
+To calculate the luminosity, one needs to define the particle number and the rms size of the two colliding particles, the center-to-center distance between the two beams, and the colliding frequency. Instead of giving the rms size of the beams, one can define the geometrical emittance and the beta function at the collision point of them, which may be convenient in many cases. An example is given as follows. 
+
+```
+section_luminosity 
+	distance_x = 1e-3
+	distance_y = 1e-6
+	particle_number_1 = 1e7
+	particle_number_2 = 1e10
+	frequency = 1000
+	bet_x_1 = 0.01
+	bet_y_1 = 0.01
+	bet_x_2 = 0.01
+	bet_y_2 = 0.01
+	geo_emit_x_1 = 1e-6
+	geo_emit_x_2 = 4e-7
+	geo_emit_y_1 = 1e-6
+	geo_emit_y_2 = 4e-7
+	use_ion_emittance = false
+
+section_run
+	calculate_luminosity
+```
+
+If one wants to use the ion beam defined in the cooling simulation in the luminosity calculation, the parameter use_ion_emittance should be set to true. ( The default value of it is true.) Then the program will use the geometrical emittance of the ion beam to set up the first colliding beam. Please note one has to create the ion beam before the luminosity calculation. 
+
+```
+section_ion #define the ion beam
+	...
+
+section_luminosity 
+	distance_x = 0
+	distance_y = 0
+	particle_number_1 = 1e7
+	particle_number_2 = 1e10
+	frequency = 1000
+	bet_x_1 = 0.01
+	bet_y_1 = 0.01
+	bet_x_2 = 0.01
+	bet_y_2 = 0.01
+	geo_emit_x_2 = 4e-7
+	geo_emit_y_2 = 4e-7
+	use_ion_emittance = true
+
+section_run
+	create_ion_beam
+	calculate_luminosity
+```
+
+
 
 
 
@@ -234,6 +287,29 @@ section_run
 | sample_number | Number of the sample ions.               |
 | force_formula | Choose the formula for friction force calculation. Now only support the Parkhomchuk formul, using  force_formula = PARKHOMCHUK. |
 
+**section_luminosity**
+
+| Keywords          | Meaning                                  |
+| ----------------- | ---------------------------------------- |
+| distance_x        | Horizontal distance between the centers of the two colliding beam, in [m]. |
+| distance_y        | Vertical distance between the centers of the two colliding beam, in [m]. |
+| particle_number_1 | Particle number of the first colliding beam. |
+| particle_number_2 | Particle number of the 2nd colliding beam. |
+| frequency         | Colliding frequency, in [1/s].           |
+| bet_x_1           | Horizontal beta function of the first colliding beam at the colliding point, in [m]. |
+| bet_y_1           | Vertical beta function of the first colliding beam at the colliding point, in [m]. |
+| bet_x_2           | Horizontal beta function of the second colliding beam at the colliding point, in [m]. |
+| bet_y_2           | Vertical beta function of the second colliding beam at the colliding point, in [m]. |
+| beam_size_x_1     | Horizontal rms size of the first colliding beam, in [m]. |
+| beam_size_y_1     | Vertical rms size of the first colliding beam, in [m]. |
+| beam_size_x_2     | Horizontal rms size of the second colliding beam, in [m]. |
+| beam_size_y_2     | Vertical rms size of the second colliding beam, in [m]. |
+| geo_emit_x_1      | Geometrical horizontal emittance of the first colliding beam, in [m*rad]. If the beam size is given, this parameter is ignored. |
+| geo_emit_y_1      | Geometrical vertical emittance of the first colliding beam, in [m*rad].If the beam size is given, this parameter is ignored. |
+| geo_emit_x_2      | Geometrical horizontal emittance of the second colliding beam, in [m*rad].If the beam size is given, this parameter is ignored. |
+| geo_emit_y_2      | Geometrical vertical emittance of the second colliding beam, in [m*rad].If the beam size is given, this parameter is ignored. |
+| use_ion_emittance | Whether to use the ion beam emittance to set up the first colliding beam: yes (true) or no (false). The default value is true. When the value is true, parameters  of the beam size and the emittance of the first colliding beam is ignored and the ion beam should be defined and created before the luminosity calculation. |
+
 **section_simulation**
 
 | Keywords               | Meaning                                  |
@@ -257,7 +333,8 @@ section_run
 | ref_disp_dy            | Same as above.                           |
 | fixed_bunch_length     | Maintain a constant ion bunch length. Default is false. |
 | reset_time             | Whether to reset the starting time to zero (value: true) or use the final time from the previous simulation (value: false). |
-| overwrite              | Whether overwrite the output file is it exists. Default value is true. If the value is false, a new output file will be generated. The name of the new file is created by adding a number before the specific file name. |
+| overwrite              | Whether overwrite the output file is it exists. The default value is true. If the value is false, a new output file will be generated. The name of the new file is created by adding a number before the specific file name. |
+| calc_luminosity        | Whether to calculate the luminosity during the simulation: yes (true) or no (false). The default value is false. |
 
 
 
@@ -271,6 +348,7 @@ section_run
 | create_cooler        | Create the cooler.                       |
 | calculate_ibs        | Calculate the IBS rate and output to the screen. Must create the ion beam and the ring before calling this command. |
 | calculate_ecool      | Calculate the electron cooling rate and output to the screen. Must create the ion beam, the ring, the electron beam, and the cooler before calling this command. |
+| calculate_luminosity | Calculate the luminosity, in [1/s * 1/cm^2] |
 | total_expansion_rate | Calculate the total expansion rate (summation of the ibs rate and electron cooling rate) and output to the screen. Must create the ion beam, the ring, the electron beam, and the cooler before calling this command. |
 | run_simulation       | Simulate the evolution of the ion beam under IBS and/or electron cooling effect(s). |
 

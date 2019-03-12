@@ -34,20 +34,13 @@ class Luminosity {
     bool use_ion_emittance_ = true;
 public:
     void set_distance(double dx, double dy){dx_=dx; dy_=dy;}
-    void set_particle_number(double n1, double n2){np_1_=n1; np_2_=n2;}
     void set_freq(double f){freq_=f;}
-    void set_beam_size_1(double sigma_x, double sigma_y){sigma_x1_=sigma_x; sigma_y1_=sigma_y;
-                        geo_emit_x1_ = sigma_x1_*sigma_x1_/bet_x1_; geo_emit_y1_ = sigma_y1_*sigma_y1_/bet_y1_; }
-    void set_beam_size_2(double sigma_x, double sigma_y){sigma_x2_=sigma_x; sigma_y2_=sigma_y;
-                        geo_emit_x2_ = sigma_x2_*sigma_x2_/bet_x2_; geo_emit_y2_ = sigma_y2_*sigma_y2_/bet_y2_; }
     bool set_use_ion_emit(bool b){use_ion_emittance_ = b;}
-    void set_geo_emit_1(double emit_x, double emit_y){geo_emit_x1_ = emit_x; geo_emit_y1_ = emit_y;
-                        sigma_x1_=sqrt(bet_x1_*geo_emit_x1_); sigma_y1_=sqrt(bet_y1_*geo_emit_y1_);}
-    void set_geo_emit_2(double emit_x, double emit_y){geo_emit_x2_ = emit_x; geo_emit_y2_ = emit_y;
-                        sigma_x2_=sqrt(bet_x2_*geo_emit_x2_); sigma_y2_=sqrt(bet_y2_*geo_emit_y2_);}
+    void set_geo_emit(double emit_x, double emit_y, int i);
+    void set_beam_size(double sigma_x, double sigma_y, int i);
+    void set_particle_number(double n, int i);
+    void set_bet(double bet_x, double bet_y, int i);
     bool use_ion_emittance(){return use_ion_emittance_;}
-    Luminosity(double bet_x1, double bet_y1, double bet_x2, double bet_y2):bet_x1_(bet_x1), bet_y1_(bet_y1),
-        bet_x2_(bet_x2),bet_y2_(bet_y2){};
     double luminosity();
 };
 

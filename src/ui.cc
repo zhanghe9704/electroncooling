@@ -614,60 +614,64 @@ void total_expansion_rate(Set_ptrs &ptrs) {
 
 void calculate_luminosity(Set_ptrs &ptrs) {
     assert(ptrs.luminosity_ptr.get()!=nullptr && "MUST SET UP THE PARAMETERS FOR LUMINOSITY CALCULATION.");
-    double bet_x1 = ptrs.luminosity_ptr->bet_x1;
-    double bet_y1 = ptrs.luminosity_ptr->bet_y1;
-    double bet_x2 = ptrs.luminosity_ptr->bet_x2;
-    double bet_y2 = ptrs.luminosity_ptr->bet_y2;
-    assert(bet_x1>0 && bet_y1>0 && bet_x2>0 && bet_y2 && "WRONG VALUE FOR LUMINOSITY: BETA FUNCTIONS SHOULD BE POSITIVE.");
-    Luminosity lum(bet_x1, bet_y1, bet_x2, bet_y2);
-
+    Luminosity lum;
     lum.set_use_ion_emit(ptrs.luminosity_ptr->use_ion_emittance);
     if(ptrs.luminosity_ptr->use_ion_emittance) {
         assert(ptrs.ion_beam.get()!=nullptr && "CREATE THE ION BEAM IF IT IS USED IN THE LUMINOSITY CALCULATION.");
         double geo_emit_x = ptrs.ion_beam->emit_x();
         double geo_emit_y = ptrs.ion_beam->emit_y();
-        lum.set_geo_emit_1(geo_emit_x, geo_emit_y);
+        double bet_x = ptrs.luminosity_ptr->bet_x1;
+        double bet_y = ptrs.luminosity_ptr->bet_y1;
+        assert(bet_x>0 && bet_y>0 &&  "WRONG VALUE FOR LUMINOSITY: BETA FUNCTIONS OF BEAM 1 SHOULD BE POSITIVE.");
+        lum.set_bet(bet_x, bet_y, 1);
+        lum.set_geo_emit(geo_emit_x, geo_emit_y, 1);
     }
     else {
         double sigma_x = ptrs.luminosity_ptr->sigma_x1;
         double sigma_y = ptrs.luminosity_ptr->sigma_y1;
+        double bet_x = ptrs.luminosity_ptr->bet_x1;
+        double bet_y = ptrs.luminosity_ptr->bet_y1;
         double geo_emit_x = ptrs.luminosity_ptr->geo_emit_x1;
         double geo_emit_y = ptrs.luminosity_ptr->geo_emit_y1;
-        assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0)  &&
-               "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE OF BEAM 1 SHOULD BE POSITIVE.");
+        assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0 && bet_x>0 && bet_y>0)  &&
+               "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE (w. BETA FUNCTIONS) OF BEAM 1 SHOULD BE POSITIVE.");
         if(sigma_x>0 && sigma_y>0) {
-            lum.set_beam_size_1(sigma_x, sigma_y);
+            lum.set_beam_size(sigma_x, sigma_y, 1);
         }
         else {
-            lum.set_geo_emit_1(geo_emit_x, geo_emit_y);
+            lum.set_bet(bet_x, bet_y, 1);
+            lum.set_geo_emit(geo_emit_x, geo_emit_y, 1);
         }
 
     }
-
+    double bet_x = ptrs.luminosity_ptr->bet_x2;
+    double bet_y = ptrs.luminosity_ptr->bet_y2;
     double sigma_x = ptrs.luminosity_ptr->sigma_x2;
     double sigma_y = ptrs.luminosity_ptr->sigma_y2;
     double geo_emit_x = ptrs.luminosity_ptr->geo_emit_x2;
     double geo_emit_y = ptrs.luminosity_ptr->geo_emit_y2;
-    assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0) &&
-           "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE OF BEAM 2 SHOULD BE POSITIVE.");
+    assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0 && bet_x>0 && bet_y>0) &&
+           "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE (w. BETA FUNCTIONS) OF BEAM 2 SHOULD BE POSITIVE.");
     if(sigma_x>0 && sigma_y>0) {
-        lum.set_beam_size_2(sigma_x, sigma_y);
+        lum.set_beam_size(sigma_x, sigma_y, 2);
     }
     else {
-        lum.set_geo_emit_2(geo_emit_x, geo_emit_y);
+        lum.set_bet(bet_x, bet_y, 2);
+        lum.set_geo_emit(geo_emit_x, geo_emit_y, 2);
     }
     lum.set_distance(ptrs.luminosity_ptr->dx, ptrs.luminosity_ptr->dy);
     double np_1 = ptrs.luminosity_ptr->np_1;
     double np_2 = ptrs.luminosity_ptr->np_2;
     assert(np_1>0 && np_2>0 && "WRONG VALUE FOR LUMINOSITY: PARTICLE NUMBERS SHOULD BE POSTIVE.");
-    lum.set_particle_number(np_1, np_2);
+    lum.set_particle_number(np_1, 1);
+    lum.set_particle_number(np_2, 2);
     double f = ptrs.luminosity_ptr->freq;
     assert(f>0 && "WRONG VALUE FOR LUMINOSITY: COLLISION FREQUENCY SHOULD BE POSITIVE.");
     lum.set_freq(f);
 
     std::cout<<std::scientific;
     std::cout << std::setprecision(3);
-    std::cout<<"Luminosity(1/s*1/m^2) :"<<lum.luminosity()<<std::endl;
+    std::cout<<"Luminosity(1/s*1/cm^2) :"<<lum.luminosity()*10000<<std::endl;
 }
 
 void run_simulation(Set_ptrs &ptrs) {
@@ -675,6 +679,7 @@ void run_simulation(Set_ptrs &ptrs) {
     bool ibs = ptrs.dynamic_ptr->ibs;
     bool ecool = ptrs.dynamic_ptr->ecool;
     bool fixed_bunch_length = ptrs.dynamic_ptr->fixed_bunch_length;
+
     if(fixed_bunch_length) {
         assert(ptrs.dynamic_ptr->model==DynamicModel::RMS&&"ERROR: THE PARAMETER FIXED_BUNCH_LENGTH WORKS ONLY FOR RMS MODEL");
         assert(ptrs.ring->rf.gamma_tr>0&&"ERROR: DEFINE THE TRANSITION GAMMA OF THE RING WHEN THE PARAMETER FIXED_BUNCH_LENGTH IS CHOSEN");
@@ -712,51 +717,60 @@ void run_simulation(Set_ptrs &ptrs) {
     if (ptrs.dynamic_ptr->calc_luminosity) dynamic_paras->set_calc_lum(true);
     else dynamic_paras->set_calc_lum(false);
 
-    double bet_x1 = ptrs.luminosity_ptr->bet_x1;
-    double bet_y1 = ptrs.luminosity_ptr->bet_y1;
-    double bet_x2 = ptrs.luminosity_ptr->bet_x2;
-    double bet_y2 = ptrs.luminosity_ptr->bet_y2;
-    assert(bet_x1>0 && bet_y1>0 && bet_x2>0 && bet_y2 && "WRONG VALUE FOR LUMINOSITY: BETA FUNCTIONS SHOULD BE POSITIVE.");
-    luminosity_paras = new Luminosity(bet_x1, bet_y1, bet_x2, bet_y2);
-    luminosity_paras->set_use_ion_emit(ptrs.luminosity_ptr->use_ion_emittance);
-    if(!ptrs.luminosity_ptr->use_ion_emittance) {
-        double sigma_x = ptrs.luminosity_ptr->sigma_x1;
-        double sigma_y = ptrs.luminosity_ptr->sigma_y1;
-        double geo_emit_x = ptrs.luminosity_ptr->geo_emit_x1;
-        double geo_emit_y = ptrs.luminosity_ptr->geo_emit_y1;
-        assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0)  &&
-               "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE OF BEAM 1 SHOULD BE POSITIVE.");
-        if(sigma_x>0 && sigma_y>0) {
-            luminosity_paras->set_beam_size_1(sigma_x, sigma_y);
+    if (ptrs.dynamic_ptr->calc_luminosity) {
+        assert(ptrs.luminosity_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR LUMINOSITY CALCULATION!");
+        luminosity_paras = new Luminosity();
+        luminosity_paras->set_use_ion_emit(ptrs.luminosity_ptr->use_ion_emittance);
+        if(ptrs.luminosity_ptr->use_ion_emittance) {
+            double bet_x = ptrs.luminosity_ptr->bet_x1;
+            double bet_y = ptrs.luminosity_ptr->bet_y1;
+            assert(bet_x>0 && bet_y>0 && "WRONG VALUE FOR LUMINOSITY: BETA FUNCTIONS OF BEAM 1 SHOULD BE POSITIVE.");
+            luminosity_paras->set_bet(bet_x, bet_y, 1);
         }
         else {
-            luminosity_paras->set_geo_emit_1(geo_emit_x, geo_emit_y);
+            double sigma_x = ptrs.luminosity_ptr->sigma_x1;
+            double sigma_y = ptrs.luminosity_ptr->sigma_y1;
+            double geo_emit_x = ptrs.luminosity_ptr->geo_emit_x1;
+            double geo_emit_y = ptrs.luminosity_ptr->geo_emit_y1;
+            double bet_x = ptrs.luminosity_ptr->bet_x1;
+            double bet_y = ptrs.luminosity_ptr->bet_y1;
+            assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0 && bet_x>0 && bet_y>0)
+                   && "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE (w. BETA FUNCTIONS) OF BEAM 1 SHOULD BE POSITIVE.");
+            if(sigma_x>0 && sigma_y>0) {
+                luminosity_paras->set_beam_size(sigma_x, sigma_y, 1);
+            }
+            else {
+                luminosity_paras->set_bet(bet_x, bet_y, 1);
+                luminosity_paras->set_geo_emit(geo_emit_x, geo_emit_y, 1);
+            }
+        }
+        double sigma_x = ptrs.luminosity_ptr->sigma_x2;
+        double sigma_y = ptrs.luminosity_ptr->sigma_y2;
+        double geo_emit_x = ptrs.luminosity_ptr->geo_emit_x2;
+        double geo_emit_y = ptrs.luminosity_ptr->geo_emit_y2;
+        double bet_x = ptrs.luminosity_ptr->bet_x2;
+        double bet_y = ptrs.luminosity_ptr->bet_y2;
+        assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0 && bet_x>0 && bet_y>0) &&
+               "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE (w. BETA FUNCTIONS) OF BEAM 2 SHOULD BE POSITIVE.");
+        if(sigma_x>0 && sigma_y>0) {
+            luminosity_paras->set_beam_size(sigma_x, sigma_y, 2);
+        }
+        else {
+            luminosity_paras->set_bet(bet_x, bet_y, 2);
+            luminosity_paras->set_geo_emit(geo_emit_x, geo_emit_y, 2);
         }
 
-    }
-    double sigma_x = ptrs.luminosity_ptr->sigma_x2;
-    double sigma_y = ptrs.luminosity_ptr->sigma_y2;
-    double geo_emit_x = ptrs.luminosity_ptr->geo_emit_x2;
-    double geo_emit_y = ptrs.luminosity_ptr->geo_emit_y2;
-    assert((sigma_x>0 && sigma_y>0) || (geo_emit_x>0 && geo_emit_y>0) &&
-           "WRONG VALUE FOR LUMINOSITY: SIZE OR EMITTANCE OF BEAM 2 SHOULD BE POSITIVE.");
-    if(sigma_x>0 && sigma_y>0) {
-        luminosity_paras->set_beam_size_2(sigma_x, sigma_y);
-    }
-    else {
-        luminosity_paras->set_geo_emit_2(geo_emit_x, geo_emit_y);
-    }
-    luminosity_paras->set_distance(ptrs.luminosity_ptr->dx, ptrs.luminosity_ptr->dy);
-    double np_1 = ptrs.luminosity_ptr->np_1;
-    double np_2 = ptrs.luminosity_ptr->np_2;
-    assert(np_1>0 && np_2>0 && "WRONG VALUE FOR LUMINOSITY: PARTICLE NUMBERS SHOULD BE POSTIVE.");
-    luminosity_paras->set_particle_number(np_1, np_2);
-    double f = ptrs.luminosity_ptr->freq;
-    assert(f>0 && "WRONG VALUE FOR LUMINOSITY: COLLISION FREQUENCY SHOULD BE POSITIVE.");
-    luminosity_paras->set_freq(f);
+        luminosity_paras->set_distance(ptrs.luminosity_ptr->dx, ptrs.luminosity_ptr->dy);
+        double np_1 = ptrs.luminosity_ptr->np_1;
+        double np_2 = ptrs.luminosity_ptr->np_2;
+        assert(np_1>0 && np_2>0 && "WRONG VALUE FOR LUMINOSITY: PARTICLE NUMBERS SHOULD BE POSTIVE.");
+        luminosity_paras->set_particle_number(np_1, 1);
+        luminosity_paras->set_particle_number(np_1, 2);
+        double f = ptrs.luminosity_ptr->freq;
+        assert(f>0 && "WRONG VALUE FOR LUMINOSITY: COLLISION FREQUENCY SHOULD BE POSITIVE.");
+        luminosity_paras->set_freq(f);
 
-
-
+    }
 
     if(dynamic_paras->model()==DynamicModel::PARTICLE && !ecool)
         assert(n_sample>0 && "SET N_SAMPLE FOR SIMULATION!");
@@ -1243,7 +1257,7 @@ void set_simulation(string &str, Set_dynamic *dynamic_args) {
 }
 
 void set_luminosity(string &str, Set_luminosity *lum_args) {
-    assert(lum_args!=nullptr && "SECTION_ECOOL MUST BE CLAIMED!");
+    assert(lum_args!=nullptr && "SECTION_LUMINOSITY MUST BE CLAIMED!");
     string::size_type idx = str.find("=");
     assert(idx!=string::npos && "WRONG COMMAND IN SECTION_LUMINOSITY!");
     string var = str.substr(0, idx);
