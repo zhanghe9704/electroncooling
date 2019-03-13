@@ -172,7 +172,19 @@ section_run
 	calculate_luminosity
 ```
 
+If one wants to calculate the instant luminosity during the simulation, one should set the calc_luminosity parameter in section_simulation to be true. 
 
+```
+section_luminosity
+	...
+	
+section_simulation
+	calc_luminosity =  true
+	...
+	
+section_run
+	run_simulation
+```
 
 
 
