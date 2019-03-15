@@ -459,6 +459,7 @@ void calc_kernels(Lattice& lattice, Beam& beam) {
 double coef_bm(Lattice &lattice, Beam &beam) {
     double lambda = 1;
     if(beam.bunched()) lambda /= 2*sqrt(k_pi)*beam.sigma_s();
+    else lambda /= lattice.circ();
 
     double beta3 = beam.beta()*beam.beta()*beam.beta();
     double gamma5 = beam.gamma()*beam.gamma()*beam.gamma()*beam.gamma()*beam.gamma();
