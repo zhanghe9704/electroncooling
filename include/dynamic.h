@@ -35,7 +35,7 @@ class Luminosity {
 public:
     void set_distance(double dx, double dy){dx_=dx; dy_=dy;}
     void set_freq(double f){freq_=f;}
-    bool set_use_ion_emit(bool b){use_ion_emittance_ = b;}
+    bool set_use_ion_emit(bool b){use_ion_emittance_ = b; return b;}
     void set_geo_emit(double emit_x, double emit_y, int i);
     void set_beam_size(double sigma_x, double sigma_y, int i);
     void set_particle_number(double n, int i);
@@ -84,7 +84,7 @@ class DynamicParas{
     int set_fixed_bunch_length(bool b){fixed_bunch_length_ = b; return 0;}
     int set_reset_time(bool b){reset_time_ = b; return 0;}
     int set_overwrite(bool b) {overwrite_ = b; return 0;}
-    int set_calc_lum(bool b) {calc_luminosity_ = b;}
+    int set_calc_lum(bool b) {calc_luminosity_ = b; return 0;}
     string output_file(){return filename_;}
     DynamicParas(double time, int n_step):time_(time),n_step_(n_step){dt_ = time_/n_step_;}
     DynamicParas(double time, int n_step, bool ibs, bool ecool):
