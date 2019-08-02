@@ -14,8 +14,10 @@ Lattice::Lattice(std::string filename) {
     infile.open(filename.c_str());
     if(!infile) std::cout<<"Error: failed to load the lattice file!"<<std::endl;
     std::string line;
-    std::map<std::string, int> keywords = {{"BETX",0}, {"ALFX",0}, {"MUX",0}, {"DX",0}, {"DPX",0}, {"BETY",0}, {"ALFY",0},
-                                            {"MUY",0}, {"DY",0}, {"DPY",0}, {"S",0}};
+    std::map<std::string, int> keywords = {{"BETX",0}, {"ALFX",0}, {"DX",0}, {"DPX",0}, {"BETY",0}, {"ALFY",0},
+                                           {"DY",0}, {"DPY",0}, {"S",0}};
+//    std::map<std::string, int> keywords = {{"BETX",0}, {"ALFX",0}, {"MUX",0}, {"DX",0}, {"DPX",0}, {"BETY",0}, {"ALFY",0},
+//                                            {"MUY",0}, {"DY",0}, {"DPY",0}, {"S",0}};
 
     std::map<int, std::string> sorted_key;
     bool read = false;
@@ -60,7 +62,8 @@ Lattice::Lattice(std::string filename) {
         }
 
         if(read){
-            double s, betx, bety, alfx,alfy, mux, muy, dx, dy, dpx, dpy;
+            double s, betx, bety, alfx,alfy, dx, dy, dpx, dpy;
+//            double s, betx, bety, alfx,alfy, mux, muy, dx, dy, dpx, dpy;
             int cnt_position = 0;
             for (auto iter=sorted_key.begin(); iter!=sorted_key.end(); ++iter) {
                 while (cnt_position<iter->first) {
@@ -76,12 +79,12 @@ Lattice::Lattice(std::string filename) {
                 }
                 if(cnt_position == keywords["BETX"]) {betx = num;}
                 else if(cnt_position == keywords["ALFX"]) {alfx = num;}
-                else if(cnt_position == keywords["MUX"]) {mux = num;}
+//                else if(cnt_position == keywords["MUX"]) {mux = num;}
                 else if(cnt_position == keywords["DX"]) {dx = num;}
                 else if(cnt_position == keywords["DPX"]) {dpx = num;}
                 else if(cnt_position == keywords["BETY"]) {bety = num;}
                 else if(cnt_position == keywords["ALFY"]) {alfy = num;}
-                else if(cnt_position == keywords["MUY"]) {muy = num;}
+//                else if(cnt_position == keywords["MUY"]) {muy = num;}
                 else if(cnt_position == keywords["DY"]) {dy = num;}
                 else if(cnt_position == keywords["DPY"]) {dpy = num;}
                 else if(cnt_position == keywords["S"]) {s = num;}
@@ -91,16 +94,19 @@ Lattice::Lattice(std::string filename) {
             if (cnt>0 && s_.back()==s) continue;
             betx_.push_back(betx);
             alfx_.push_back(alfx);
-            mux_.push_back(mux);
+//            mux_.push_back(mux);
             dx_.push_back(dx);
             dpx_.push_back(dpx);
             bety_.push_back(bety);
             alfy_.push_back(alfy);
-            muy_.push_back(muy);
+//            muy_.push_back(muy);
             dy_.push_back(dy);
             dpy_.push_back(dpy);
             s_.push_back(s);
             ++cnt;
+
+//            std::cout<<cnt<<' '<<s<<' '<<betx<<' '<<alfx<<' '<<dx<<' '<<dpx<<' '
+//                    <<bety<<' '<<alfy<<' '<<dy<<' '<<dpy<<std::endl;
         }
     }
     n_element_ = cnt;
