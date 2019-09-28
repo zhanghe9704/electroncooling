@@ -35,7 +35,7 @@ class Luminosity {
 public:
     void set_distance(double dx, double dy){dx_=dx; dy_=dy;}
     void set_freq(double f){freq_=f;}
-    bool set_use_ion_emit(bool b){use_ion_emittance_ = b;}
+    void set_use_ion_emit(bool b){use_ion_emittance_ = b;}
     void set_geo_emit(double emit_x, double emit_y, int i);
     void set_beam_size(double sigma_x, double sigma_y, int i);
     void set_particle_number(double n, int i);
@@ -76,15 +76,15 @@ class DynamicParas{
     int n_sample(){return n_sample_;}
 //    int n_sample() {assert(model_==DynamicModel::MODEL_BEAM); return n_sample_;};
     DynamicModel model(){return model_;}
-    int set_model(DynamicModel model){model_ = model; return 0;}
-    int set_ion_save(int x){ion_save_intvl_ = x; return 0;}
-    int set_output_file(string filename){filename_ = filename; return 0;}
-    int set_output_intvl(int x){output_intvl_ = x; return 0;}
-    int set_n_sample(int x){n_sample_ = x; return 0;}
-    int set_fixed_bunch_length(bool b){fixed_bunch_length_ = b; return 0;}
-    int set_reset_time(bool b){reset_time_ = b; return 0;}
-    int set_overwrite(bool b) {overwrite_ = b; return 0;}
-    int set_calc_lum(bool b) {calc_luminosity_ = b;}
+    void set_model(DynamicModel model){model_ = model; }
+    void set_ion_save(int x){ion_save_intvl_ = x; }
+    void set_output_file(string filename){filename_ = filename; }
+    void set_output_intvl(int x){output_intvl_ = x; }
+    void set_n_sample(int x){n_sample_ = x; }
+    void set_fixed_bunch_length(bool b){fixed_bunch_length_ = b; }
+    void set_reset_time(bool b){reset_time_ = b; }
+    void set_overwrite(bool b) {overwrite_ = b; }
+    void set_calc_lum(bool b) {calc_luminosity_ = b; }
     string output_file(){return filename_;}
     DynamicParas(double time, int n_step):time_(time),n_step_(n_step){dt_ = time_/n_step_;}
     DynamicParas(double time, int n_step, bool ibs, bool ecool):

@@ -804,7 +804,7 @@ void run_simulation(Set_ptrs &ptrs) {
         int nz = ptrs.ibs_ptr->nz;
         double log_c = ptrs.ibs_ptr->log_c;
         double k = ptrs.ibs_ptr->coupling;
-        double rx, ry, rz;
+//        double rx, ry, rz;
         IBSModel model = ptrs.ibs_ptr->model;
 
         if(model==IBSModel::MARTINI){

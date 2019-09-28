@@ -828,7 +828,8 @@ void density(vector<Box> &tree, std::vector<unsigned long int>& list_e, std::vec
             int n_e = box.n_ptcl;
             double d = n_e/(box_size*box_size*box_size); //density
             unsigned long int idx = box.first_ptcl;
-            double vx_avg, vy_avg, vz_avg;
+//            double vx_avg, vy_avg, vz_avg;
+            double vz_avg;
             vz_avg = 0;
             while(list_e.at(idx)!=ne) {
                 vz_avg += vz.at(idx);
@@ -837,8 +838,7 @@ void density(vector<Box> &tree, std::vector<unsigned long int>& list_e, std::vec
             vz_avg /= n_e;
 
             idx = box.first_ptcl;
-            double vx_rms, vy_rms, vz_rms;
-            vz_rms = 0;
+            double vx_rms = 0, vy_rms = 0, vz_rms = 0;
             while(list_e.at(idx)!=ne) {
                 double dvz = vz.at(idx) - vz_avg;
                 vx_rms += vx.at(idx)*vx.at(idx);

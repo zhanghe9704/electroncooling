@@ -36,13 +36,13 @@ public:
     void set_nz(int nz){assert(nz>0&&"Wrong value of nz in IBS parameters!"); nz_ = nz;}
     IBSModel model() {return model_;}
 
-    IBSParas(int nu, int nv):nu_(nu),nv_(nv){};
-    IBSParas(int nu, int nv, double log_c):nu_(nu),nv_(nv),log_c_(log_c){};
-    IBSParas(int nu, int nv, int nz):nu_(nu),nv_(nv),nz_(nz){use_log_c_ = false;}
-    IBSParas(IBSModel model):model_(model){};
+    IBSParas(int nu, int nv):nu_(nu),nv_(nv) { }
+    IBSParas(int nu, int nv, double log_c):nu_(nu),nv_(nv),log_c_(log_c) { }
+    IBSParas(int nu, int nv, int nz):nu_(nu),nv_(nv),nz_(nz) { use_log_c_ = false; }
+    IBSParas(IBSModel model):model_(model) { }
 };
 
-int ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs);
+void ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs);
 
 
 #endif

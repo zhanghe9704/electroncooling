@@ -12,7 +12,7 @@ extern std::unique_ptr<double []> x_bet, xp_bet, y_bet, yp_bet, ds, dp_p, x, y, 
 extern std::unique_ptr<double []> force_x, force_y, force_z;
 
 std::unique_ptr<double []> rdn;
-int n_sample = 0;
+unsigned int n_sample = 0;
 double p0 = 0;
 
 void initialize_particle_model(Beam &ion) {
@@ -64,16 +64,16 @@ void particle_model_ibs_scratches() {
     srand(time(NULL));
 }
 
-void ibs_kick(int n_sample, double rate, double twiss, double dt, double emit, double* p) {
+void ibs_kick(unsigned int n_sample, double rate, double twiss, double dt, double emit, double* p) {
 
     if (rate>0) {
         double theta = sqrt(2*rate*dt*emit/twiss);
         gaussian_random(n_sample, rdn.get(), 1, 0);
-        for(int i=0; i<n_sample; ++i) p[i] += theta*rdn[i];
+        for(unsigned int i=0; i<n_sample; ++i) p[i] += theta*rdn[i];
     }
     else {
         double k = exp(rate*dt);
-        for(int i=0; i<n_sample; ++i) p[i] *= k;
+        for(unsigned int i=0; i<n_sample; ++i) p[i] *= k;
     }
 }
 

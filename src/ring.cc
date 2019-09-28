@@ -40,7 +40,7 @@ Lattice::Lattice(std::string filename) {
             start_reading = 0;
             iss >> name;
 //            iss >> keyword;
-            int cnt_keywords = 0;
+            unsigned int cnt_keywords = 0;
             int cnt_position = 0;
             while(cnt_keywords!=keywords.size()) {
                 iss >> keyword;

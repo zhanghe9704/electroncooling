@@ -137,7 +137,7 @@ class UniformHollowBunch: public EBeamShape {
     double length(){return length_;}
     bool bunched(){return true;}
     UniformHollowBunch(double current, double in_radius, double out_radius, double length, double neutralisation=2):current_(current),
-        in_radius_(in_radius), out_radius_(out_radius),length_(length), neutralisation_(neutralisation){};
+        in_radius_(in_radius), out_radius_(out_radius), neutralisation_(neutralisation), length_(length) {}
 };
 
 class GaussianBunch: public EBeamShape{
@@ -267,7 +267,7 @@ public:
     double length(){return length_;}
     bool bunched(){return true;}
     bool corr(){return v_x_corr_;}
-    bool set_corr(bool corr = true){v_x_corr_ = corr;}
+    void set_corr(bool corr = true){v_x_corr_ = corr;}
     void set_buffer(int n) {buffer_ = n;}
     void set_s(int s) {s_ = s;}
     void set_binary(bool b) {binary_ = b;}

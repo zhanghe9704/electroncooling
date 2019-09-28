@@ -15,7 +15,7 @@ extern std::unique_ptr<double []> x_bet, xp_bet, y_bet, yp_bet, ds, dp_p, x, y, 
 extern std::unique_ptr<double []> force_x, force_y, force_z;
 
 extern std::unique_ptr<double []> rdn;
-extern int n_sample;
+extern unsigned int n_sample;
 extern double p0;
 
 void initialize_turn_by_turn_model(Beam &ion, Ring &ring) {
@@ -57,19 +57,19 @@ void turn_by_turn_move_particles(Beam &ion, Ring &ring, Cooler &cooler) {
         yp_bet[i] = yp[i] - dpy*dp_p[i];
     }
     //one turn phase advance
-    double alf_x = dynamic_paras->twiss_ref.alf_x;
-    double alf_y = dynamic_paras->twiss_ref.alf_y;
-    double beta_x = dynamic_paras->twiss_ref.bet_x;
-    double beta_y = dynamic_paras->twiss_ref.bet_y;
+//    double alf_x = dynamic_paras->twiss_ref.alf_x;
+//    double alf_y = dynamic_paras->twiss_ref.alf_y;
+//    double beta_x = dynamic_paras->twiss_ref.bet_x;
+//    double beta_y = dynamic_paras->twiss_ref.bet_y;
 
-    double gamma_x = (1+alf_x*alf_x)/beta_x;
-    double gamma_y = (1+alf_y*alf_y)/beta_y;
+//    double gamma_x = (1+alf_x*alf_x)/beta_x;
+//    double gamma_y = (1+alf_y*alf_y)/beta_y;
 
     //Transverse motion by tunes
     assert(ring.tunes.qx>0&&ring.tunes.qy>0&&"Transverse tunes are needed for Turn_by_turn model");
     double Qx = ring.tunes.qx;
     double Qy = ring.tunes.qy;
-    for (auto i=0; i<n_sample; ++i) {
+    for (unsigned int i=0; i<n_sample; ++i) {
         double phi = 2*k_pi*Qx;
         double x_bet_0 = x_bet[i];
         double xp_bet_0 = xp_bet[i];
@@ -129,7 +129,7 @@ void turn_by_turn_move_particles(Beam &ion, Ring &ring, Cooler &cooler) {
             double phi = 2*k_pi*ring.tunes.qs;
             double inv_beta_s = 1/ring.beta_s();
             double beta_s = ring.beta_s();
-            for (auto i=0; i<n_sample; ++i) {
+            for (unsigned int i=0; i<n_sample; ++i) {
                 double dp_p_0 = dp_p[i];
                 double ds_0 = ds[i];
                 dp_p[i] = cos(phi)*dp_p_0 - sin(phi)*ds_0*inv_beta_s;

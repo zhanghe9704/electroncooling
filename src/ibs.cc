@@ -219,27 +219,38 @@ int f(int n_element, int nu, int nv, double log_c){
     memset(f1.get(), 0, n_element*sizeof(double));
     memset(f2.get(), 0, n_element*sizeof(double));
     memset(f3.get(), 0, n_element*sizeof(double));
+    
+    double duvTimes2Logc = 2*k_pi*k_pi/(nu*nv) * 2 * log_c;
+
+
+//    #pragma omp parallel for
     for(int ie=0; ie<n_element; ++ie){
-        int cnt = 0;
-//        f1[ie] = 0;
-//        f2[ie] = 0;
-//        f3[ie] = 0;
-        double duv = 2*k_pi*k_pi/(nu*nv);
+        const double tmp_a_f = a_f[ie];
+        const double tmp_dtld_f = dtld_f[ie];
+        const double tmp_b2_f = b2_f[ie];
+        const double tmp_k1_f = k1_f[ie];
+
         for(int iu=0; iu<nu; ++iu){
+            double foo1 = 0, foo2 = 0, foo3 = 0;
+            const double tmp_sin_u = sin_u[iu];
+            const double tmp_sin_u2 = sin_u2[iu];
+            const double tmp_cos_u2 = cos_u2[iu];
             for(int iv=0; iv<nv; ++iv){
-                double tmp = a_f[ie]*sin_v[iv]-dtld_f[ie]*cos_v[iv];
+                const int cnt = iu * nv + iv;
+                double tmp = tmp_a_f * sin_v[iv] - tmp_dtld_f * cos_v[iv];
                 tmp *= tmp;
-                double d_uv = (sin_u2_cos_v2[cnt]+sin_u2[iu]*tmp+b2_f[ie]*cos_u2[iu])*k1_f[ie];
-                double int_z = 2*log_c/d_uv;
-                f1[ie] += sin_u[iu]*int_z*g1[cnt];
-                f2[ie] += sin_u[iu]*int_z*(g2_1[cnt]+g2_2[cnt]*dtld_f[ie]/a_f[ie]);
-                f3[ie] += sin_u[iu]*int_z*g3[iu];
-                ++cnt;
+                const double inv_int_z = (sin_u2_cos_v2[cnt] + tmp_sin_u2 * tmp + tmp_b2_f * tmp_cos_u2) * tmp_k1_f;
+                foo1 += g1[cnt] / inv_int_z;
+                foo2 += (g2_1[cnt] + g2_2[cnt] * tmp_dtld_f / tmp_a_f) / inv_int_z;
+                foo3 += g3[iu] / inv_int_z;
             }
+            f1[ie] += tmp_sin_u * foo1;
+            f2[ie] += tmp_sin_u * foo2;
+            f3[ie] += tmp_sin_u * foo3;
         }
-        f1[ie] *= k1_f[ie]*duv;
-        f2[ie] *= k2_f[ie]*duv;
-        f3[ie] *= k3_f[ie]*duv;
+        f1[ie] *= k1_f[ie] * duvTimes2Logc;
+        f2[ie] *= k2_f[ie] * duvTimes2Logc;
+        f3[ie] *= k3_f[ie] * duvTimes2Logc;
     }
     return 0;
 }
@@ -506,7 +517,7 @@ int ibs_bm(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double 
     return 0;
 }
 
-int ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs) {
+void ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs) {
     switch (ibs_paras.model()) {
         case IBSModel::MARTINI : {
             ibs_martini(lattice, beam, ibs_paras, rx, ry, rs);

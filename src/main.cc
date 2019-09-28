@@ -679,8 +679,8 @@ int main(int argc, char** argv) {
     }
 
     //Pause the system
-    std::cout<<std::endl<<"Press the Enter key to close the window."<<std::endl;
-    std::cin.ignore( std::numeric_limits< std::streamsize >::max( ), '\n' );
+//    std::cout<<std::endl<<"Press the Enter key to close the window."<<std::endl;
+//    std::cin.ignore( std::numeric_limits< std::streamsize >::max( ), '\n' );
 
     return 0;
 }
