@@ -2,6 +2,7 @@
 #include <chrono>
 #include <fstream>
 #include <map>
+#include <cmath>
 #include "dynamic.h"
 #include "ecooling.h"
 #include "ibs.h"
@@ -13,7 +14,7 @@
 using std::string;
 
 extern DynamicParas * dynamic_paras;
-extern IBSParas * ibs_paras;
+extern IBSSolver * ibs_solver;
 extern EcoolRateParas * ecool_paras;
 extern ForceParas * force_paras;
 extern Luminosity *luminosity_paras;
@@ -189,7 +190,7 @@ int main(int argc, char** argv) {
                 int nv = 100;
                 int nz = 40;
                 double log_c = 39.9/2;
-                ibs_paras = new IBSParas(nu, nv, log_c);
+                ibs_solver = new IBSSolver_Martini(nu, nv, nz, log_c, 0);
 
 //                //Calculate IBS rate.
 //
@@ -365,7 +366,7 @@ int main(int argc, char** argv) {
                 int nv = 100;
                 int nz = 40;
                 double log_c = 39.2/2;
-                IBSParas ibs_paras(nu, nv, nz);
+                ibs_solver = new IBSSolver_Martini(nu, nv, nz, log_c, 0);
 
 //                //Calculate IBS rate.
 //                std::chrono::steady_clock::time_point start, end;
@@ -380,13 +381,11 @@ int main(int argc, char** argv) {
 //
 //                std::cout<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
 
-                ibs_paras.set_log_c(log_c);
-                ibs_rate(lattice, p_beam, ibs_paras, rx_ibs, ry_ibs, rz_ibs);
+                ibs_solver->rate(lattice, p_beam, rx_ibs, ry_ibs, rz_ibs);
                 std::cout<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
 
-
-                ibs_paras.set_k(0.2);
-                ibs_rate(lattice, p_beam, ibs_paras, rx_ibs, ry_ibs, rz_ibs);
+                ibs_solver->set_k(0.2);
+                ibs_solver->rate(lattice, p_beam, rx_ibs, ry_ibs, rz_ibs);
                 std::cout<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
                 break;
             }
@@ -416,7 +415,7 @@ int main(int argc, char** argv) {
                 int nv = 200;
                 int nz = 40;
                 double log_c = 39.9/2;
-                ibs_paras = new IBSParas(nu, nv, log_c);
+                ibs_solver = new IBSSolver_Martini(nu, nv, nz, log_c, 0);
 
                 dynamic_paras = new DynamicParas(3600, 360, true, false);
 
@@ -455,8 +454,7 @@ int main(int argc, char** argv) {
                 int nv = 200;
                 int nz = 40;
                 double log_c = 44.8/2;
-                ibs_paras = new IBSParas(nu, nv, log_c);
-                ibs_paras->set_k(1.0);
+                ibs_solver = new IBSSolver_Martini(nu, nv, nz, log_c, 1.0);
 
                 dynamic_paras = new DynamicParas(3600, 360, true, false);
 
@@ -630,12 +628,10 @@ int main(int argc, char** argv) {
                 int nz = 40;
                 double log_c = 40.4/2;      //100 GeV, 63.3 GeV CM Energy
     //            double log_c = 39.2/2;    //100 GeV
-                ibs_paras = new IBSParas(nu, nv, log_c);
-    //            ibs_paras = new IBSParas(nu, nv, nz);
-                ibs_paras->set_k(0.4);
+                ibs_solver = new IBSSolver_Martini(nu, nv, nz, log_c, 0.4);
 
                 double rx_ibs, ry_ibs, rz_ibs;
-                ibs_rate(lattice, p_beam, *ibs_paras, rx_ibs, ry_ibs, rz_ibs);
+                ibs_solver->rate(lattice, p_beam, rx_ibs, ry_ibs, rz_ibs);
                 std::cout<<"IBS rate: [1/s] "<<rx_ibs<<' '<<ry_ibs<<' '<<rz_ibs<<std::endl;
                 std::cout<<"Total rate: [1/s] "<<rx_ibs+rate_x<<' '<<ry_ibs+rate_y<<' '<<rz_ibs+rate_s<<std::endl<<std::endl;
 

@@ -36,23 +36,23 @@ public:
     int set_sigma_s(double x){sigma_s_ = x; return 0;}
     int set_center(double cx, double cy, double cz){center_[0] = cx; center_[1] = cy; center_[2] = cz; return 0;}
     int set_center(int i, double x);
-    int charge_number(){return charge_number_;}
-    double mass(){return mass_;}
-    double kinetic_energy(){return kinetic_energy_;}
-    double beta(){return beta_;}
-    double gamma(){return gamma_;}
-    double emit_nx(){return emit_nx_;}
-    double emit_ny(){return emit_ny_;}
-    double emit_x(){return emit_x_;}
-    double emit_y(){return emit_y_;}
-    double dp_p(){return dp_p_;}
-    double energy_spread(){return energy_spread_;}
-    double sigma_s(){return sigma_s_;}
-    double r(){return r_;}
-    double particle_number(){return particle_number_;}
-    double mass_number(){return mass_number_;}
-    double mass_J(){return mass_*1e6*k_e;}
-    bool bunched(){return bunched_;}
+    int charge_number() const {return charge_number_;}
+    double mass() const {return mass_;}
+    double kinetic_energy() const {return kinetic_energy_;}
+    double beta() const {return beta_;}
+    double gamma() const {return gamma_;}
+    double emit_nx() const {return emit_nx_;}
+    double emit_ny() const {return emit_ny_;}
+    double emit_x() const {return emit_x_;}
+    double emit_y() const {return emit_y_;}
+    double dp_p() const {return dp_p_;}
+    double energy_spread() const {return energy_spread_;}
+    double sigma_s() const {return sigma_s_;}
+    double r() const {return r_;}
+    double particle_number() const {return particle_number_;}
+    double mass_number() const {return mass_number_;}
+    double mass_J() const {return mass_*1e6*k_e;}
+    bool bunched()const {return bunched_;}
     int center(double &cx, double &cy, double &cz){cx = center_[0]; cy = center_[1]; cz = center_[2]; return 0;}
     double center(int i){ if (i<3) return center_[i]; else perror("Error index for electron beam center!"); return 1.0;}
     Beam(int charge_number, double mass_number, double kinetic_energy, double emit_nx, double emit_ny, double dp_p,

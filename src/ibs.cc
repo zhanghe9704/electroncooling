@@ -1,19 +1,33 @@
 #include <fstream>
 #include <memory>
+#include <cmath>
+#include <cstring>
 #include "functions.h"
 #include "ibs.h"
+#include "ring.h"
+#include "beam.h"
 
-//Scratch variables for IBS calculation (Martini model)
+IBSSolver::IBSSolver(int nu, int nv, int nz, double log_c, double k)
+    : nu_(nu), nv_(nv), nz_(nz), log_c_(log_c), k_(k)
+{
+}
 
-std::unique_ptr<double []> sigma_xbet, sigma_xbetp, sigma_y, sigma_yp;
-std::unique_ptr<double []> a_f, b2_f, c2_f, d2_f, dtld_f, k1_f, k2_f, k3_f;
+void IBSSolver::ibs_coupling(double &rx, double &ry, double k, double emit_x, double emit_y)
+{
+    double rxc = 0.5*(rx*(2-k)+ry*k*emit_y/emit_x);
+    double ryc = 0.5*(ry*(2-k)+rx*k*emit_x/emit_y);
+    rx = rxc;
+    ry = ryc;
+}
 
-std::unique_ptr<double []> sin_u, sin_u2, cos_u2, sin_v, cos_v, sin_u2_cos_v2;
-std::unique_ptr<double []> g1, g2_1, g2_2, g3;
-std::unique_ptr<double []> f1, f2, f3;
+
+IBSSolver_Martini::IBSSolver_Martini(int nu, int nv, int nz, double log_c, double k)
+    : IBSSolver(nu, nv, nz, log_c, k)
+{
+}
 
 //Set ptrs for bunch_size
-void set_bunch_size(int n) {
+void IBSSolver_Martini::set_bunch_size(int n) {
     if(sigma_xbet.get()==nullptr) {
         sigma_xbet.reset(new double[n]);
         memset(sigma_xbet.get(), 0, n*sizeof(double));
@@ -34,7 +48,7 @@ void set_bunch_size(int n) {
 }
 
 //Calculate sigma_xbet, sigma_xbetp, sigma_y, sigma_yp
-int bunch_size(Lattice &lattice, Beam &beam) {
+void IBSSolver_Martini::bunch_size(const Lattice &lattice, const Beam &beam) {
     double emit_x = beam.emit_x();
     double emit_y = beam.emit_y();
     set_bunch_size(lattice.n_element());
@@ -48,11 +62,10 @@ int bunch_size(Lattice &lattice, Beam &beam) {
         alf2 *= alf2;
         sigma_yp[i] = sqrt((1+alf2)*emit_y/lattice.bety(i));
     }
-    return 0;
 }
 
 //Set the ptrs for abcdk
-void set_abcdk(int n) {
+void IBSSolver_Martini::set_abcdk(int n) {
     if(a_f.get()==nullptr) {
         a_f.reset(new double[n]);
         memset(a_f.get(), 0, n*sizeof(double));
@@ -90,7 +103,8 @@ void set_abcdk(int n) {
 
 //Calculate a, b, c, d and dtld
 //Call bunch_size() before calling this one
-int abcdk(Lattice &lattice, Beam &beam){
+void IBSSolver_Martini::abcdk(const Lattice &lattice, const Beam &beam)
+{
     double d_tld, q, sigma_x, sigma_tmp;
     int n = lattice.n_element();
 
@@ -125,10 +139,10 @@ int abcdk(Lattice &lattice, Beam &beam){
         k2_f[i] = a_f[i]*a_f[i]*k1_f[i];
         k3_f[i] = b2_f[i]*k1_f[i];
     }
-    return 0;
 }
 
-int coef_f(int nu, int nv){
+void IBSSolver_Martini::coef_f(int nu, int nv)
+{
     if(sin_u.get()==nullptr) sin_u.reset(new double[nu]);
     if(sin_u2.get()==nullptr) sin_u2.reset(new double[nu]);
     if(cos_u2.get()==nullptr) cos_u2.reset(new double[nu]);
@@ -169,10 +183,10 @@ int coef_f(int nu, int nv){
             ++cnt;
         }
     }
-    return 0;
 }
 
-int f(int n_element, int nu, int nv, int nz){
+void IBSSolver_Martini::f(int n_element)
+{
     if(f1.get()==nullptr) f1.reset(new double[n_element]);
     if(f2.get()==nullptr) f2.reset(new double[n_element]);
     if(f3.get()==nullptr) f3.reset(new double[n_element]);
@@ -180,47 +194,8 @@ int f(int n_element, int nu, int nv, int nz){
     memset(f2.get(), 0, n_element*sizeof(double));
     memset(f3.get(), 0, n_element*sizeof(double));
 
-    for(int ie=0; ie<n_element; ++ie){
-        int cnt = 0;
-//        f1[ie] = 0;
-//        f2[ie] = 0;
-//        f3[ie] = 0;
-        double duv = 2*k_pi*k_pi/(nv*nu);
-        for(int iu=0; iu<nu; ++iu){
-            for(int iv=0; iv<nv; ++iv){
-                double tmp = a_f[ie]*sin_v[iv]-dtld_f[ie]*cos_v[iv];
-                tmp *= tmp;
-                double d_uv = (sin_u2_cos_v2[cnt]+sin_u2[iu]*tmp+b2_f[ie]*cos_u2[iu])*k1_f[ie];
-                double int_z = 0;
-                double dz = 20/(d_uv*nz);
-                double z = -0.5*dz;
-                for(int iz=0; iz<nz; ++iz){
-                    z += dz;
-                    int_z += exp(-1*d_uv*z)*log(1+z*z)*dz;
-                }
-                f1[ie] += sin_u[iu]*int_z*g1[cnt];
-                f2[ie] += sin_u[iu]*int_z*(g2_1[cnt]+g2_2[cnt]*dtld_f[ie]/a_f[ie]);
-                f3[ie] += sin_u[iu]*int_z*g3[iu];
-                ++cnt;
-            }
-        }
-        f1[ie] *= k1_f[ie]*duv;
-        f2[ie] *= k2_f[ie]*duv;
-        f3[ie] *= k3_f[ie]*duv;
-    }
-    return 0;
-}
-
-int f(int n_element, int nu, int nv, double log_c){
-//    if(f1.get()==nullptr) std::cout<<"create f1"<<std::endl;
-    if(f1.get()==nullptr) f1.reset(new double[n_element]);
-    if(f2.get()==nullptr) f2.reset(new double[n_element]);
-    if(f3.get()==nullptr) f3.reset(new double[n_element]);
-    memset(f1.get(), 0, n_element*sizeof(double));
-    memset(f2.get(), 0, n_element*sizeof(double));
-    memset(f3.get(), 0, n_element*sizeof(double));
-    
-    double duvTimes2Logc = 2*k_pi*k_pi/(nu*nv) * 2 * log_c;
+if (log_c_ > 0) {
+    double duvTimes2Logc = 2*k_pi*k_pi/(nu_*nv_) * 2 * log_c_;
 
 
 //    #pragma omp parallel for
@@ -230,13 +205,13 @@ int f(int n_element, int nu, int nv, double log_c){
         const double tmp_b2_f = b2_f[ie];
         const double tmp_k1_f = k1_f[ie];
 
-        for(int iu=0; iu<nu; ++iu){
+        for(int iu=0; iu<nu_; ++iu){
             double foo1 = 0, foo2 = 0, foo3 = 0;
             const double tmp_sin_u = sin_u[iu];
             const double tmp_sin_u2 = sin_u2[iu];
             const double tmp_cos_u2 = cos_u2[iu];
-            for(int iv=0; iv<nv; ++iv){
-                const int cnt = iu * nv + iv;
+            for(int iv=0; iv<nv_; ++iv){
+                const int cnt = iu * nv_ + iv;
                 double tmp = tmp_a_f * sin_v[iv] - tmp_dtld_f * cos_v[iv];
                 tmp *= tmp;
                 const double inv_int_z = (sin_u2_cos_v2[cnt] + tmp_sin_u2 * tmp + tmp_b2_f * tmp_cos_u2) * tmp_k1_f;
@@ -252,10 +227,37 @@ int f(int n_element, int nu, int nv, double log_c){
         f2[ie] *= k2_f[ie] * duvTimes2Logc;
         f3[ie] *= k3_f[ie] * duvTimes2Logc;
     }
-    return 0;
+} else {
+    for(int ie=0; ie<n_element; ++ie){
+        int cnt = 0;
+        double duv = 2*k_pi*k_pi/(nv_*nu_);
+        for(int iu=0; iu<nu_; ++iu){
+            for(int iv=0; iv<nv_; ++iv){
+                double tmp = a_f[ie]*sin_v[iv]-dtld_f[ie]*cos_v[iv];
+                tmp *= tmp;
+                double d_uv = (sin_u2_cos_v2[cnt]+sin_u2[iu]*tmp+b2_f[ie]*cos_u2[iu])*k1_f[ie];
+                double int_z = 0;
+                double dz = 20/(d_uv*nz_);
+                double z = -0.5*dz;
+                for(int iz=0; iz<nz_; ++iz){
+                    z += dz;
+                    int_z += exp(-1*d_uv*z)*log(1+z*z)*dz;
+                }
+                f1[ie] += sin_u[iu]*int_z*g1[cnt];
+                f2[ie] += sin_u[iu]*int_z*(g2_1[cnt]+g2_2[cnt]*dtld_f[ie]/a_f[ie]);
+                f3[ie] += sin_u[iu]*int_z*g3[iu];
+                ++cnt;
+            }
+        }
+        f1[ie] *= k1_f[ie]*duv;
+        f2[ie] *= k2_f[ie]*duv;
+        f3[ie] *= k3_f[ie]*duv;
+    }
+}
 }
 
-double coef_a(Lattice &lattice, Beam &beam){
+double IBSSolver_Martini::coef_a(const Lattice &lattice, const Beam &beam) const
+{
     double lambda = beam.particle_number()/lattice.circ();
     if(beam.bunched()) lambda = beam.particle_number()/(2*sqrt(k_pi)*beam.sigma_s());
 
@@ -267,31 +269,16 @@ double coef_a(Lattice &lattice, Beam &beam){
     return k_c*beam.r()*beam.r()*lambda/(16*k_pi*sqrt(k_pi)*beam.dp_p()*beta3*gamma4)/(beam.emit_x()*beam.emit_y());
 }
 
-int ibs_coupling(double &rx, double &ry, double k, double emit_x, double emit_y){
-    double rxc = 0.5*(rx*(2-k)+ry*k*emit_y/emit_x);
-    double ryc = 0.5*(ry*(2-k)+rx*k*emit_x/emit_y);
-    rx = rxc;
-    ry = ryc;
-    return 0;
-}
-
-int ibs_martini(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs) {
-    int nu = ibs_paras.nu();
-    int nv = ibs_paras.nv();
-    int nz = ibs_paras.nz();
-    double log_c = ibs_paras.log_c();
-    double k = ibs_paras.k();
+void IBSSolver_Martini::rate(const Lattice &lattice, const Beam &beam, double &rx, double &ry, double &rs)
+{
     int n_element = lattice.n_element();
     bunch_size(lattice, beam);
     abcdk(lattice, beam);
-    if(ibs_paras.reset()) {
-        coef_f(nu,nv);
-        ibs_paras.reset_off();
+    if(reset()) {
+        coef_f(nu_, nv_);
+        reset_off();
     }
-    if(ibs_paras.use_log_c())
-        f(n_element,nu,nv,log_c);
-    else
-        f(n_element,nu,nv,nz);
+    f(n_element);
 
     double a = coef_a(lattice, beam);
 
@@ -312,29 +299,18 @@ int ibs_martini(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, do
     rx /= circ;
     ry /= circ;
     rs /= circ;
-    if(k>0) ibs_coupling(rx, ry, k, beam.emit_nx(), beam.emit_ny());
-    return 0;
+    if(k_>0) ibs_coupling(rx, ry, k_, beam.emit_nx(), beam.emit_ny());
 }
 
 
-// IBS calculation by Bjorken-Mtingwa model using Sergei Nagaitsev's method
-std::unique_ptr<double []> phi;
-std::unique_ptr<double []> dx2; //D_x * D_x
-std::unique_ptr<double []> dx_betax_phi_2; // D_x * D_x / (beta_x * beta_x) + phi * phi
-std::unique_ptr<double []> sqrt_betay;  // sqrt(beta_y)
-std::unique_ptr<double []> gamma_phi_2; // gamma * gamma * phi * phi
-std::unique_ptr<double []> psi;
-std::unique_ptr<double []> sx, sp, sxp;
-std::unique_ptr<double []> inv_sigma;
-
-void alloc_var(std::unique_ptr<double []>& ptr, int n) {
+void IBSSolver_BM::alloc_var(std::unique_ptr<double []>& ptr, int n) {
     if(ptr.get()==nullptr) {
         ptr = std::unique_ptr<double []>(new double [n]);
     }
 }
 
 //Calculate the variables that only depend on the TWISS parameters and energy of the beam.
-void init_fixed_var(Lattice& lattice, Beam& beam) {
+void IBSSolver_BM::init_fixed_var(const Lattice& lattice, const Beam& beam) {
     int n = lattice.n_element();
     alloc_var(phi, n);
     alloc_var(dx2, n);
@@ -375,7 +351,7 @@ void init_fixed_var(Lattice& lattice, Beam& beam) {
 
 }
 
-void calc_kernels(Lattice& lattice, Beam& beam) {
+void IBSSolver_BM::calc_kernels(const Lattice& lattice, const Beam& beam) {
     auto emit_x = beam.emit_x();
     auto emit_y = beam.emit_y();
     auto sigma_p2 = beam.dp_p() * beam.dp_p();
@@ -467,23 +443,25 @@ void calc_kernels(Lattice& lattice, Beam& beam) {
 //    output_particles.close();
 }
 
-double coef_bm(Lattice &lattice, Beam &beam) {
+double IBSSolver_BM::coef_bm(const Lattice &lattice, const Beam &beam) const {
     double lambda = 1;
-    if(beam.bunched()) lambda /= 2*sqrt(k_pi)*beam.sigma_s();
-    else lambda /= lattice.circ();
+    if (beam.bunched())
+        lambda /= 2*sqrt(k_pi)*beam.sigma_s();
+    else
+        lambda /= lattice.circ();
 
     double beta3 = beam.beta()*beam.beta()*beam.beta();
     double gamma5 = beam.gamma()*beam.gamma()*beam.gamma()*beam.gamma()*beam.gamma();
     return lambda*beam.particle_number()*beam.r()*beam.r()*k_c/(lattice.circ()*6*sqrt(k_pi)*beta3*gamma5);
 }
 
-int ibs_bm(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs) {
-        double k = ibs_paras.k();
+void IBSSolver_BM::rate(const Lattice &lattice, const Beam &beam, double &rx, double &ry, double &rs)
+{
     int n_element = lattice.n_element();
 
-    if(ibs_paras.reset()) {
+    if (reset()) {
         init_fixed_var(lattice, beam);
-        ibs_paras.reset_off();
+        reset_off();
     }
 
     calc_kernels(lattice, beam);
@@ -503,7 +481,7 @@ int ibs_bm(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double 
     }
 
 //    double circ = lattice.circ();
-    double lc = ibs_paras.log_c();
+    double lc = log_c();
     c_bm *= lc;
     rs *= n*c_bm;
     rx *= c_bm;
@@ -513,22 +491,7 @@ int ibs_bm(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double 
     rx /= beam.emit_x();
     ry /= beam.emit_y();
 
-    if(k>0) ibs_coupling(rx, ry, k, beam.emit_nx(), beam.emit_ny());
-    return 0;
+    if(k_>0)
+        ibs_coupling(rx, ry, k_, beam.emit_nx(), beam.emit_ny());
 }
 
-void ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double &ry, double &rs) {
-    switch (ibs_paras.model()) {
-        case IBSModel::MARTINI : {
-            ibs_martini(lattice, beam, ibs_paras, rx, ry, rs);
-            break;
-        }
-        case IBSModel::BM : {
-            ibs_bm(lattice, beam, ibs_paras, rx, ry, rs);
-            break;
-        }
-        default : {
-            assert(false&&"IBS model NOT exists!");
-        }
-    }
-}

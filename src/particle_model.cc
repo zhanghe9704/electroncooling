@@ -1,6 +1,6 @@
 #include "particle_model.h"
 #include <chrono>
-
+#include <cmath>
 #include "constants.h"
 #include "dynamic.h"
 #include "ecooling.h"

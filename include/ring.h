@@ -29,20 +29,20 @@ class Lattice{
     int n_element_;
     double circ_;
  public:
-    double s(int i){return s_.at(i);}
-    double betx(int i){return betx_.at(i);}
-    double alfx(int i){return alfx_.at(i);}
-    double mux(int i){return mux_.at(i);}
-    double dx(int i){return dx_.at(i);}
-    double dpx(int i){return dpx_.at(i);}
-    double bety(int i){return bety_.at(i);}
-    double alfy(int i){return alfy_.at(i);}
-    double muy(int i){return muy_.at(i);}
-    double dy(int i){return dy_.at(i);}
-    double dpy(int i){return dpy_.at(i);}
-    int n_element(){return n_element_;}
-    double l_element(int i){return l_element_.at(i);}
-    double circ(){return circ_;}
+    double s(int i) const {return s_.at(i);}
+    double betx(int i) const {return betx_.at(i);}
+    double alfx(int i) const {return alfx_.at(i);}
+    double mux(int i) const {return mux_.at(i);}
+    double dx(int i) const {return dx_.at(i);}
+    double dpx(int i) const {return dpx_.at(i);}
+    double bety(int i) const {return bety_.at(i);}
+    double alfy(int i) const {return alfy_.at(i);}
+    double muy(int i) const {return muy_.at(i);}
+    double dy(int i) const {return dy_.at(i);}
+    double dpy(int i) const {return dpy_.at(i);}
+    int n_element() const {return n_element_;}
+    double l_element(int i) const {return l_element_.at(i);}
+    double circ() const {return circ_;}
     Lattice(std::string filename);
 
 };

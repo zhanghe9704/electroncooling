@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iomanip>
 #include <iostream>
+#include <cmath>
 
 #include "beam.h"
 #include "constants.h"
@@ -11,7 +12,7 @@
 using std::string;
 
 extern DynamicParas *dynamic_paras;
-extern IBSParas *ibs_paras;
+extern IBSSolver *ibs_solver;
 extern EcoolRateParas *ecool_paras;
 extern ForceParas *force_paras;
 extern Luminosity *luminosity_paras;
@@ -524,37 +525,24 @@ void create_cooler(Set_ptrs &ptrs) {
 }
 
 void calculate_ibs(Set_ptrs &ptrs) {
-    assert(ptrs.ring.get()!=nullptr && "MUST CREATE THE RING BEFORE CALCULATE IBS RATE!");
+    assert(ptrs.ring.get()!=nullptr && "MUST CREATE THE RING BEFORE CALCULATING IBS RATE!");
     assert(ptrs.ibs_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR IBS RATE CALCULATION!");
-    int nu = ptrs.ibs_ptr->nu;
-    int nv = ptrs.ibs_ptr->nv;
-    int nz = ptrs.ibs_ptr->nz;
-    double log_c = ptrs.ibs_ptr->log_c;
-    double k = ptrs.ibs_ptr->coupling;
+    const int nu = ptrs.ibs_ptr->nu;
+    const int nv = ptrs.ibs_ptr->nv;
+    const int nz = ptrs.ibs_ptr->nz;
+    const double log_c = ptrs.ibs_ptr->log_c;
+    const double k = ptrs.ibs_ptr->coupling;
     double rx, ry, rz;
     IBSModel model = ptrs.ibs_ptr->model;
-
-    if(model==IBSModel::MARTINI) {
-        if (log_c>0) {
-            assert(nu>0 && nv>0 && k<=1 && k>=0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
-            IBSParas ibs_paras(nu, nv, log_c);
-            if (k>0) ibs_paras.set_k(k);
-            ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
-        }
-        else {
-            assert(nu>0 && nv>0 && nz>0 &&  k<=1 && k>=0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
-            IBSParas ibs_paras(nu, nv, nz);
-            if (k>0) ibs_paras.set_k(k);
-            ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
-        }
+    
+    if(model == IBSModel::MARTINI) {
+        assert(nu>0 && nv>0 && (k <= 1) && (k >= 0) && ((log_c > 0) || (nz > 0)) && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
+        ibs_solver = new IBSSolver_Martini(nu, nv, nz, log_c, k);
+    } else if (model == IBSModel::BM) {
+        assert(log_c>0 && "WRONG VALUE FOR COULOMB LOGARITHM IN IBS CALCULATION WITH BM MODEL!");
+        ibs_solver = new IBSSolver_BM(log_c, k);
     }
-    else if(model==IBSModel::BM) {
-        IBSParas ibs_paras(model);
-        assert(log_c>0 && "WRONG VALUE FOR COULOMB LOGRITHEM IN IBS CALCULATION WITH BM MODEL!");
-        ibs_paras.set_log_c(log_c);
-        if (k>0) ibs_paras.set_k(k);
-        ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
-    }
+    ibs_solver->rate(*ptrs.ring->lattice_, *ptrs.ion_beam, rx, ry, rz);
 
     ptrs.ibs_rate.at(0) = rx;
     ptrs.ibs_rate.at(1) = ry;

@@ -1,12 +1,13 @@
 #include "dynamic.h"
 #include <chrono>
+#include <cmath>
 #include "constants.h"
 #include "functions.h"
 #include "particle_model.h"
 #include "turn_by_turn.h"
 
 DynamicParas *dynamic_paras = nullptr;
-IBSParas *ibs_paras = nullptr;
+IBSSolver *ibs_solver = nullptr;
 EcoolRateParas *ecool_paras = nullptr;
 ForceParas *force_paras = nullptr;
 Luminosity *luminosity_paras = nullptr;
@@ -441,7 +442,10 @@ int dynamic(Beam &ion, Cooler &cooler, EBeam &ebeam, Ring &ring) {
         if (ion.bunched()) emit.at(3) = ion.sigma_s();
 
         //Rate calculation
-        if(ibs) ibs_rate(*ring.lattice_, ion, *ibs_paras, r_ibs.at(0), r_ibs.at(1), r_ibs.at(2));
+        if(ibs) {
+            assert(ibs_solver != nullptr);
+            ibs_solver->rate(*ring.lattice_, ion, r_ibs.at(0), r_ibs.at(1), r_ibs.at(2));
+        }
         if(ecool) {
             ecooling_rate(*ecool_paras, *force_paras, ion, cooler, ebeam, ring, r_ecool.at(0), r_ecool.at(1), r_ecool.at(2));
         }

@@ -1,6 +1,6 @@
 #include "turn_by_turn.h"
 #include <chrono>
-
+#include <cmath>
 #include "beam.h"
 #include "constants.h"
 #include "dynamic.h"
