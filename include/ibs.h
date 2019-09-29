@@ -11,18 +11,12 @@ enum class IBSModel {MARTINI, BM};
 
 class IBSSolver {
 protected:
-    int nu_ = 0;                //Grid number in u direction.
-    int nv_ = 0;                //Grid number in v direction.
-    int nz_ = 0;                //Grid number in z direction.
     double log_c_ = 0.0;     //Coulomb logarithm.
     double k_ = 0.0;          //Coupling rate in transverse directions.
     bool reset_ = true;
     
     void ibs_coupling(double &rx, double &ry, double k, double emit_x, double emit_y);
 public:
-    int nu() const { return nu_; }
-    int nv() const { return nv_; }
-    int nz() const { return nz_; }
     double log_c() const { return log_c_; }
     double k() const { return k_; }
     bool reset() const { return reset_; }
@@ -30,17 +24,18 @@ public:
     void set_log_c(double x) { log_c_ = x; }
     void reset_off() { reset_ = false; }
     void reset_on() { reset_ = true; }
-    void set_nu(int nu) { assert(nu>0&&"Wrong value of nu in IBS parameters!"); nu_ = nu; }
-    void set_nv(int nv) { assert(nv>0&&"Wrong value of nv in IBS parameters!"); nv_ = nv; }
-    void set_nz(int nz) { assert(nz>0&&"Wrong value of nz in IBS parameters!"); nz_ = nz; }
 
-    IBSSolver(int nu, int nv, int nz, double log_c, double k);
+    IBSSolver(double log_c, double k);
     
     virtual void rate(const Lattice &lattice, const Beam &beam, double &rx, double &ry, double &rs) = 0;
 };
 
 class IBSSolver_Martini : public IBSSolver {
 private:
+    int nu_ = 0;                //Grid number in u direction.
+    int nv_ = 0;                //Grid number in v direction.
+    int nz_ = 0;                //Grid number in z direction.
+    
     // Scratch variables for IBS calculation (Martini model)
     std::unique_ptr<double []> sigma_xbet, sigma_xbetp, sigma_y, sigma_yp;
     std::unique_ptr<double []> a_f, b2_f, c2_f, d2_f, dtld_f, k1_f, k2_f, k3_f;
@@ -57,6 +52,12 @@ private:
     void f(int n_element);
     double coef_a(const Lattice &lattice, const Beam &beam) const;
 public:
+    int nu() const { return nu_; }
+    int nv() const { return nv_; }
+    int nz() const { return nz_; }
+    void set_nu(int nu) { assert(nu>0&&"Wrong value of nu in IBS parameters!"); nu_ = nu; }
+    void set_nv(int nv) { assert(nv>0&&"Wrong value of nv in IBS parameters!"); nv_ = nv; }
+    void set_nz(int nz) { assert(nz>0&&"Wrong value of nz in IBS parameters!"); nz_ = nz; }
     IBSSolver_Martini(int nu, int nv, int nz, double log_c, double k);
     virtual void rate(const Lattice &lattice, const Beam &beam, double &rx, double &ry, double &rs);
 };

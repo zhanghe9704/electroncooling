@@ -787,29 +787,8 @@ void run_simulation(Set_ptrs &ptrs) {
 
     if(ibs) {
         assert(ptrs.ibs_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR IBS RATE CALCULATION!");
-        int nu = ptrs.ibs_ptr->nu;
-        int nv = ptrs.ibs_ptr->nv;
-        int nz = ptrs.ibs_ptr->nz;
-        double log_c = ptrs.ibs_ptr->log_c;
-        double k = ptrs.ibs_ptr->coupling;
-//        double rx, ry, rz;
-        IBSModel model = ptrs.ibs_ptr->model;
-
-        if(model==IBSModel::MARTINI){
-            if (log_c>0) {
-                assert(nu>0 && nv>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
-                ibs_paras = new IBSParas(nu, nv, log_c);
-            }
-            else {
-                assert(nu>0 && nv>0 && nz>0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
-                ibs_paras = new IBSParas(nu, nv, nz);
-                ibs_paras->set_log_c(log_c);
-            }
-        }
-        else if(model==IBSModel::BM) {
-            ibs_paras = new IBSParas(model);
-        }
-        if (k>0) ibs_paras->set_k(k);
+	if (!ibs_solver)
+		calculate_ibs(ptrs);
     }
 
     if (ibs && !ecool && dynamic_paras->model()==DynamicModel::PARTICLE) {

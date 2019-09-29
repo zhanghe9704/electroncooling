@@ -7,8 +7,8 @@
 #include "ring.h"
 #include "beam.h"
 
-IBSSolver::IBSSolver(int nu, int nv, int nz, double log_c, double k)
-    : nu_(nu), nv_(nv), nz_(nz), log_c_(log_c), k_(k)
+IBSSolver::IBSSolver(double log_c, double k)
+    : log_c_(log_c), k_(k)
 {
 }
 
@@ -22,8 +22,11 @@ void IBSSolver::ibs_coupling(double &rx, double &ry, double k, double emit_x, do
 
 
 IBSSolver_Martini::IBSSolver_Martini(int nu, int nv, int nz, double log_c, double k)
-    : IBSSolver(nu, nv, nz, log_c, k)
+    : IBSSolver(log_c, k), nu_(nu), nv_(nv), nz_(nz)
 {
+#ifndef NDEBUG
+	std::cerr << "DEBUG: ISBSolver_Martini constructor" << std::endl;
+#endif
 }
 
 //Set ptrs for bunch_size
@@ -143,6 +146,9 @@ void IBSSolver_Martini::abcdk(const Lattice &lattice, const Beam &beam)
 
 void IBSSolver_Martini::coef_f(int nu, int nv)
 {
+#ifndef NDEBUG
+	std::cerr << "ISBSolver_Martini::coef_f()" << std::endl;
+#endif
     if(sin_u.get()==nullptr) sin_u.reset(new double[nu]);
     if(sin_u2.get()==nullptr) sin_u2.reset(new double[nu]);
     if(cos_u2.get()==nullptr) cos_u2.reset(new double[nu]);
@@ -196,8 +202,9 @@ void IBSSolver_Martini::f(int n_element)
 
 if (log_c_ > 0) {
     double duvTimes2Logc = 2*k_pi*k_pi/(nu_*nv_) * 2 * log_c_;
-
-
+#ifndef NDEBUG
+	std::cerr << "ISBSolver_Martini::f(): using log_c" << std::endl;
+#endif
 //    #pragma omp parallel for
     for(int ie=0; ie<n_element; ++ie){
         const double tmp_a_f = a_f[ie];
@@ -228,6 +235,9 @@ if (log_c_ > 0) {
         f3[ie] *= k3_f[ie] * duvTimes2Logc;
     }
 } else {
+#ifndef NDEBUG
+	std::cerr << "ISBSolver_Martini::f(): using nz" << std::endl;
+#endif
     for(int ie=0; ie<n_element; ++ie){
         int cnt = 0;
         double duv = 2*k_pi*k_pi/(nv_*nu_);
@@ -302,6 +312,15 @@ void IBSSolver_Martini::rate(const Lattice &lattice, const Beam &beam, double &r
     if(k_>0) ibs_coupling(rx, ry, k_, beam.emit_nx(), beam.emit_ny());
 }
 
+
+
+IBSSolver_BM::IBSSolver_BM(double log_c, double k)
+    : IBSSolver(log_c, k)
+{
+#ifndef NDEBUG
+	std::cerr << "DEBUG: ISBSolver_BM constructor" << std::endl;
+#endif
+}
 
 void IBSSolver_BM::alloc_var(std::unique_ptr<double []>& ptr, int n) {
     if(ptr.get()==nullptr) {
