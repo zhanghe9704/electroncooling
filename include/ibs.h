@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <memory>
+#include <vector>
 
 class Lattice;
 class Beam;
@@ -37,18 +38,16 @@ private:
     int nz_ = 0;                //Grid number in z direction.
     
     // Scratch variables for IBS calculation (Martini model)
-    std::unique_ptr<double []> sigma_xbet, sigma_xbetp, sigma_y, sigma_yp;
-    std::unique_ptr<double []> a_f, b2_f, c2_f, d2_f, dtld_f, k1_f, k2_f, k3_f;
+    std::vector<double> sigma_xbet, sigma_xbetp, sigma_y, sigma_yp;
+    std::vector<double> a_f, b2_f, c2_f, d2_f, dtld_f, k1_f, k2_f, k3_f;
 
-    std::unique_ptr<double []> sin_u, sin_u2, cos_u2, sin_v, cos_v, sin_u2_cos_v2;
-    std::unique_ptr<double []> g1, g2_1, g2_2, g3;
-    std::unique_ptr<double []> f1, f2, f3;
+    std::vector<double> sin_u, sin_u2, cos_u2, sin_v, cos_v, sin_u2_cos_v2;
+    std::vector<double> g1, g2_1, g2_2, g3;
+    std::vector<double> f1, f2, f3;
     
-    void set_bunch_size(int n);
     void bunch_size(const Lattice &lattice, const Beam &beam);
-    void set_abcdk(int n);
     void abcdk(const Lattice &lattice, const Beam &beam);
-    void coef_f(int nu, int nv);
+    void coef_f();
     void f(int n_element);
     double coef_a(const Lattice &lattice, const Beam &beam) const;
 public:

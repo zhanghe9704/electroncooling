@@ -29,33 +29,19 @@ IBSSolver_Martini::IBSSolver_Martini(int nu, int nv, int nz, double log_c, doubl
 #endif
 }
 
-//Set ptrs for bunch_size
-void IBSSolver_Martini::set_bunch_size(int n) {
-    if(sigma_xbet.get()==nullptr) {
-        sigma_xbet.reset(new double[n]);
-        memset(sigma_xbet.get(), 0, n*sizeof(double));
-//        std::cout<<"reset bunch_sizze"<<std::endl;
-    }
-    if(sigma_xbetp.get()==nullptr) {
-        sigma_xbetp.reset(new double[n]);
-        memset(sigma_xbetp.get(), 0, n*sizeof(double));
-    }
-    if(sigma_y.get()==nullptr) {
-        sigma_y.reset(new double[n]);
-        memset(sigma_y.get(), 0, n*sizeof(double));
-    }
-    if(sigma_yp.get()==nullptr) {
-        sigma_yp.reset(new double[n]);
-        memset(sigma_yp.get(), 0, n*sizeof(double));
-    }
-}
-
 //Calculate sigma_xbet, sigma_xbetp, sigma_y, sigma_yp
-void IBSSolver_Martini::bunch_size(const Lattice &lattice, const Beam &beam) {
+void IBSSolver_Martini::bunch_size(const Lattice &lattice, const Beam &beam)
+{
+    int n = lattice.n_element();
+    
+    sigma_xbet.reserve(n);
+    sigma_xbetp.reserve(n);
+    sigma_y.reserve(n);
+    sigma_yp.reserve(n);
+    
     double emit_x = beam.emit_x();
     double emit_y = beam.emit_y();
-    set_bunch_size(lattice.n_element());
-    for(int i=0; i<lattice.n_element(); ++i) {
+    for(int i=0; i<n; ++i) {
         sigma_xbet[i] = sqrt(lattice.betx(i)*emit_x);
         sigma_y[i] = sqrt(lattice.bety(i)*emit_y);
         double alf2 = lattice.alfx(i);
@@ -67,43 +53,6 @@ void IBSSolver_Martini::bunch_size(const Lattice &lattice, const Beam &beam) {
     }
 }
 
-//Set the ptrs for abcdk
-void IBSSolver_Martini::set_abcdk(int n) {
-    if(a_f.get()==nullptr) {
-        a_f.reset(new double[n]);
-        memset(a_f.get(), 0, n*sizeof(double));
-//        std::cout<<"reset abcdk"<<std::endl;
-    }
-    if(b2_f.get()==nullptr) {
-        b2_f.reset(new double[n]);
-        memset(b2_f.get(), 0, n*sizeof(double));
-    }
-    if(c2_f.get()==nullptr) {
-        c2_f.reset(new double[n]);
-        memset(c2_f.get(), 0, n*sizeof(double));
-    }
-    if(d2_f.get()==nullptr) {
-        d2_f.reset(new double[n]);
-        memset(d2_f.get(), 0, n*sizeof(double));
-    }
-    if(dtld_f.get()==nullptr) {
-        dtld_f.reset(new double[n]);
-        memset(dtld_f.get(), 0, n*sizeof(double));
-    }
-    if(k1_f.get()==nullptr) {
-        k1_f.reset(new double[n]);
-        memset(k1_f.get(), 0, n*sizeof(double));
-    }
-    if(k2_f.get()==nullptr) {
-        k2_f.reset(new double[n]);
-        memset(k2_f.get(), 0, n*sizeof(double));
-    }
-    if(k3_f.get()==nullptr) {
-        k3_f.reset(new double[n]);
-        memset(k3_f.get(), 0, n*sizeof(double));
-    }
-}
-
 //Calculate a, b, c, d and dtld
 //Call bunch_size() before calling this one
 void IBSSolver_Martini::abcdk(const Lattice &lattice, const Beam &beam)
@@ -111,7 +60,14 @@ void IBSSolver_Martini::abcdk(const Lattice &lattice, const Beam &beam)
     double d_tld, q, sigma_x, sigma_tmp;
     int n = lattice.n_element();
 
-    set_abcdk(n);
+    a_f.reserve(n);
+    b2_f.reserve(n);
+    c2_f.reserve(n);
+    d2_f.reserve(n);
+    dtld_f.reserve(n);
+    k1_f.reserve(n);
+    k2_f.reserve(n);
+    k3_f.reserve(n);
 
     double dp_p = beam.dp_p();
     double beta = beam.beta();
@@ -144,26 +100,25 @@ void IBSSolver_Martini::abcdk(const Lattice &lattice, const Beam &beam)
     }
 }
 
-void IBSSolver_Martini::coef_f(int nu, int nv)
+void IBSSolver_Martini::coef_f()
 {
 #ifndef NDEBUG
 	std::cerr << "ISBSolver_Martini::coef_f()" << std::endl;
 #endif
-    if(sin_u.get()==nullptr) sin_u.reset(new double[nu]);
-    if(sin_u2.get()==nullptr) sin_u2.reset(new double[nu]);
-    if(cos_u2.get()==nullptr) cos_u2.reset(new double[nu]);
-    if(sin_v.get()==nullptr) sin_v.reset(new double[nv]);
-    if(cos_v.get()==nullptr) cos_v.reset(new double[nv]);
-    if(sin_u2_cos_v2.get()==nullptr) sin_u2_cos_v2.reset(new double[nu*nv]);
-
-    if(g1.get()==nullptr) g1.reset(new double[nu*nv]);
-    if(g2_1.get()==nullptr) g2_1.reset(new double[nu*nv]);
-    if(g2_2.get()==nullptr) g2_2.reset(new double[nu*nv]);
-    if(g3.get()==nullptr) g3.reset(new double[nu]);
-
-    double du = k_pi/nu;
+    sin_u.reserve(nu_);
+    sin_u2.reserve(nu_);
+    cos_u2.reserve(nu_);
+    sin_v.reserve(nv_);
+    cos_v.reserve(nv_);
+    sin_u2_cos_v2.reserve(nu_ * nv_);
+    g1.reserve(nu_ * nv_);
+    g2_1.reserve(nu_ * nv_);
+    g2_2.reserve(nu_ * nv_);
+    g3.reserve(nu_);
+    
+    double du = k_pi/nu_;
     double u = -0.5*du;
-    for(int i=0; i<nu; ++i){
+    for(int i=0; i<nu_; ++i){
         u += du;
         sin_u[i] = sin(u);
         sin_u2[i] = sin_u[i]*sin_u[i];
@@ -171,17 +126,17 @@ void IBSSolver_Martini::coef_f(int nu, int nv)
         g3[i] = 1-3*cos_u2[i];
     }
 
-    double dv = 2*k_pi/nv;
+    double dv = 2*k_pi/nv_;
     double v = -0.5*dv;
-    for(int i=0; i<nv; ++i){
+    for(int i=0; i<nv_; ++i){
         v += dv;
         sin_v[i] = sin(v);
         cos_v[i] = cos(v);
     }
 
     int cnt = 0;
-    for(int i=0; i<nu; ++i){
-        for(int j=0; j<nv; ++j){
+    for(int i=0; i<nu_; ++i){
+        for(int j=0; j<nv_; ++j){
             sin_u2_cos_v2[cnt] = sin_u2[i]*cos_v[j]*cos_v[j];
             g1[cnt] = 1-3*sin_u2_cos_v2[cnt];
             g2_1[cnt] = 1-3*sin_u2[i]*sin_v[j]*sin_v[j];
@@ -193,14 +148,11 @@ void IBSSolver_Martini::coef_f(int nu, int nv)
 
 void IBSSolver_Martini::f(int n_element)
 {
-    if(f1.get()==nullptr) f1.reset(new double[n_element]);
-    if(f2.get()==nullptr) f2.reset(new double[n_element]);
-    if(f3.get()==nullptr) f3.reset(new double[n_element]);
-    memset(f1.get(), 0, n_element*sizeof(double));
-    memset(f2.get(), 0, n_element*sizeof(double));
-    memset(f3.get(), 0, n_element*sizeof(double));
+    f1.reserve(n_element);
+    f2.reserve(n_element);
+    f3.reserve(n_element);
 
-if (log_c_ > 0) {
+    if (log_c_ > 0) {
     double duvTimes2Logc = 2*k_pi*k_pi/(nu_*nv_) * 2 * log_c_;
 #ifndef NDEBUG
 	std::cerr << "ISBSolver_Martini::f(): using log_c" << std::endl;
@@ -239,7 +191,7 @@ if (log_c_ > 0) {
 	std::cerr << "ISBSolver_Martini::f(): using nz" << std::endl;
 #endif
     for(int ie=0; ie<n_element; ++ie){
-        int cnt = 0;
+/*        int cnt = 0;
         double duv = 2*k_pi*k_pi/(nv_*nu_);
         for(int iu=0; iu<nu_; ++iu){
             for(int iv=0; iv<nv_; ++iv){
@@ -262,7 +214,7 @@ if (log_c_ > 0) {
         f1[ie] *= k1_f[ie]*duv;
         f2[ie] *= k2_f[ie]*duv;
         f3[ie] *= k3_f[ie]*duv;
-    }
+*/    }
 }
 }
 
@@ -285,7 +237,7 @@ void IBSSolver_Martini::rate(const Lattice &lattice, const Beam &beam, double &r
     bunch_size(lattice, beam);
     abcdk(lattice, beam);
     if(reset()) {
-        coef_f(nu_, nv_);
+        coef_f();
         reset_off();
     }
     f(n_element);
