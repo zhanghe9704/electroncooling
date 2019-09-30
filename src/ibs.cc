@@ -25,7 +25,7 @@ IBSSolver_Martini::IBSSolver_Martini(int nu, int nv, int nz, double log_c, doubl
     : IBSSolver(log_c, k), nu_(nu), nv_(nv), nz_(nz)
 {
 #ifndef NDEBUG
-	std::cerr << "DEBUG: ISBSolver_Martini constructor" << std::endl;
+	std::cerr << "DEBUG: IBSSolver_Martini constructor" << std::endl;
 #endif
 }
 
@@ -34,10 +34,10 @@ void IBSSolver_Martini::bunch_size(const Lattice &lattice, const Beam &beam)
 {
     int n = lattice.n_element();
     
-    sigma_xbet.reserve(n);
-    sigma_xbetp.reserve(n);
-    sigma_y.reserve(n);
-    sigma_yp.reserve(n);
+    sigma_xbet.resize(n);
+    sigma_xbetp.resize(n);
+    sigma_y.resize(n);
+    sigma_yp.resize(n);
     
     double emit_x = beam.emit_x();
     double emit_y = beam.emit_y();
@@ -58,164 +58,166 @@ void IBSSolver_Martini::bunch_size(const Lattice &lattice, const Beam &beam)
 void IBSSolver_Martini::abcdk(const Lattice &lattice, const Beam &beam)
 {
     double d_tld, q, sigma_x, sigma_tmp;
-    int n = lattice.n_element();
+    const int n = lattice.n_element();
+    storageOpt.resize(n);
 
-    a_f.reserve(n);
-    b2_f.reserve(n);
-    c2_f.reserve(n);
-    d2_f.reserve(n);
-    dtld_f.reserve(n);
-    k1_f.reserve(n);
-    k2_f.reserve(n);
-    k3_f.reserve(n);
-
-    double dp_p = beam.dp_p();
-    double beta = beam.beta();
-    double gamma = beam.gamma();
-    double r = beam.r();
+    const double dp_p = beam.dp_p();
+    const double beta = beam.beta();
+    const double gamma = beam.gamma();
+    const double r = beam.r();
     for(int i=0; i<n; ++i){
-        double betx = lattice.betx(i);
-        double alfx = lattice.alfx(i);
-        double dx = lattice.dx(i);
-        double dpx = lattice.dpx(i);
-        double alfy = lattice.alfy(i);
+        const double betx = lattice.betx(i);
+        const double alfx = lattice.alfx(i);
+        const double dx = lattice.dx(i);
+        const double dpx = lattice.dpx(i);
+        const double alfy = lattice.alfy(i);
 
         d_tld = alfx*dx+betx*dpx;
         sigma_x = sqrt(sigma_xbet[i]*sigma_xbet[i]+dx*dx*dp_p*dp_p);
         sigma_tmp = dp_p*sigma_xbet[i]/(gamma*sigma_x);
         q = 2*beta*gamma*sqrt(sigma_y[i]/r);
 
-        a_f[i] = sigma_tmp*sqrt(1+alfx*alfx)/sigma_xbetp[i];
-        b2_f[i] = sigma_tmp*sqrt(1+alfy*alfy)/sigma_yp[i];
-        b2_f[i] *= b2_f[i];
-        c2_f[i] = q*sigma_tmp;
-        c2_f[i] *= c2_f[i];
-        d2_f[i] = dp_p*dx/sigma_x;
-        d2_f[i] *= d2_f[i];
-        dtld_f[i] = dp_p*d_tld/sigma_x;
+        OpticalStorage os;
+	os.a = sigma_tmp*sqrt(1+alfx*alfx)/sigma_xbetp[i];
+        os.b2 = sigma_tmp*sqrt(1+alfy*alfy)/sigma_yp[i];
+        os.b2 *= os.b2;
+        os.c2 = q*sigma_tmp;
+        os.c2 *= os.c2;
+        os.d2 = dp_p*dx/sigma_x;
+        os.d2 *= os.d2;
+        os.dtld = dp_p*d_tld/sigma_x;
 
-        k1_f[i] = 1/c2_f[i];
-        k2_f[i] = a_f[i]*a_f[i]*k1_f[i];
-        k3_f[i] = b2_f[i]*k1_f[i];
+        os.k1 = 1.0 / os.c2;
+        os.k2 = os.a * os.a * os.k1;
+        os.k3 = os.b2 * os.k1;
+	
+	storageOpt[i] = os;
     }
 }
 
 void IBSSolver_Martini::coef_f()
 {
 #ifndef NDEBUG
-	std::cerr << "ISBSolver_Martini::coef_f()" << std::endl;
+	std::cerr << "IBSSolver_Martini::coef_f()" << std::endl;
 #endif
-    sin_u.reserve(nu_);
-    sin_u2.reserve(nu_);
-    cos_u2.reserve(nu_);
-    sin_v.reserve(nv_);
-    cos_v.reserve(nv_);
-    sin_u2_cos_v2.reserve(nu_ * nv_);
-    g1.reserve(nu_ * nv_);
-    g2_1.reserve(nu_ * nv_);
-    g2_2.reserve(nu_ * nv_);
-    g3.reserve(nu_);
+    storageU.resize(nu_);
+    storageV.resize(nv_);
     
-    double du = k_pi/nu_;
-    double u = -0.5*du;
-    for(int i=0; i<nu_; ++i){
-        u += du;
-        sin_u[i] = sin(u);
-        sin_u2[i] = sin_u[i]*sin_u[i];
-        cos_u2[i] = 1-sin_u2[i];
-        g3[i] = 1-3*cos_u2[i];
-    }
-
     double dv = 2*k_pi/nv_;
     double v = -0.5*dv;
     for(int i=0; i<nv_; ++i){
         v += dv;
-        sin_v[i] = sin(v);
-        cos_v[i] = cos(v);
+        storageV[i] = TrigonometryStorageV({sin(v), cos(v)});
     }
 
-    int cnt = 0;
+    double du = k_pi/nu_;
+    double u = -0.5*du;
     for(int i=0; i<nu_; ++i){
+        u += du;
+        double sin_u = sin(u);
+        double sin_u2 = sin_u * sin_u;
+        double cos_u2 = 1 - sin_u2;
+        double g3 = 1 - 3 * cos_u2;
+	std::vector<TrigonometryStorageUV> uv;
+	uv.resize(nv_);
         for(int j=0; j<nv_; ++j){
-            sin_u2_cos_v2[cnt] = sin_u2[i]*cos_v[j]*cos_v[j];
-            g1[cnt] = 1-3*sin_u2_cos_v2[cnt];
-            g2_1[cnt] = 1-3*sin_u2[i]*sin_v[j]*sin_v[j];
-            g2_2[cnt] = 6*sin_u[i]*sin_v[j]*cos_v[j];
-            ++cnt;
+            const double sin_u2_cos_v2 = sin_u2 * storageV[j].cos_v * storageV[j].cos_v;
+            const double g1 = 1 - 3 * sin_u2_cos_v2;
+            const double g2_1 = 1 - 3 * sin_u2 * storageV[j].sin_v * storageV[j].sin_v;
+            const double g2_2 = 6 * sin_u * storageV[j].sin_v * storageV[j].cos_v;
+	    TrigonometryStorageUV tempUV = {sin_u2_cos_v2, g1, g2_1, g2_2};
+	    uv[j] = tempUV;
         }
+        storageU[i] = TrigonometryStorageU({sin_u, sin_u2, cos_u2, g3, uv});
     }
 }
 
-void IBSSolver_Martini::f(int n_element)
+void IBSSolver_Martini::f()
 {
-    f1.reserve(n_element);
-    f2.reserve(n_element);
-    f3.reserve(n_element);
+    const int n_element = storageOpt.size();
+    f1.resize(n_element);
+    f2.resize(n_element);
+    f3.resize(n_element);
 
     if (log_c_ > 0) {
-    double duvTimes2Logc = 2*k_pi*k_pi/(nu_*nv_) * 2 * log_c_;
+        const double duvTimes2Logc = 2*k_pi*k_pi/(nu_*nv_) * 2 * log_c_;
 #ifndef NDEBUG
-	std::cerr << "ISBSolver_Martini::f(): using log_c" << std::endl;
+        std::cerr << "IBSSolver_Martini::f(): using log_c method; nu=" << nu_ << "; nv=" << nv_ << "; log_c=" << log_c_ << std::endl;
 #endif
-//    #pragma omp parallel for
-    for(int ie=0; ie<n_element; ++ie){
-        const double tmp_a_f = a_f[ie];
-        const double tmp_dtld_f = dtld_f[ie];
-        const double tmp_b2_f = b2_f[ie];
-        const double tmp_k1_f = k1_f[ie];
+#ifdef _OPENMP
+        // Maybe make this runtime-adjustable. SMT gives no benefit here, so choose n = physical cores
+        #pragma omp parallel for num_threads(6)
+#endif
+        for(int ie=0; ie < n_element; ie++) {
+            const OpticalStorage &os = storageOpt[ie];
+            double tempf1 = 0, tempf2 = 0, tempf3 = 0;
+            for(int iu=0; iu<nu_; ++iu) {
+                const TrigonometryStorageU &tu = storageU[iu];
+                double sum1 = 0, sum2 = 0, sum3 = 0;
+                for(int iv=0; iv<nv_; ++iv) {
+                    const TrigonometryStorageV &tv = storageV[iv];
+                    const TrigonometryStorageUV &tuv = tu.uv[iv];
 
-        for(int iu=0; iu<nu_; ++iu){
-            double foo1 = 0, foo2 = 0, foo3 = 0;
-            const double tmp_sin_u = sin_u[iu];
-            const double tmp_sin_u2 = sin_u2[iu];
-            const double tmp_cos_u2 = cos_u2[iu];
-            for(int iv=0; iv<nv_; ++iv){
-                const int cnt = iu * nv_ + iv;
-                double tmp = tmp_a_f * sin_v[iv] - tmp_dtld_f * cos_v[iv];
-                tmp *= tmp;
-                const double inv_int_z = (sin_u2_cos_v2[cnt] + tmp_sin_u2 * tmp + tmp_b2_f * tmp_cos_u2) * tmp_k1_f;
-                foo1 += g1[cnt] / inv_int_z;
-                foo2 += (g2_1[cnt] + g2_2[cnt] * tmp_dtld_f / tmp_a_f) / inv_int_z;
-                foo3 += g3[iu] / inv_int_z;
-            }
-            f1[ie] += tmp_sin_u * foo1;
-            f2[ie] += tmp_sin_u * foo2;
-            f3[ie] += tmp_sin_u * foo3;
-        }
-        f1[ie] *= k1_f[ie] * duvTimes2Logc;
-        f2[ie] *= k2_f[ie] * duvTimes2Logc;
-        f3[ie] *= k3_f[ie] * duvTimes2Logc;
-    }
-} else {
-#ifndef NDEBUG
-	std::cerr << "ISBSolver_Martini::f(): using nz" << std::endl;
-#endif
-    for(int ie=0; ie<n_element; ++ie){
-/*        int cnt = 0;
-        double duv = 2*k_pi*k_pi/(nv_*nu_);
-        for(int iu=0; iu<nu_; ++iu){
-            for(int iv=0; iv<nv_; ++iv){
-                double tmp = a_f[ie]*sin_v[iv]-dtld_f[ie]*cos_v[iv];
-                tmp *= tmp;
-                double d_uv = (sin_u2_cos_v2[cnt]+sin_u2[iu]*tmp+b2_f[ie]*cos_u2[iu])*k1_f[ie];
-                double int_z = 0;
-                double dz = 20/(d_uv*nz_);
-                double z = -0.5*dz;
-                for(int iz=0; iz<nz_; ++iz){
-                    z += dz;
-                    int_z += exp(-1*d_uv*z)*log(1+z*z)*dz;
+                    double tmp = os.a * tv.sin_v - os.dtld * tv.cos_v;
+                    tmp *= tmp;
+                    const double inv_int_z = (tuv.sin_u2_cos_v2 + tu.sin_u2 * tmp + os.b2 * tu.cos_u2) * os.k1;
+                    sum1 += tuv.g1 / inv_int_z;
+                    sum2 += (tuv.g2_1 + tuv.g2_2 * os.dtld / os.a) / inv_int_z;
+                    sum3 += tu.g3 / inv_int_z;
                 }
-                f1[ie] += sin_u[iu]*int_z*g1[cnt];
-                f2[ie] += sin_u[iu]*int_z*(g2_1[cnt]+g2_2[cnt]*dtld_f[ie]/a_f[ie]);
-                f3[ie] += sin_u[iu]*int_z*g3[iu];
-                ++cnt;
+                tempf1 += tu.sin_u * sum1;
+                tempf2 += tu.sin_u * sum2;
+                tempf3 += tu.sin_u * sum3;
             }
+            f1[ie] = tempf1 * os.k1 * duvTimes2Logc;
+            f2[ie] = tempf2 * os.k2 * duvTimes2Logc;
+            f3[ie] = tempf3 * os.k3 * duvTimes2Logc;
         }
-        f1[ie] *= k1_f[ie]*duv;
-        f2[ie] *= k2_f[ie]*duv;
-        f3[ie] *= k3_f[ie]*duv;
-*/    }
-}
+    } else {
+        const double duv = 2*k_pi*k_pi/(nv_*nu_);
+#ifndef NDEBUG
+        std::cerr << "IBSSolver_Martini::f(): using nz method; nu=" << nu_ << "; nv=" << nv_ << "; nz=" << nz_ << std::endl;
+#endif
+#ifdef _OPENMP
+        // Maybe make this runtime-adjustable. SMT gives no benefit here, so choose n = physical cores
+        #pragma omp parallel for num_threads(6)
+#endif
+        for(int ie=0; ie<n_element; ++ie){
+            const OpticalStorage &os = storageOpt[ie];
+            double tempf1 = 0, tempf2 = 0, tempf3 = 0;
+            for(int iu=0; iu<nu_; ++iu){
+                const TrigonometryStorageU &tu = storageU[iu];
+                double sum1 = 0, sum2 = 0, sum3 = 0;
+                for(int iv=0; iv<nv_; ++iv){
+                    const TrigonometryStorageV &tv = storageV[iv];
+                    const TrigonometryStorageUV &tuv = tu.uv[iv];
+
+                    double tmp = os.a * tv.sin_v - os.dtld * tv.cos_v;
+                    tmp *= tmp;
+                    const double d_uv = (tuv.sin_u2_cos_v2 + tu.sin_u2 * tmp + os.b2 * tu.cos_u2) * os.k1;
+                    double int_z = 0;
+                    const double dz = 20/(d_uv*nz_);
+                    double z = -0.5*dz;
+                    for(int iz=0; iz<nz_; ++iz){
+                        z += dz;
+                        int_z += exp(-d_uv*z)*log(1+z*z)*dz;
+                    }
+                    sum1 += int_z * tuv.g1;
+                    sum2 += int_z * (tuv.g2_1 + tuv.g2_2 * os.dtld / os.a);
+                    sum3 += int_z * tu.g3;
+                }
+                tempf1 += tu.sin_u * sum1;
+                tempf2 += tu.sin_u * sum2;
+                tempf3 += tu.sin_u * sum3;
+            }
+            f1[ie] = tempf1 * os.k1 * duv;
+            f2[ie] = tempf2 * os.k2 * duv;
+            f3[ie] = tempf3 * os.k3 * duv;
+        }
+    }
+#ifndef NDEBUG
+    std::cerr << "IBSSolver_Martini::f() done" << std::endl;
+#endif
 }
 
 double IBSSolver_Martini::coef_a(const Lattice &lattice, const Beam &beam) const
@@ -233,14 +235,13 @@ double IBSSolver_Martini::coef_a(const Lattice &lattice, const Beam &beam) const
 
 void IBSSolver_Martini::rate(const Lattice &lattice, const Beam &beam, double &rx, double &ry, double &rs)
 {
-    int n_element = lattice.n_element();
     bunch_size(lattice, beam);
     abcdk(lattice, beam);
-    if(reset()) {
+    if (cacheInvalid) {
         coef_f();
-        reset_off();
+        cacheInvalid = false;
     }
-    f(n_element);
+    f();
 
     double a = coef_a(lattice, beam);
 
@@ -250,14 +251,16 @@ void IBSSolver_Martini::rate(const Lattice &lattice, const Beam &beam, double &r
     int n=2;
     if (beam.bunched()) n=1;
 
+    const int n_element = lattice.n_element();
     for(int i=0; i<n_element-1; ++i){
-        double l_element = lattice.l_element(i);
-        rs += n*a*(1-d2_f[i])*f1[i]*l_element;
-        rx += a*(f2[i]+f1[i]*(d2_f[i]+dtld_f[i]*dtld_f[i]))*l_element;
+        const double l_element = lattice.l_element(i);
+        const OpticalStorage &os = storageOpt[i];
+        rs += n*a*(1-os.d2)*f1[i]*l_element;
+        rx += a*(f2[i]+f1[i]*(os.d2+os.dtld*os.dtld))*l_element;
         ry += a*f3[i]*l_element;
     }
 
-    double circ = lattice.circ();
+    const double circ = lattice.circ();
     rx /= circ;
     ry /= circ;
     rs /= circ;
@@ -270,7 +273,7 @@ IBSSolver_BM::IBSSolver_BM(double log_c, double k)
     : IBSSolver(log_c, k)
 {
 #ifndef NDEBUG
-	std::cerr << "DEBUG: ISBSolver_BM constructor" << std::endl;
+	std::cerr << "DEBUG: IBSSolver_BM constructor" << std::endl;
 #endif
 }
 
@@ -430,9 +433,9 @@ void IBSSolver_BM::rate(const Lattice &lattice, const Beam &beam, double &rx, do
 {
     int n_element = lattice.n_element();
 
-    if (reset()) {
+    if (cacheInvalid) {
         init_fixed_var(lattice, beam);
-        reset_off();
+        cacheInvalid = false;
     }
 
     calc_kernels(lattice, beam);
