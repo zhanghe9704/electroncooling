@@ -267,7 +267,7 @@ public:
     double length(){return length_;}
     bool bunched(){return true;}
     bool corr(){return v_x_corr_;}
-    bool set_corr(bool corr = true){v_x_corr_ = corr;}
+    bool set_corr(bool corr = true){v_x_corr_ = corr; return corr;}
     void set_buffer(int n) {buffer_ = n;}
     void set_s(int s) {s_ = s;}
     void set_binary(bool b) {binary_ = b;}
