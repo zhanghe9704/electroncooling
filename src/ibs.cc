@@ -502,6 +502,30 @@ int ibs_bm(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double 
     rx /= beam.emit_x();
     ry /= beam.emit_y();
 
+
+//    double lc = ibs_paras.log_c();
+//    c_bm *= lc;
+//    std::ofstream out;
+//    out.open("ibs_by_element.txt");
+//    out<<"bet_x bet_y alf_x alf_y disp_x disp_y length rx_i ry_i rs_i rx_int ry_int rs_int"<<std::endl;
+//    out.precision(10);
+//    out<<std::showpos;
+//    out<<std::scientific;
+//
+//    for(int i=0; i<n_element-1; ++i){
+//        double l_element = lattice.l_element(i);
+//        rs += inv_sigma[i]*sp[i]*l_element;
+//        ry += lattice.bety(i)*inv_sigma[i]*psi[i]*l_element;
+//        rx += lattice.betx(i)*inv_sigma[i]*(sx[i]+dx_betax_phi_2[i]*sp[i]+sxp[i])*l_element;
+//        out<<lattice.betx(i)<<' '<<lattice.bety(i)<<' '<<lattice.alfx(i)<<' '
+//            <<lattice.alfy(i)<<' '<<lattice.dx(i)<<' '<<lattice.dy(i)<<' '<<l_element<<' '
+//            <<(lattice.betx(i)*inv_sigma[i]*(sx[i]+dx_betax_phi_2[i]*sp[i]+sxp[i])*l_element)*c_bm/beam.emit_x()<<' '
+//            <<(lattice.bety(i)*inv_sigma[i]*psi[i]*l_element)*c_bm/beam.emit_y()<<' '
+//            <<(inv_sigma[i]*sp[i]*l_element)*n*c_bm/(beam.dp_p()*beam.dp_p())<<' '
+//            <<rx*c_bm/beam.emit_x()<<' '<<ry*c_bm/beam.emit_y()<<' '<<rs*n*c_bm/(beam.dp_p()*beam.dp_p())<<std::endl;
+//    }
+//    out.close();
+
     if(k>0) ibs_coupling(rx, ry, k, beam.emit_nx(), beam.emit_ny());
     return 0;
 }

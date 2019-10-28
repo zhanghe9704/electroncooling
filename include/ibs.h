@@ -17,6 +17,7 @@ class IBSParas{
     double k_ = 0;          //Coupling rate in transverse directions.
     bool use_log_c_ = true;
     bool reset_ = true;
+    bool ibs_by_element_ = false;
     IBSModel model_ = IBSModel::MARTINI;
 public:
     int nu(){return nu_;}
@@ -26,6 +27,7 @@ public:
     double k(){return k_;}
     bool use_log_c(){return use_log_c_;}
     bool reset(){return reset_;}
+    bool ibs_by_element(){return ibs_by_element_;}
     int set_k(double x){k_ = x; return 0;}
     int set_log_c(double x){ log_c_ = x; use_log_c_ = true; return 0;}
     int reset_off(){reset_ = false; return 0;}
@@ -34,6 +36,7 @@ public:
     void set_nu(int nu){assert(nu>0&&"Wrong value of nu in IBS parameters!"); nu_ = nu;}
     void set_nv(int nv){assert(nv>0&&"Wrong value of nv in IBS parameters!"); nv_ = nv;}
     void set_nz(int nz){assert(nz>0&&"Wrong value of nz in IBS parameters!"); nz_ = nz;}
+    void set_ibs_by_element(bool b){ibs_by_element_ = b;}
     IBSModel model() {return model_;}
 
     IBSParas(int nu, int nv):nu_(nu),nv_(nv){};
