@@ -513,4 +513,5 @@ int ibs_rate(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, doubl
             assert(false&&"IBS model NOT exists!");
         }
     }
+    return 0;
 }

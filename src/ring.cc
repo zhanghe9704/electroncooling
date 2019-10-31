@@ -106,7 +106,6 @@ Lattice::Lattice(std::string filename) {
             dpy_.push_back(dpy);
             s_.push_back(s);
             ++cnt;
-
         }
     }
     n_element_ = cnt;
