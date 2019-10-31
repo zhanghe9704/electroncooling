@@ -38,7 +38,7 @@ std::vector<string> ION_ARGS = {"CHARGE_NUMBER", "MASS", "KINETIC_ENERGY", "NORM
 std::vector<string> RUN_COMMANDS = {"CREATE_ION_BEAM", "CREATE_RING", "CREATE_E_BEAM", "CREATE_COOLER",
     "CALCULATE_IBS", "CALCULATE_ECOOL", "TOTAL_EXPANSION_RATE", "RUN_SIMULATION", "CALCULATE_LUMINOSITY"};
 std::vector<string> RING_ARGS = {"LATTICE", "QX", "QY", "QS", "GAMMA_TR", "RF_V", "RF_H", "RF_PHI"};
-std::vector<string> IBS_ARGS = {"NU","NV","NZ","LOG_C","COUPLING","MODEL"};
+std::vector<string> IBS_ARGS = {"NU","NV","NZ","LOG_C","COUPLING","MODEL","IBS_BY_ELEMENT"};
 std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD", "BET_X", "BET_Y", "DISP_X", "DISP_Y",
     "ALPHA_X", "ALPHA_Y", "DISP_DX", "DISP_DY"};
 //std::vector<string> SCRATCH_COMMANDS = {"PRINT", "LIST_VAR", "LIST_CONST"};
@@ -533,18 +533,23 @@ void calculate_ibs(Set_ptrs &ptrs) {
     double k = ptrs.ibs_ptr->coupling;
     double rx, ry, rz;
     IBSModel model = ptrs.ibs_ptr->model;
+    bool ibs_by_element = ptrs.ibs_ptr->ibs_by_element;
 
     if(model==IBSModel::MARTINI) {
         if (log_c>0) {
             assert(nu>0 && nv>0 && k<=1 && k>=0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
             IBSParas ibs_paras(nu, nv, log_c);
             if (k>0) ibs_paras.set_k(k);
+            if (ibs_by_element) ibs_paras.set_ibs_by_element(true);
+            else ibs_paras.set_ibs_by_element(false);
             ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
         }
         else {
             assert(nu>0 && nv>0 && nz>0 &&  k<=1 && k>=0 && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
             IBSParas ibs_paras(nu, nv, nz);
             if (k>0) ibs_paras.set_k(k);
+            if (ibs_by_element) ibs_paras.set_ibs_by_element(true);
+            else ibs_paras.set_ibs_by_element(false);
             ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
         }
     }
@@ -553,6 +558,8 @@ void calculate_ibs(Set_ptrs &ptrs) {
         assert(log_c>0 && "WRONG VALUE FOR COULOMB LOGRITHEM IN IBS CALCULATION WITH BM MODEL!");
         ibs_paras.set_log_c(log_c);
         if (k>0) ibs_paras.set_k(k);
+        if (ibs_by_element) ibs_paras.set_ibs_by_element(true);
+        else ibs_paras.set_ibs_by_element(false);
         ibs_rate(*ptrs.ring->lattice_, *ptrs.ion_beam, ibs_paras, rx, ry, rz);
     }
 
@@ -822,6 +829,7 @@ void run_simulation(Set_ptrs &ptrs) {
             ibs_paras = new IBSParas(model);
         }
         if (k>0) ibs_paras->set_k(k);
+        ibs_paras->set_ibs_by_element(false);
     }
 
     if (ibs && !ecool && dynamic_paras->model()==DynamicModel::PARTICLE) {
@@ -1066,6 +1074,11 @@ void set_ibs(string &str, Set_ibs *ibs_args) {
         else {
             assert(false&&"WRONG IBS MODEL!");
         }
+    }
+    else if (var == "IBS_BY_ELEMENT") {
+        if (val == "ON" || val == "TRUE") ibs_args->ibs_by_element = true;
+        else if (val == "OFF" || val == "FALSE") ibs_args->ibs_by_element = false;
+        else assert(false&&"WRONG VALUE FOR THE PARAMETER IBS_BY_ELEMENT IN SECTION_IBS!");
     }
     else if (math_parser == NULL) {
         if (var == "NU") {

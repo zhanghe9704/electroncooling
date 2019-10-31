@@ -289,18 +289,44 @@ int ibs_martini(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, do
     rs = 0;
     int n=2;
     if (beam.bunched()) n=1;
+    double circ = lattice.circ();
 
-    for(int i=0; i<n_element-1; ++i){
-        double l_element = lattice.l_element(i);
-        rs += n*a*(1-d2_f[i])*f1[i]*l_element;
-        rx += a*(f2[i]+f1[i]*(d2_f[i]+dtld_f[i]*dtld_f[i]))*l_element;
-        ry += a*f3[i]*l_element;
+    if(ibs_paras.ibs_by_element()) {
+        std::ofstream out;
+        out.open("ibs_by_element.txt");
+        out<<"s bet_x bet_y alf_x alf_y disp_x disp_y rx_i ry_i rs_i rx_int ry_int rs_int"<<std::endl;
+        out.precision(10);
+        out<<std::showpos;
+        out<<std::scientific;
+        double s = 0;
+        double inv_circ = 1/circ;
+        for(int i=0; i<n_element-1; ++i){
+            double l_element = lattice.l_element(i);
+            double rsi = n*a*(1-d2_f[i])*f1[i]*l_element*inv_circ;
+            double rxi = a*(f2[i]+f1[i]*(d2_f[i]+dtld_f[i]*dtld_f[i]))*l_element*inv_circ;
+            double ryi = a*f3[i]*l_element*inv_circ;
+            rx += rxi;
+            ry += ryi;
+            rs += rsi;
+            out<<s<<' '<<lattice.betx(i)<<' '<<lattice.bety(i)<<' '<<lattice.alfx(i)<<' '
+                <<lattice.alfy(i)<<' '<<lattice.dx(i)<<' '<<lattice.dy(i)<<' '
+                <<rxi<<' '<<ryi<<' '<<rsi<<' '<<rx<<' '<<ry<<' '<<rs<<std::endl;
+            s += l_element;
+        }
+        out.close();
+    }
+    else {
+        for(int i=0; i<n_element-1; ++i){
+            double l_element = lattice.l_element(i);
+            rs += n*a*(1-d2_f[i])*f1[i]*l_element;
+            rx += a*(f2[i]+f1[i]*(d2_f[i]+dtld_f[i]*dtld_f[i]))*l_element;
+            ry += a*f3[i]*l_element;
+        }
+        rx /= circ;
+        ry /= circ;
+        rs /= circ;
     }
 
-    double circ = lattice.circ();
-    rx /= circ;
-    ry /= circ;
-    rs /= circ;
     if(k>0) ibs_coupling(rx, ry, k, beam.emit_nx(), beam.emit_ny());
     return 0;
 }
@@ -339,29 +365,6 @@ void init_fixed_var(Lattice& lattice, Beam& beam) {
         sqrt_betay[i] = sqrt(lattice.bety(i));
         gamma_phi_2[i] = beam.gamma() * beam.gamma() * phi[i] * phi[i];
     }
-
-//    std::ofstream output_particles;
-//    output_particles.open("ibs_bm_init_fixed_var.txt");
-//    output_particles<<"dx                 "
-//                    <<"bet_x              "
-//                    <<"dpx                "
-//                    <<"alfa_x             "
-//                    <<"dx^2               "
-//                    <<"phi                "
-//                    <<"dx^2/bet_x^2+phi^2 "
-//                    <<"sqrt(bet_y)        "
-//                    <<"gamma^2*phi^2      "
-//        <<std::endl;
-//    output_particles.precision(10);
-//    output_particles<<std::showpos;
-//    output_particles<<std::scientific;
-//    for(int i=0; i<n; ++i) {
-//        output_particles<<lattice.dx(i)<<' '<<lattice.betx(i)<<' '<<lattice.dpx(i)<<' '<<lattice.alfx(i)<<' '<<dx2[i]<<' '
-//        <<phi[i]<<' '<<dx_betax_phi_2[i]<<' '<<sqrt_betay[i]<<' '<<gamma_phi_2[i]<<std::endl;
-//    }
-//    output_particles.close();
-
-
 }
 
 void calc_kernels(Lattice& lattice, Beam& beam) {
@@ -372,47 +375,17 @@ void calc_kernels(Lattice& lattice, Beam& beam) {
     auto n = lattice.n_element();
     auto gamma2 = beam.gamma()*beam.gamma();
 
-//    std::cout<<"emit_x: "<<emit_x<<std::endl
-//             <<"emit_y: "<<emit_y<<std::endl
-//             <<"gamma:  "<<beam.gamma()<<std::endl;
-
     alloc_var(psi, n);
     alloc_var(sx, n);
     alloc_var(sp, n);
     alloc_var(sxp, n);
     alloc_var(inv_sigma, n);
 
-//    std::ofstream output_particles;
-//    output_particles.open("ibs_bm_calc_kernels.txt");
-//    output_particles<<"bet_x              "
-//                    <<"bet_y              "
-//                    <<"sigma_x            "
-//                    <<"sigma_y            "
-//                    <<"1/sigma_x/sigma_y  "
-//                    <<"a1                 "
-//                    <<"a2                 "
-//                    <<"lamda_1            "
-//                    <<"lamda_2            "
-//                    <<"lamda_3            "
-//                    <<"psi                "
-//                    <<"sxp                "
-//                    <<"sp                 "
-//                    <<"sx                 "
-//        <<std::endl;
-//    output_particles.precision(10);
-//    output_particles<<std::showpos;
-//    output_particles<<std::scientific;
-
-
-
-
-
     for(int i=0; i<n; ++i) {
         auto betx = lattice.betx(i);
         auto bety = lattice.bety(i);
         auto sigma_x = sqrt(dx2[i]*sigma_p2+emit_x*betx);
         auto sigma_y = sqrt(emit_y*bety);
-//        auto l = lattice.circ();
         inv_sigma[i] = 1/(sigma_x*sigma_y);
 
         auto ax = betx/emit_x;
@@ -448,12 +421,7 @@ void calc_kernels(Lattice& lattice, Beam& beam) {
         sp[i] = gamma2*(r1-r2*tmp1-r3*tmp2)/2;
         sx[i] = (r1-r2*tmp2-r3*tmp1)/2;
 
-
-//        output_particles<<lattice.betx(i)<<' '<<lattice.bety(i)<<' '<<sigma_x<<' '<<sigma_y<<' '<<inv_sigma[i]<<' '
-//        <<a1<<' '<<a2<<' '<<lamda_1<<' '<<lamda_2<<' '<<lamda_3<<' '<<psi[i]<<' '<<sxp[i]<<' '<<sp[i]<<' '<<sx[i]<<std::endl;
     }
-
-//    output_particles.close();
 }
 
 double coef_bm(Lattice &lattice, Beam &beam) {
@@ -477,6 +445,8 @@ int ibs_bm(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double 
 
     calc_kernels(lattice, beam);
     double c_bm = coef_bm(lattice, beam);
+    double lc = ibs_paras.log_c();
+    c_bm *= lc;
 
     rx = 0;
     ry = 0;
@@ -484,47 +454,46 @@ int ibs_bm(Lattice &lattice, Beam &beam, IBSParas &ibs_paras,double &rx, double 
     int n=2;
     if (beam.bunched()) n=1;
 
-    for(int i=0; i<n_element-1; ++i){
-        double l_element = lattice.l_element(i);
-        rs += inv_sigma[i]*sp[i]*l_element;
-        ry += lattice.bety(i)*inv_sigma[i]*psi[i]*l_element;
-        rx += lattice.betx(i)*inv_sigma[i]*(sx[i]+dx_betax_phi_2[i]*sp[i]+sxp[i])*l_element;
+    if(ibs_paras.ibs_by_element()) {
+        std::ofstream out;
+        out.open("ibs_by_element.txt");
+        out<<"s bet_x bet_y alf_x alf_y disp_x disp_y rx_i ry_i rs_i rx_int ry_int rs_int"<<std::endl;
+        out.precision(10);
+        out<<std::showpos;
+        out<<std::scientific;
+        double s = 0;
+        for(int i=0; i<n_element-1; ++i){
+            double l_element = lattice.l_element(i);
+            double rxi = (lattice.betx(i)*inv_sigma[i]*(sx[i]+dx_betax_phi_2[i]*sp[i]+sxp[i])*l_element)*c_bm/beam.emit_x();
+            double ryi = (lattice.bety(i)*inv_sigma[i]*psi[i]*l_element)*c_bm/beam.emit_y();
+            double rsi = (inv_sigma[i]*sp[i]*l_element)*n*c_bm/(beam.dp_p()*beam.dp_p());
+            rx += rxi;
+            ry += ryi;
+            rs += rsi;
+            out<<s<<' '<<lattice.betx(i)<<' '<<lattice.bety(i)<<' '<<lattice.alfx(i)<<' '
+                <<lattice.alfy(i)<<' '<<lattice.dx(i)<<' '<<lattice.dy(i)<<' '
+                <<rxi<<' '<<ryi<<' '<<rsi<<' '<<rx<<' '<<ry<<' '<<rs<<std::endl;
+            s += l_element;
+        }
+        out.close();
+
     }
+    else {
+        for(int i=0; i<n_element-1; ++i){
+            double l_element = lattice.l_element(i);
+            rs += inv_sigma[i]*sp[i]*l_element;
+            ry += lattice.bety(i)*inv_sigma[i]*psi[i]*l_element;
+            rx += lattice.betx(i)*inv_sigma[i]*(sx[i]+dx_betax_phi_2[i]*sp[i]+sxp[i])*l_element;
+        }
 
-//    double circ = lattice.circ();
-    double lc = ibs_paras.log_c();
-    c_bm *= lc;
-    rs *= n*c_bm;
-    rx *= c_bm;
-    ry *= c_bm;
+        rs *= n*c_bm;
+        rx *= c_bm;
+        ry *= c_bm;
 
-    rs /= beam.dp_p()*beam.dp_p();
-    rx /= beam.emit_x();
-    ry /= beam.emit_y();
-
-
-//    double lc = ibs_paras.log_c();
-//    c_bm *= lc;
-//    std::ofstream out;
-//    out.open("ibs_by_element.txt");
-//    out<<"bet_x bet_y alf_x alf_y disp_x disp_y length rx_i ry_i rs_i rx_int ry_int rs_int"<<std::endl;
-//    out.precision(10);
-//    out<<std::showpos;
-//    out<<std::scientific;
-//
-//    for(int i=0; i<n_element-1; ++i){
-//        double l_element = lattice.l_element(i);
-//        rs += inv_sigma[i]*sp[i]*l_element;
-//        ry += lattice.bety(i)*inv_sigma[i]*psi[i]*l_element;
-//        rx += lattice.betx(i)*inv_sigma[i]*(sx[i]+dx_betax_phi_2[i]*sp[i]+sxp[i])*l_element;
-//        out<<lattice.betx(i)<<' '<<lattice.bety(i)<<' '<<lattice.alfx(i)<<' '
-//            <<lattice.alfy(i)<<' '<<lattice.dx(i)<<' '<<lattice.dy(i)<<' '<<l_element<<' '
-//            <<(lattice.betx(i)*inv_sigma[i]*(sx[i]+dx_betax_phi_2[i]*sp[i]+sxp[i])*l_element)*c_bm/beam.emit_x()<<' '
-//            <<(lattice.bety(i)*inv_sigma[i]*psi[i]*l_element)*c_bm/beam.emit_y()<<' '
-//            <<(inv_sigma[i]*sp[i]*l_element)*n*c_bm/(beam.dp_p()*beam.dp_p())<<' '
-//            <<rx*c_bm/beam.emit_x()<<' '<<ry*c_bm/beam.emit_y()<<' '<<rs*n*c_bm/(beam.dp_p()*beam.dp_p())<<std::endl;
-//    }
-//    out.close();
+        rs /= beam.dp_p()*beam.dp_p();
+        rx /= beam.emit_x();
+        ry /= beam.emit_y();
+    }
 
     if(k>0) ibs_coupling(rx, ry, k, beam.emit_nx(), beam.emit_ny());
     return 0;

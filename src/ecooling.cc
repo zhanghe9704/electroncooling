@@ -77,8 +77,11 @@ int assign_ecool_scratches(unsigned int n){
 //    v_tr = new double[n];
 //    memset(v_tr, 0, n*sizeof(double));
 
+//    auto seed = time(NULL);
+//    std::cout<<"seed: "<<seed<<std::endl;
+//    srand(seed);
     srand(time(NULL));
-//    srand(1);
+//    srand(3.4345878966324);
     return 0;
 }
 

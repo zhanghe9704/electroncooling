@@ -49,6 +49,7 @@ struct Set_ibs{
      double log_c = 0;
      double coupling = -1;
      IBSModel model = IBSModel::MARTINI;
+     bool ibs_by_element = false;
 };
 
 struct Set_ecool{

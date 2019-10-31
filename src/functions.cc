@@ -6,7 +6,7 @@
 
 int gaussian_random(unsigned int n, double *random_num, double sigma, double avg){
     std::default_random_engine generator;
-//    generator.seed(0);
+//    generator.seed(2);
     generator.seed(rand());
     std::normal_distribution<double> distribution(avg,sigma);
     for(unsigned int i=0; i<n; ++i) random_num[i] = distribution(generator);
@@ -15,7 +15,7 @@ int gaussian_random(unsigned int n, double *random_num, double sigma, double avg
 
 int uniform_random(unsigned int n, double *random_num, double r_min, double r_max){
     std::default_random_engine generator;
-//    generator.seed(0);
+//    generator.seed(2);
     generator.seed(rand());
     std::uniform_real_distribution<double> uniform_dis(r_min,r_max);
     for(unsigned int i=0; i<n; ++i) random_num[i] = uniform_dis(generator);
