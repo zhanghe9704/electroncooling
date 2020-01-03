@@ -33,12 +33,12 @@ IBSSolver_Martini::IBSSolver_Martini(int nu, int nv, int nz, double log_c, doubl
 void IBSSolver_Martini::bunch_size(const Lattice &lattice, const Beam &beam)
 {
     int n = lattice.n_element();
-    
+
     sigma_xbet.resize(n);
     sigma_xbetp.resize(n);
     sigma_y.resize(n);
     sigma_yp.resize(n);
-    
+
     double emit_x = beam.emit_x();
     double emit_y = beam.emit_y();
     for(int i=0; i<n; ++i) {
@@ -59,7 +59,7 @@ void IBSSolver_Martini::abcdk(const Lattice &lattice, const Beam &beam)
 {
     double d_tld, q, sigma_x, sigma_tmp;
     const int n = lattice.n_element();
-    storageOpt.resize(n);
+    storage_opt.resize(n);
 
     const double dp_p = beam.dp_p();
     const double beta = beam.beta();
@@ -78,7 +78,7 @@ void IBSSolver_Martini::abcdk(const Lattice &lattice, const Beam &beam)
         q = 2*beta*gamma*sqrt(sigma_y[i]/r);
 
         OpticalStorage os;
-	os.a = sigma_tmp*sqrt(1+alfx*alfx)/sigma_xbetp[i];
+        os.a = sigma_tmp*sqrt(1+alfx*alfx)/sigma_xbetp[i];
         os.b2 = sigma_tmp*sqrt(1+alfy*alfy)/sigma_yp[i];
         os.b2 *= os.b2;
         os.c2 = q*sigma_tmp;
@@ -90,8 +90,8 @@ void IBSSolver_Martini::abcdk(const Lattice &lattice, const Beam &beam)
         os.k1 = 1.0 / os.c2;
         os.k2 = os.a * os.a * os.k1;
         os.k3 = os.b2 * os.k1;
-	
-	storageOpt[i] = os;
+
+        storage_opt[i] = os;
     }
 }
 
@@ -100,14 +100,14 @@ void IBSSolver_Martini::coef_f()
 #ifndef NDEBUG
 	std::cerr << "IBSSolver_Martini::coef_f()" << std::endl;
 #endif
-    storageU.resize(nu_);
-    storageV.resize(nv_);
-    
+    storage_u.resize(nu_);
+    storage_v.resize(nv_);
+
     double dv = 2*k_pi/nv_;
     double v = -0.5*dv;
     for(int i=0; i<nv_; ++i){
         v += dv;
-        storageV[i] = TrigonometryStorageV({sin(v), cos(v)});
+        storage_v[i] = TrigonometryStorageV({sin(v), cos(v)});
     }
 
     double du = k_pi/nu_;
@@ -121,20 +121,20 @@ void IBSSolver_Martini::coef_f()
 	std::vector<TrigonometryStorageUV> uv;
 	uv.resize(nv_);
         for(int j=0; j<nv_; ++j){
-            const double sin_u2_cos_v2 = sin_u2 * storageV[j].cos_v * storageV[j].cos_v;
+            const double sin_u2_cos_v2 = sin_u2 * storage_v[j].cos_v * storage_v[j].cos_v;
             const double g1 = 1 - 3 * sin_u2_cos_v2;
-            const double g2_1 = 1 - 3 * sin_u2 * storageV[j].sin_v * storageV[j].sin_v;
-            const double g2_2 = 6 * sin_u * storageV[j].sin_v * storageV[j].cos_v;
+            const double g2_1 = 1 - 3 * sin_u2 * storage_v[j].sin_v * storage_v[j].sin_v;
+            const double g2_2 = 6 * sin_u * storage_v[j].sin_v * storage_v[j].cos_v;
 	    TrigonometryStorageUV tempUV = {sin_u2_cos_v2, g1, g2_1, g2_2};
 	    uv[j] = tempUV;
         }
-        storageU[i] = TrigonometryStorageU({sin_u, sin_u2, cos_u2, g3, uv});
+        storage_u[i] = TrigonometryStorageU({sin_u, sin_u2, cos_u2, g3, uv});
     }
 }
 
 void IBSSolver_Martini::f()
 {
-    const int n_element = storageOpt.size();
+    const int n_element = storage_opt.size();
     f1.resize(n_element);
     f2.resize(n_element);
     f3.resize(n_element);
@@ -149,13 +149,13 @@ void IBSSolver_Martini::f()
         #pragma omp parallel for num_threads(6)
 #endif
         for(int ie=0; ie < n_element; ie++) {
-            const OpticalStorage &os = storageOpt[ie];
+            const OpticalStorage &os = storage_opt[ie];
             double tempf1 = 0, tempf2 = 0, tempf3 = 0;
             for(int iu=0; iu<nu_; ++iu) {
-                const TrigonometryStorageU &tu = storageU[iu];
+                const TrigonometryStorageU &tu = storage_u[iu];
                 double sum1 = 0, sum2 = 0, sum3 = 0;
                 for(int iv=0; iv<nv_; ++iv) {
-                    const TrigonometryStorageV &tv = storageV[iv];
+                    const TrigonometryStorageV &tv = storage_v[iv];
                     const TrigonometryStorageUV &tuv = tu.uv[iv];
 
                     double tmp = os.a * tv.sin_v - os.dtld * tv.cos_v;
@@ -183,13 +183,13 @@ void IBSSolver_Martini::f()
         #pragma omp parallel for num_threads(6)
 #endif
         for(int ie=0; ie<n_element; ++ie){
-            const OpticalStorage &os = storageOpt[ie];
+            const OpticalStorage &os = storage_opt[ie];
             double tempf1 = 0, tempf2 = 0, tempf3 = 0;
             for(int iu=0; iu<nu_; ++iu){
-                const TrigonometryStorageU &tu = storageU[iu];
+                const TrigonometryStorageU &tu = storage_u[iu];
                 double sum1 = 0, sum2 = 0, sum3 = 0;
                 for(int iv=0; iv<nv_; ++iv){
-                    const TrigonometryStorageV &tv = storageV[iv];
+                    const TrigonometryStorageV &tv = storage_v[iv];
                     const TrigonometryStorageUV &tuv = tu.uv[iv];
 
                     double tmp = os.a * tv.sin_v - os.dtld * tv.cos_v;
@@ -237,9 +237,9 @@ void IBSSolver_Martini::rate(const Lattice &lattice, const Beam &beam, double &r
 {
     bunch_size(lattice, beam);
     abcdk(lattice, beam);
-    if (cacheInvalid) {
+    if (cache_invalid) {
         coef_f();
-        cacheInvalid = false;
+        cache_invalid = false;
     }
     f();
 
@@ -250,20 +250,48 @@ void IBSSolver_Martini::rate(const Lattice &lattice, const Beam &beam, double &r
     rs = 0;
     int n=2;
     if (beam.bunched()) n=1;
+    const double circ = lattice.circ();
 
     const int n_element = lattice.n_element();
-    for(int i=0; i<n_element-1; ++i){
-        const double l_element = lattice.l_element(i);
-        const OpticalStorage &os = storageOpt[i];
-        rs += n*a*(1-os.d2)*f1[i]*l_element;
-        rx += a*(f2[i]+f1[i]*(os.d2+os.dtld*os.dtld))*l_element;
-        ry += a*f3[i]*l_element;
+    if(ibs_by_element) {
+        std::ofstream out;
+        out.open("ibs_by_element.txt");
+        out<<"s bet_x bet_y alf_x alf_y disp_x disp_y rx_i ry_i rs_i rx_int ry_int rs_int"<<std::endl;
+        out.precision(10);
+        out<<std::showpos;
+        out<<std::scientific;
+        double s = 0;
+        double inv_circ = 1/circ;
+        for(int i=0; i<n_element-1; ++i){
+            double l_element = lattice.l_element(i);
+            const OpticalStorage &os = storage_opt[i];
+            double rsi = n*a*(1-os.d2)*f1[i]*l_element*inv_circ;
+            double rxi = a*(f2[i]+f1[i]*(os.d2+os.dtld*os.dtld))*l_element*inv_circ;
+            double ryi = a*f3[i]*l_element*inv_circ;
+            rx += rxi;
+            ry += ryi;
+            rs += rsi;
+            out<<s<<' '<<lattice.betx(i)<<' '<<lattice.bety(i)<<' '<<lattice.alfx(i)<<' '
+                <<lattice.alfy(i)<<' '<<lattice.dx(i)<<' '<<lattice.dy(i)<<' '
+                <<rxi<<' '<<ryi<<' '<<rsi<<' '<<rx<<' '<<ry<<' '<<rs<<std::endl;
+            s += l_element;
+        }
+        out.close();
+
+    }
+    else {
+        for(int i=0; i<n_element-1; ++i){
+            const double l_element = lattice.l_element(i);
+            const OpticalStorage &os = storage_opt[i];
+            rs += n*a*(1-os.d2)*f1[i]*l_element;
+            rx += a*(f2[i]+f1[i]*(os.d2+os.dtld*os.dtld))*l_element;
+            ry += a*f3[i]*l_element;
+        }
+        rx /= circ;
+        ry /= circ;
+        rs /= circ;
     }
 
-    const double circ = lattice.circ();
-    rx /= circ;
-    ry /= circ;
-    rs /= circ;
     if(k_>0) ibs_coupling(rx, ry, k_, beam.emit_nx(), beam.emit_ny());
 }
 
@@ -277,52 +305,20 @@ IBSSolver_BM::IBSSolver_BM(double log_c, double k)
 #endif
 }
 
-void IBSSolver_BM::alloc_var(std::unique_ptr<double []>& ptr, int n) {
-    if(ptr.get()==nullptr) {
-        ptr = std::unique_ptr<double []>(new double [n]);
-    }
-}
-
-//Calculate the variables that only depend on the TWISS parameters and energy of the beam.
 void IBSSolver_BM::init_fixed_var(const Lattice& lattice, const Beam& beam) {
     int n = lattice.n_element();
-    alloc_var(phi, n);
-    alloc_var(dx2, n);
-    alloc_var(dx_betax_phi_2, n);
-    alloc_var(sqrt_betay, n);
-    alloc_var(gamma_phi_2, n);
+    optical_strage.resize(n);
 
     for(int i=0; i<n; ++i) {
+        OpticalStorage os;
         double dx_betax = lattice.dx(i)/lattice.betx(i);
-        dx2[i] = lattice.dx(i) * lattice.dx(i);
-        phi[i] = lattice.dpx(i) + lattice.alfx(i)*dx_betax;
-        dx_betax_phi_2[i] = dx_betax*dx_betax + phi[i]*phi[i];
-        sqrt_betay[i] = sqrt(lattice.bety(i));
-        gamma_phi_2[i] = beam.gamma() * beam.gamma() * phi[i] * phi[i];
+        os.dx2 = lattice.dx(i) * lattice.dx(i);
+        os.phi = lattice.dpx(i) + lattice.alfx(i)*dx_betax;
+        os.dx_betax_phi_2 = dx_betax*dx_betax + os.phi*os.phi;
+        os.sqrt_betay = sqrt(lattice.bety(i));
+        os.gamma_phi_2 = beam.gamma() * beam.gamma() * os.phi * os.phi;
+        optical_strage.at(i)= os;
     }
-
-//    std::ofstream output_particles;
-//    output_particles.open("ibs_bm_init_fixed_var.txt");
-//    output_particles<<"dx                 "
-//                    <<"bet_x              "
-//                    <<"dpx                "
-//                    <<"alfa_x             "
-//                    <<"dx^2               "
-//                    <<"phi                "
-//                    <<"dx^2/bet_x^2+phi^2 "
-//                    <<"sqrt(bet_y)        "
-//                    <<"gamma^2*phi^2      "
-//        <<std::endl;
-//    output_particles.precision(10);
-//    output_particles<<std::showpos;
-//    output_particles<<std::scientific;
-//    for(int i=0; i<n; ++i) {
-//        output_particles<<lattice.dx(i)<<' '<<lattice.betx(i)<<' '<<lattice.dpx(i)<<' '<<lattice.alfx(i)<<' '<<dx2[i]<<' '
-//        <<phi[i]<<' '<<dx_betax_phi_2[i]<<' '<<sqrt_betay[i]<<' '<<gamma_phi_2[i]<<std::endl;
-//    }
-//    output_particles.close();
-
-
 }
 
 void IBSSolver_BM::calc_kernels(const Lattice& lattice, const Beam& beam) {
@@ -333,57 +329,24 @@ void IBSSolver_BM::calc_kernels(const Lattice& lattice, const Beam& beam) {
     auto n = lattice.n_element();
     auto gamma2 = beam.gamma()*beam.gamma();
 
-//    std::cout<<"emit_x: "<<emit_x<<std::endl
-//             <<"emit_y: "<<emit_y<<std::endl
-//             <<"gamma:  "<<beam.gamma()<<std::endl;
-
-    alloc_var(psi, n);
-    alloc_var(sx, n);
-    alloc_var(sp, n);
-    alloc_var(sxp, n);
-    alloc_var(inv_sigma, n);
-
-//    std::ofstream output_particles;
-//    output_particles.open("ibs_bm_calc_kernels.txt");
-//    output_particles<<"bet_x              "
-//                    <<"bet_y              "
-//                    <<"sigma_x            "
-//                    <<"sigma_y            "
-//                    <<"1/sigma_x/sigma_y  "
-//                    <<"a1                 "
-//                    <<"a2                 "
-//                    <<"lamda_1            "
-//                    <<"lamda_2            "
-//                    <<"lamda_3            "
-//                    <<"psi                "
-//                    <<"sxp                "
-//                    <<"sp                 "
-//                    <<"sx                 "
-//        <<std::endl;
-//    output_particles.precision(10);
-//    output_particles<<std::showpos;
-//    output_particles<<std::scientific;
-
-
-
-
+    kernels.resize(n);
 
     for(int i=0; i<n; ++i) {
+        Kernels knl;
         auto betx = lattice.betx(i);
         auto bety = lattice.bety(i);
-        auto sigma_x = sqrt(dx2[i]*sigma_p2+emit_x*betx);
+        auto sigma_x = sqrt(optical_strage.at(i).dx2*sigma_p2+emit_x*betx);
         auto sigma_y = sqrt(emit_y*bety);
-//        auto l = lattice.circ();
-        inv_sigma[i] = 1/(sigma_x*sigma_y);
+        knl.inv_sigma = 1/(sigma_x*sigma_y);
 
         auto ax = betx/emit_x;
         auto lamda_1 = bety/emit_y; //lamda_1 = ay.
-        auto as = ax*dx_betax_phi_2[i] + inv_sigma_p2;
+        auto as = ax*optical_strage.at(i).dx_betax_phi_2 + inv_sigma_p2;
         auto a1 = gamma2*as;
         auto a2 = (ax-a1)/2;
         a1 = (ax+a1)/2;
 
-        auto lamda_2 = sqrt(a2*a2+ax*ax*gamma_phi_2[i]);
+        auto lamda_2 = sqrt(a2*a2+ax*ax*optical_strage.at(i).gamma_phi_2);
         auto lamda_3 = a1 - lamda_2;
         auto tmp1 = 3/lamda_2;
         lamda_2 = a1 + lamda_2;
@@ -400,21 +363,16 @@ void IBSSolver_BM::calc_kernels(const Lattice& lattice, const Beam& beam) {
         r2 *= inv_lamda_2;
         r3 *= inv_lamda_3;
 
-        psi[i] = -r1 + r2 + r3;
+        knl.psi = -r1 + r2 + r3;
 
-        sxp[i] = tmp1*ax*gamma_phi_2[i]*(r3-r2);
+        knl.sxp = tmp1*ax*optical_strage.at(i).gamma_phi_2*(r3-r2);
         tmp1 = tmp1*a2;
         auto tmp2 = 1 + tmp1;
         tmp1 = 1 - tmp1;
-        sp[i] = gamma2*(r1-r2*tmp1-r3*tmp2)/2;
-        sx[i] = (r1-r2*tmp2-r3*tmp1)/2;
-
-
-//        output_particles<<lattice.betx(i)<<' '<<lattice.bety(i)<<' '<<sigma_x<<' '<<sigma_y<<' '<<inv_sigma[i]<<' '
-//        <<a1<<' '<<a2<<' '<<lamda_1<<' '<<lamda_2<<' '<<lamda_3<<' '<<psi[i]<<' '<<sxp[i]<<' '<<sp[i]<<' '<<sx[i]<<std::endl;
+        knl.sp = gamma2*(r1-r2*tmp1-r3*tmp2)/2;
+        knl.sx = (r1-r2*tmp2-r3*tmp1)/2;
+        kernels.at(i) = knl;
     }
-
-//    output_particles.close();
 }
 
 double IBSSolver_BM::coef_bm(const Lattice &lattice, const Beam &beam) const {
@@ -433,13 +391,15 @@ void IBSSolver_BM::rate(const Lattice &lattice, const Beam &beam, double &rx, do
 {
     int n_element = lattice.n_element();
 
-    if (cacheInvalid) {
+    if (cache_invalid) {
         init_fixed_var(lattice, beam);
-        cacheInvalid = false;
+        cache_invalid = false;
     }
 
     calc_kernels(lattice, beam);
     double c_bm = coef_bm(lattice, beam);
+    const double lc = log_c();
+    c_bm *= lc;
 
     rx = 0;
     ry = 0;
@@ -447,23 +407,50 @@ void IBSSolver_BM::rate(const Lattice &lattice, const Beam &beam, double &rx, do
     int n=2;
     if (beam.bunched()) n=1;
 
-    for(int i=0; i<n_element-1; ++i){
-        double l_element = lattice.l_element(i);
-        rs += inv_sigma[i]*sp[i]*l_element;
-        ry += lattice.bety(i)*inv_sigma[i]*psi[i]*l_element;
-        rx += lattice.betx(i)*inv_sigma[i]*(sx[i]+dx_betax_phi_2[i]*sp[i]+sxp[i])*l_element;
+    if(ibs_by_element) {
+        std::ofstream out;
+        out.open("ibs_by_element.txt");
+        out<<"s bet_x bet_y alf_x alf_y disp_x disp_y rx_i ry_i rs_i rx_int ry_int rs_int"<<std::endl;
+        out.precision(10);
+        out<<std::showpos;
+        out<<std::scientific;
+        double s = 0;
+        for(int i=0; i<n_element-1; ++i){
+            double l_element = lattice.l_element(i);
+            double rxi = (lattice.betx(i)*kernels.at(i).inv_sigma*(kernels.at(i).sx
+                            +optical_strage.at(i).dx_betax_phi_2*kernels.at(i).sp
+                            +kernels.at(i).sxp)*l_element)*c_bm/beam.emit_x();
+            double ryi = (lattice.bety(i)*kernels.at(i).inv_sigma*kernels.at(i).psi*l_element)*c_bm/beam.emit_y();
+            double rsi = (kernels.at(i).inv_sigma*kernels.at(i).sp*l_element)*n*c_bm/(beam.dp_p()*beam.dp_p());
+            rx += rxi;
+            ry += ryi;
+            rs += rsi;
+            out<<s<<' '<<lattice.betx(i)<<' '<<lattice.bety(i)<<' '<<lattice.alfx(i)<<' '
+                <<lattice.alfy(i)<<' '<<lattice.dx(i)<<' '<<lattice.dy(i)<<' '
+                <<rxi<<' '<<ryi<<' '<<rsi<<' '<<rx<<' '<<ry<<' '<<rs<<std::endl;
+            s += l_element;
+        }
+        out.close();
+
     }
+    else {
+        for(int i=0; i<n_element-1; ++i){
+            double l_element = lattice.l_element(i);
+            rs += kernels.at(i).inv_sigma*kernels.at(i).sp*l_element;
+            ry += lattice.bety(i)*kernels.at(i).inv_sigma*kernels.at(i).psi*l_element;
+            rx += lattice.betx(i)*kernels.at(i).inv_sigma*(kernels.at(i).sx
+                    +optical_strage.at(i).dx_betax_phi_2*kernels.at(i).sp
+                    +kernels.at(i).sxp)*l_element;
+        }
 
-//    double circ = lattice.circ();
-    double lc = log_c();
-    c_bm *= lc;
-    rs *= n*c_bm;
-    rx *= c_bm;
-    ry *= c_bm;
+        rs *= n*c_bm;
+        rx *= c_bm;
+        ry *= c_bm;
 
-    rs /= beam.dp_p()*beam.dp_p();
-    rx /= beam.emit_x();
-    ry /= beam.emit_y();
+        rs /= beam.dp_p()*beam.dp_p();
+        rx /= beam.emit_x();
+        ry /= beam.emit_y();
+    }
 
     if(k_>0)
         ibs_coupling(rx, ry, k_, beam.emit_nx(), beam.emit_ny());

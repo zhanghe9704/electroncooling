@@ -39,7 +39,7 @@ std::vector<string> ION_ARGS = {"CHARGE_NUMBER", "MASS", "KINETIC_ENERGY", "NORM
 std::vector<string> RUN_COMMANDS = {"CREATE_ION_BEAM", "CREATE_RING", "CREATE_E_BEAM", "CREATE_COOLER",
     "CALCULATE_IBS", "CALCULATE_ECOOL", "TOTAL_EXPANSION_RATE", "RUN_SIMULATION", "CALCULATE_LUMINOSITY"};
 std::vector<string> RING_ARGS = {"LATTICE", "QX", "QY", "QS", "GAMMA_TR", "RF_V", "RF_H", "RF_PHI"};
-std::vector<string> IBS_ARGS = {"NU","NV","NZ","LOG_C","COUPLING","MODEL"};
+std::vector<string> IBS_ARGS = {"NU","NV","NZ","LOG_C","COUPLING","MODEL","IBS_BY_ELEMENT"};
 std::vector<string> COOLER_ARGS = {"LENGTH", "SECTION_NUMBER", "MAGNETIC_FIELD", "BET_X", "BET_Y", "DISP_X", "DISP_Y",
     "ALPHA_X", "ALPHA_Y", "DISP_DX", "DISP_DY"};
 //std::vector<string> SCRATCH_COMMANDS = {"PRINT", "LIST_VAR", "LIST_CONST"};
@@ -524,7 +524,7 @@ void create_cooler(Set_ptrs &ptrs) {
     std::cout<<"Cooler created!"<<std::endl;
 }
 
-void calculate_ibs(Set_ptrs &ptrs) {
+void calculate_ibs(Set_ptrs &ptrs, bool calc = true) {
     assert(ptrs.ring.get()!=nullptr && "MUST CREATE THE RING BEFORE CALCULATING IBS RATE!");
     assert(ptrs.ibs_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR IBS RATE CALCULATION!");
     const int nu = ptrs.ibs_ptr->nu;
@@ -534,25 +534,32 @@ void calculate_ibs(Set_ptrs &ptrs) {
     const double k = ptrs.ibs_ptr->coupling;
     double rx, ry, rz;
     IBSModel model = ptrs.ibs_ptr->model;
-    
+    bool ibs_by_element = ptrs.ibs_ptr->ibs_by_element;
+
     if(model == IBSModel::MARTINI) {
         assert(nu>0 && nv>0 && (k <= 1) && (k >= 0) && ((log_c > 0) || (nz > 0)) && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
+        delete ibs_solver;
         ibs_solver = new IBSSolver_Martini(nu, nv, nz, log_c, k);
+        ibs_solver->set_ibs_by_element(ibs_by_element);
     } else if (model == IBSModel::BM) {
         assert(log_c>0 && "WRONG VALUE FOR COULOMB LOGARITHM IN IBS CALCULATION WITH BM MODEL!");
+        delete ibs_solver;
         ibs_solver = new IBSSolver_BM(log_c, k);
+        ibs_solver->set_ibs_by_element(ibs_by_element);
     }
-    ibs_solver->rate(*ptrs.ring->lattice_, *ptrs.ion_beam, rx, ry, rz);
+    if(calc) {
+        ibs_solver->rate(*ptrs.ring->lattice_, *ptrs.ion_beam, rx, ry, rz);
 
-    ptrs.ibs_rate.at(0) = rx;
-    ptrs.ibs_rate.at(1) = ry;
-    ptrs.ibs_rate.at(2) = rz;
-    vl_rx_ibs = rx;
-    vl_ry_ibs = ry;
-    vl_rs_ibs = rz;
-    std::cout<<std::scientific;
-    std::cout << std::setprecision(3);
-    std::cout<<"IBS rate (1/s): "<<rx<<"  "<<ry<<"  "<<rz<<std::endl;
+        ptrs.ibs_rate.at(0) = rx;
+        ptrs.ibs_rate.at(1) = ry;
+        ptrs.ibs_rate.at(2) = rz;
+        vl_rx_ibs = rx;
+        vl_ry_ibs = ry;
+        vl_rs_ibs = rz;
+        std::cout<<std::scientific;
+        std::cout << std::setprecision(3);
+        std::cout<<"IBS rate (1/s): "<<rx<<"  "<<ry<<"  "<<rz<<std::endl;
+    }
 }
 
 void calculate_ecool(Set_ptrs &ptrs) {
@@ -787,8 +794,8 @@ void run_simulation(Set_ptrs &ptrs) {
 
     if(ibs) {
         assert(ptrs.ibs_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR IBS RATE CALCULATION!");
-	if (!ibs_solver)
-		calculate_ibs(ptrs);
+//        if (!ibs_solver)
+        calculate_ibs(ptrs, false);
     }
 
     if (ibs && !ecool && dynamic_paras->model()==DynamicModel::PARTICLE) {
@@ -1033,6 +1040,11 @@ void set_ibs(string &str, Set_ibs *ibs_args) {
         else {
             assert(false&&"WRONG IBS MODEL!");
         }
+    }
+    else if (var == "IBS_BY_ELEMENT") {
+        if (val == "ON" || val == "TRUE") ibs_args->ibs_by_element = true;
+        else if (val == "OFF" || val == "FALSE") ibs_args->ibs_by_element = false;
+        else assert(false&&"WRONG VALUE FOR THE PARAMETER IBS_BY_ELEMENT IN SECTION_IBS!");
     }
     else if (math_parser == NULL) {
         if (var == "NU") {
