@@ -11,3 +11,4 @@ cbp/*.tfs
 cbp/[[]*
 cbp/bin
 cbp/obj
+cbp/*.pdf
