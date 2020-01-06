@@ -408,6 +408,7 @@ void IBSSolver_BM::rate(const Lattice &lattice, const Beam &beam, double &rx, do
     if (beam.bunched()) n=1;
 
     if(ibs_by_element) {
+
         std::ofstream out;
         out.open("ibs_by_element.txt");
         out<<"s bet_x bet_y alf_x alf_y disp_x disp_y rx_i ry_i rs_i rx_int ry_int rs_int"<<std::endl;
@@ -422,6 +423,7 @@ void IBSSolver_BM::rate(const Lattice &lattice, const Beam &beam, double &rx, do
                             +kernels.at(i).sxp)*l_element)*c_bm/beam.emit_x();
             double ryi = (lattice.bety(i)*kernels.at(i).inv_sigma*kernels.at(i).psi*l_element)*c_bm/beam.emit_y();
             double rsi = (kernels.at(i).inv_sigma*kernels.at(i).sp*l_element)*n*c_bm/(beam.dp_p()*beam.dp_p());
+
             rx += rxi;
             ry += ryi;
             rs += rsi;

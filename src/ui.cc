@@ -527,6 +527,7 @@ void create_cooler(Set_ptrs &ptrs) {
 void calculate_ibs(Set_ptrs &ptrs, bool calc = true) {
     assert(ptrs.ring.get()!=nullptr && "MUST CREATE THE RING BEFORE CALCULATING IBS RATE!");
     assert(ptrs.ibs_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR IBS RATE CALCULATION!");
+
     const int nu = ptrs.ibs_ptr->nu;
     const int nv = ptrs.ibs_ptr->nv;
     const int nz = ptrs.ibs_ptr->nz;
@@ -535,6 +536,7 @@ void calculate_ibs(Set_ptrs &ptrs, bool calc = true) {
     double rx, ry, rz;
     IBSModel model = ptrs.ibs_ptr->model;
     bool ibs_by_element = ptrs.ibs_ptr->ibs_by_element;
+
 
     if(model == IBSModel::MARTINI) {
         assert(nu>0 && nv>0 && (k <= 1) && (k >= 0) && ((log_c > 0) || (nz > 0)) && "WRONG PARAMETER VALUE FOR IBS RATE CALCULATION!");
@@ -794,7 +796,7 @@ void run_simulation(Set_ptrs &ptrs) {
 
     if(ibs) {
         assert(ptrs.ibs_ptr.get()!=nullptr && "PLEASE SET UP THE PARAMETERS FOR IBS RATE CALCULATION!");
-//        if (!ibs_solver)
+
         calculate_ibs(ptrs, false);
     }
 
@@ -1029,6 +1031,7 @@ void set_ibs(string &str, Set_ibs *ibs_args) {
     var = trim_tab(var);
     val = trim_blank(val);
     val = trim_tab(val);
+
     assert(std::find(IBS_ARGS.begin(),IBS_ARGS.end(),var)!=IBS_ARGS.end() && "WRONG COMMANDS IN SECTION_IBS!");
     if (var== "MODEL") {
         if (val == "MARTINI") {

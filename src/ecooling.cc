@@ -44,7 +44,7 @@ int assign_ecool_scratches(unsigned int n){
     v_long.reset(new double[n]);
 
     srand(time(NULL));
-//    srand(1);
+//    srand(3.4345878966324);
     return 0;
 }
 

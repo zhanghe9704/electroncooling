@@ -197,52 +197,6 @@ public:
     EllipticUniformBunch(double current, double rh, double rv, double length, double neutralisation=2):current_(current),
             rh_(rh),rv_(rv),length_(length),neutralisation_(neutralisation){};
 };
-//
-//class ParticleBunch: public EBeamShape {
-//    double n_electron_;
-//    std::string filename_;
-//    unsigned long int n_;
-//    double length_;
-//    bool v_x_corr_ = false;    //Velocity position correlation
-//    double neutralisation_;
-//    int line_skip_;
-//    vector<Box> tree_;
-//    vector<unsigned long int> list_e_;
-//    int s_;
-//    bool binary_;
-//    int buffer_;
-//public:
-//    std::vector<double> x, y, z, vx, vy, vz;  //Electron phase space coordinates
-//    std::vector<double> v_avg_z, v_rms_l, v_rms_t, tpr_l, tpr_t;  //Velocity and temperate w.r.t. ions.
-//    //Calculate the charge density for a given position (x,y,z) in Lab frame.
-//    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n);
-//    int density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n, double cx, double cy, double cz);
-//    Shape shape(){return Shape::PARTICLE_BUNCH;}
-//    double length(){return length_;}
-//    bool bunched(){return true;}
-//    bool corr(){return v_x_corr_;}
-//    bool set_corr(bool corr = true){v_x_corr_ = corr;}
-//    double neutralisation(){return neutralisation_;}
-//    reload(double n_electron, std::string filename, unsigned long int n, double length, int line_skip = 0,
-//           bool binary = false, int buffer = 1000, int s = 100, double neutralisation=2);
-//    reload(double n_electron, std::string filename, unsigned long int n, int line_skip = 0,
-//           bool binary = false, int buffer = 1000, int s = 100, double neutralisation=2);
-//    reload(double n_electron, std::string filename,  double length, int line_skip = 0,
-//           bool binary = false, int buffer = 1000, int s = 100, double neutralisation=2);
-//    reload(double n_electron, std::string filename, int line_skip = 0,
-//           bool binary = false, int buffer = 1000, int s = 100, double neutralisation=2);
-//
-//    ParticleBunch(double n_electron, std::string filename, unsigned long int n, double length, int line_skip = 0,
-//                  bool binary = false, int buffer = 1000, int s = 100, double neutralisation=2);
-//    ParticleBunch(double n_electron, std::string filename, unsigned long int n, int line_skip = 0,
-//                  bool binary = false, int buffer = 1000, int s = 100, double neutralisation=2);
-//
-//    ParticleBunch(double n_electron, std::string filename, double length, int line_skip = 0,
-//                  bool binary = false, int buffer = 1000, int s = 100, double neutralisation=2);
-//    ParticleBunch(double n_electron, std::string filename, int line_skip = 0,
-//                  bool binary = false, int buffer = 1000, int s = 100, double neutralisation=2);
-//};
-
 
 class ParticleBunch: public EBeamShape {
     double n_electron_;
