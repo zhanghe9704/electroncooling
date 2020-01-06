@@ -92,27 +92,6 @@ public:
     virtual void rate(const Lattice &lattice, const Beam &beam, double &rx, double &ry, double &rs);
 };
 
-// IBS calculation by Bjorken-Mtingwa model using Sergei Nagaitsev's method
-//class IBSSolver_BM : public IBSSolver {
-//private:
-//    std::unique_ptr<double []> phi;
-//    std::unique_ptr<double []> dx2; //D_x * D_x
-//    std::unique_ptr<double []> dx_betax_phi_2; // D_x * D_x / (beta_x * beta_x) + phi * phi
-//    std::unique_ptr<double []> sqrt_betay;  // sqrt(beta_y)
-//    std::unique_ptr<double []> gamma_phi_2; // gamma * gamma * phi * phi
-//    std::unique_ptr<double []> psi;
-//    std::unique_ptr<double []> sx, sp, sxp;
-//    std::unique_ptr<double []> inv_sigma;
-//
-//    void alloc_var(std::unique_ptr<double []>& ptr, int n);
-//    void init_fixed_var(const Lattice &lattice, const Beam &beam);
-//    void calc_kernels(const Lattice &lattice, const Beam &beam);
-//    double coef_bm(const Lattice &lattice, const Beam &beam) const;
-//public:
-//    IBSSolver_BM(double log_c, double k);
-//    virtual void rate(const Lattice &lattice, const Beam &beam, double &rx, double &ry, double &rs);
-//};
-
 class IBSSolver_BM : public IBSSolver {
  private:
      struct OpticalStorage { //variables only depends on the TWISS parameters and the energy.
