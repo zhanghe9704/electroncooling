@@ -874,14 +874,14 @@ int ecooling_rate(EcoolRateParas &ecool_paras, ForceParas &force_paras, Beam &io
     force_distribute(n_sample,ion);
     //Original emittance
     double emit_x0, emit_y0, emit_z0;
-    original_emittance(ecool_paras, ion, emit_x0, emit_y0, emit_z0);
-//    original_emittance(ecool_paras, ring, ion, emit_x0, emit_y0, emit_z0);
+//    original_emittance(ecool_paras, ion, emit_x0, emit_y0, emit_z0);
+    original_emittance(ecool_paras, ring, ion, emit_x0, emit_y0, emit_z0);
     //Apply kick
     apply_kick(n_sample, ion);
     //New emittance
     double emit_x, emit_y, emit_z;
-    new_emittance(ecool_paras, ion, cooler, emit_x, emit_y, emit_z);
-//    new_emittance(ecool_paras, ion, ring, cooler, emit_x, emit_y, emit_z);
+//    new_emittance(ecool_paras, ion, cooler, emit_x, emit_y, emit_z);
+    new_emittance(ecool_paras, ion, ring, cooler, emit_x, emit_y, emit_z);
     //rate
     rate_x = emit_x/emit_x0-1;
     rate_y = emit_y/emit_y0-1;
