@@ -36,7 +36,7 @@ Authors of [**BETACOOL**](http://betacool.jinr.ru/), we learned a lot from BETAC
 
 Authors of [**muParser**](http://beltoforion.de/article.php?a=muparser),  which is used in building the text-base UI. 
 
-Dr. David Bruwihler and Dr. Paul Moeller at [*Radiasoft*](http://radiasoft.net/), who developed an [*online version of JSPEC with GUI*](https://beta.sirepo.com/#/jspec) on their cloud server, [*Sirepo*](https://beta.sirepo.com/). 
+Dr. David Bruwihler and Dr. Paul Moeller at [*Radiasoft*](http://radiasoft.net/), who developed an [*online version of JSPEC with GUI*](https://sirepo.com/jspec) on their cloud server, [*Sirepo*](https://sirepo.com/). 
 
 
 
