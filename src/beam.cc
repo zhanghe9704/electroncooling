@@ -276,7 +276,7 @@ EBeam::EBeam(double gamma, EBeamShape &shape_defined):Beam(-1, k_me/k_u, (gamma-
 
 int GaussianBunch::density(double *x, double *y, double *z, Beam &beam, double *ne, unsigned int n_particle){
     double amp = n_electron_/(sqrt(8*k_pi*k_pi*k_pi)*sigma_x_*sigma_y_*sigma_s_);
-    double sigma_x2 = -1/(2*sigma_x_*sigma_y_);
+    double sigma_x2 = -1/(2*sigma_x_*sigma_x_);
     double sigma_y2 = -1/(2*sigma_y_*sigma_y_);
     double sigma_s2 = -1/(2*sigma_s_*sigma_s_);
     for(unsigned int i=0; i<n_particle; ++i){
@@ -289,7 +289,7 @@ int GaussianBunch::density(double *x, double *y, double *z, Beam &beam, double *
 int GaussianBunch::density(double *x, double *y, double *z, Beam &ebeam, double *ne, unsigned int n_particle, double cx,
                            double cy, double cz){
     double amp = n_electron_/(sqrt(8*k_pi*k_pi*k_pi)*sigma_x_*sigma_y_*sigma_s_);
-    double sigma_x2 = -1/(2*sigma_x_*sigma_y_);
+    double sigma_x2 = -1/(2*sigma_x_*sigma_x_);
     double sigma_y2 = -1/(2*sigma_y_*sigma_y_);
     double sigma_s2 = -1/(2*sigma_s_*sigma_s_);
     //ion_center - electron_center
