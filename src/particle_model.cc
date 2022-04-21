@@ -117,12 +117,40 @@ void apply_ibs_kick(double dt, Beam &ion, std::vector<double> &r_ibs) {
     double ry_ibs = r_ibs.at(1);
     double rs_ibs = r_ibs.at(2);
 
-    ibs_kick(n_sample, rx_ibs, dynamic_paras->twiss_ref.bet_x, dt, ion.emit_x(), xp.get());
-    ibs_kick(n_sample, ry_ibs, dynamic_paras->twiss_ref.bet_y, dt, ion.emit_y(), yp.get());
-    if (ion.bunched())
-        ibs_kick(n_sample, rs_ibs, 1, dt, ion.dp_p()*ion.dp_p(), dp_p.get());
-    else
-        ibs_kick(n_sample, rs_ibs, 2, dt, ion.dp_p()*ion.dp_p(), dp_p.get());
+    double dx = dynamic_paras->twiss_ref.disp_x;
+    double dy = dynamic_paras->twiss_ref.disp_y;
+    double dpx = dynamic_paras->twiss_ref.disp_dx;
+    double dpy = dynamic_paras->twiss_ref.disp_dy;
+    if (fabs(dx)>0 || fabs(dy)>0 || fabs(dpx)>0 || fabs(dpy)>0) {
+        for(unsigned int i=0; i<n_sample; ++i){
+            x_bet[i] = x[i] - dx*dp_p[i];
+            xp_bet[i] = xp[i] - dpx*dp_p[i];
+            y_bet[i] = y[i] - dy*dp_p[i];
+            yp_bet[i] = yp[i] - dpy*dp_p[i];
+        }
+
+        ibs_kick(n_sample, rx_ibs, dynamic_paras->twiss_ref.bet_x, dt, ion.emit_x(), xp_bet.get());
+        ibs_kick(n_sample, ry_ibs, dynamic_paras->twiss_ref.bet_y, dt, ion.emit_y(), yp_bet.get());
+        if (ion.bunched())
+            ibs_kick(n_sample, rs_ibs, 1, dt, ion.dp_p()*ion.dp_p(), dp_p.get());
+        else
+            ibs_kick(n_sample, rs_ibs, 2, dt, ion.dp_p()*ion.dp_p(), dp_p.get());
+
+        adjust_disp(dx, x_bet.get(), dp_p.get(), x.get(), n_sample);
+        adjust_disp(dy, y_bet.get(), dp_p.get(), y.get(), n_sample);
+        adjust_disp(dpx, xp_bet.get(), dp_p.get(), xp.get(), n_sample);
+        adjust_disp(dpy, yp_bet.get(), dp_p.get(), yp.get(), n_sample);
+
+    }
+    else {
+        ibs_kick(n_sample, rx_ibs, dynamic_paras->twiss_ref.bet_x, dt, ion.emit_x(), xp.get());
+        ibs_kick(n_sample, ry_ibs, dynamic_paras->twiss_ref.bet_y, dt, ion.emit_y(), yp.get());
+        if (ion.bunched())
+            ibs_kick(n_sample, rs_ibs, 1, dt, ion.dp_p()*ion.dp_p(), dp_p.get());
+        else
+            ibs_kick(n_sample, rs_ibs, 2, dt, ion.dp_p()*ion.dp_p(), dp_p.get());
+    }
+
 }
 
 void move_particles(Beam &ion, Ring &ring) {
